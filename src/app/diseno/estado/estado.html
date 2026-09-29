@@ -1,0 +1,19 @@
+<div class="estado" [class.es-error]="tipo() === 'error'" role="status" aria-live="polite">
+  @if (tipo() === 'cargando') {
+    <mat-spinner diameter="40" />
+  } @else if (icono(); as nombre) {
+    <mat-icon class="simbolo" [svgIcon]="nombre" />
+  } @else if (tipo() === 'error') {
+    <mat-icon class="simbolo" svgIcon="error" />
+  }
+
+  <p class="titulo">{{ titulo() }}</p>
+
+  @if (detalle(); as texto) {
+    <p class="detalle">{{ texto }}</p>
+  }
+
+  @if (accion(); as etiqueta) {
+    <button matButton="tonal" (click)="ejecutar()">{{ etiqueta }}</button>
+  }
+</div>

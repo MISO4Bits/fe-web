@@ -1,0 +1,33 @@
+@use '../../../styles/layout' as layout;
+
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: layout.espacio(2);
+  padding: layout.espacio(6) layout.espacio(3);
+  text-align: center;
+}
+
+.simbolo {
+  width: 40px;
+  height: 40px;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 40px;
+}
+
+.es-error .simbolo {
+  color: var(--mat-sys-error);
+}
+
+.titulo {
+  margin: 0;
+  font: var(--mat-sys-title-medium);
+}
+
+.detalle {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}

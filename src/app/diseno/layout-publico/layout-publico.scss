@@ -1,0 +1,51 @@
+@use '../../../styles/layout' as layout;
+
+.armazon {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.encabezado {
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-lowest);
+}
+
+.barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: layout.espacio(2);
+  padding-block: layout.espacio(2);
+}
+
+.marca {
+  color: var(--mat-sys-primary);
+  font-size: 1.75rem;
+  text-decoration: none;
+}
+
+nav {
+  display: flex;
+  gap: layout.espacio(1);
+}
+
+main {
+  flex: 1;
+}
+
+.pie {
+  padding-block: layout.espacio(4);
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-low);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+
+  p {
+    margin: 0 0 layout.espacio(0.5);
+  }
+}
+
+.legal {
+  max-width: 68ch;
+}

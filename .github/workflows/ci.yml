@@ -1,0 +1,224 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: [main, develop]
+  # Disparo manual: permite reconstruir y publicar la imagen de una rama o
+  # tag concreta desde la pestaña Actions sin necesidad de un push.
+  workflow_dispatch:
+
+env:
+  IMAGE: ${{ vars.GCP_ARTIFACT_REGISTRY }}/fe-web
+  NODE_VERSION: "22"
+
+jobs:
+  # Required check. Usa el binario de gitleaks directo, no la GitHub Action
+  # oficial (gitleaks/gitleaks-action): esa exige licencia de pago a partir
+  # del segundo repositorio de una organización.
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Instalar gitleaks
+        run: |
+          curl -sSfL -o gitleaks.tar.gz \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+
+      - name: Escanear historial
+        run: ./gitleaks detect --source . --no-banner -v --config .gitleaks.toml
+
+  # Required check. Lint (ESLint) + formato (Prettier) + pruebas unitarias
+  # (Jasmine/Karma) con cobertura.
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier — formato
+        run: npm run format:check
+
+      - name: Pruebas + cobertura (gate 80%)
+        run: npm test -- --watch=false
+
+      - name: Subir reporte de cobertura
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-lcov
+          path: coverage/fe-web/lcov.info
+          retention-days: 1
+
+  # Pruebas E2E (Playwright) contra la app servida en modo desarrollo.
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar navegadores de Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Pruebas E2E
+        run: npm run e2e
+
+      - name: Subir reporte de Playwright
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # Required check. Espera el quality gate de SonarQube Cloud.
+  sonar:
+    name: sonar
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Descargar reporte de cobertura
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-lcov
+          path: coverage/fe-web
+
+      - name: SonarQube Cloud Scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # No corre en pull_request — solo al hacer push a main/develop o al
+  # taguear una versión semver.
+  image:
+    name: image
+    runs-on: ubuntu-latest
+    needs: [gitleaks, quality, e2e, sonar]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      id-token: write # requerido por google-github-actions/auth (WIF)
+    outputs:
+      sha_short: ${{ steps.tags.outputs.sha_short }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: auth
+        name: Autenticar contra GCP (Workload Identity Federation)
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Configurar Docker para Artifact Registry
+        run: gcloud auth configure-docker "${IMAGE%%/*}" --quiet
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Calcular tags de la imagen
+        id: tags
+        run: |
+          sha_short=$(git rev-parse --short=7 HEAD)
+          echo "sha_short=${sha_short}" >> "$GITHUB_OUTPUT"
+          {
+            echo "tags<<EOF"
+            echo "${IMAGE}:sha-${sha_short}"
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              echo "${IMAGE}:main"
+            elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+              echo "${IMAGE}:develop"
+            elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+              echo "${IMAGE}:${GITHUB_REF_NAME#v}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build y push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+
+  # Write-back de GitOps: fija el tag inmutable (sha-<corto>) de esta build
+  # en apps/fe-web/overlays/dev del repo `deploy`, para que Argo CD vea un
+  # cambio real de texto y dispare el rollout (auto-sync). Solo desde
+  # develop por ahora — overlays/prod no existe todavía; cuando exista, ese
+  # camino va por PR + 2 revisiones, no por commit directo como este.
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    needs: image
+    if: github.ref == 'refs/heads/develop'
+    permissions:
+      contents: read
+    steps:
+      - name: Generar token de instalación de la GitHub App
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.DEPLOY_GITHUB_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_GITHUB_APP_PRIVATE_KEY }}
+          owner: MISO4Bits
+          repositories: deploy
+
+      - name: Clonar deploy
+        uses: actions/checkout@v7
+        with:
+          repository: MISO4Bits/deploy
+          token: ${{ steps.app-token.outputs.token }}
+          path: deploy
+
+      - name: Instalar kustomize
+        run: |
+          curl -sSfL -o kustomize.tar.gz \
+            https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_linux_amd64.tar.gz
+          tar -xzf kustomize.tar.gz kustomize
+          sudo mv kustomize /usr/local/bin/kustomize
+
+      - name: Fijar el tag en apps/fe-web/overlays/dev
+        working-directory: deploy/apps/fe-web/overlays/dev
+        run: kustomize edit set image "${IMAGE}=${IMAGE}:sha-${{ needs.image.outputs.sha_short }}"
+
+      - name: Commitear y pushear a deploy
+        working-directory: deploy
+        run: |
+          git config user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
+          git config user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+          git add apps/fe-web/overlays/dev/kustomization.yaml
+          if git diff --cached --quiet; then
+            echo "Sin cambios de imagen, nada que commitear."
+            exit 0
+          fi
+          git commit -m "fe-web: desplegar sha-${{ needs.image.outputs.sha_short }} en dev"
+          git pull --rebase origin main
+          git push origin HEAD:main

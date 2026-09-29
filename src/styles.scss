@@ -1,1 +1,30 @@
-/* You can add global styles to this file, and also import other style files */
+@use 'styles/theme';
+@use 'styles/layout';
+
+// Base del documento. Los valores salen del tema, no de constantes locales.
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  letter-spacing: var(--mat-sys-body-medium-tracking);
+  -webkit-font-smoothing: antialiased;
+}
+
+// El logo es lo unico que usa Dancing Script y el Accent Teal de la marca.
+.solventa-logo {
+  font-family: var(--solventa-logo-font), cursive;
+  font-weight: var(--solventa-logo-weight);
+}
+
+// Foco visible en todo el producto, requisito de accesibilidad.
+:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}

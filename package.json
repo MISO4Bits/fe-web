@@ -10,7 +10,9 @@
     "lint": "ng lint",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\" \"e2e/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\" \"e2e/**/*.ts\"",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "tokens:build": "node tools/tokens-to-scss.mjs",
+    "icons:build": "node tools/build-icons.mjs"
   },
   "private": true,
   "packageManager": "npm@10.9.3",
@@ -19,6 +21,7 @@
     "@angular/compiler": "^21.2.0",
     "@angular/core": "^21.2.0",
     "@angular/forms": "^21.2.0",
+    "@angular/material": "^21.2.14",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
     "rxjs": "~7.8.0",
@@ -30,6 +33,8 @@
     "@angular/compiler-cli": "^21.2.0",
     "@angular/localize": "^21.2.23",
     "@eslint/js": "^10.0.1",
+    "@material-symbols/svg-400": "^0.47.5",
+    "@phosphor-icons/core": "^2.1.1",
     "@playwright/test": "^1.63.0",
     "@types/jasmine": "~6.0.0",
     "angular-eslint": "21.4.0",

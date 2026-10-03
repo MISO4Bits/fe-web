@@ -1,8 +1,16 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 
 import { routes } from './app.routes';
+import { proveerIconos } from './nucleo/iconos/proveer-iconos';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideBrowserGlobalErrorListeners(), provideRouter(routes)],
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideRouter(routes, withComponentInputBinding()),
+    // Material carga el sprite de iconos con HttpClient.
+    provideHttpClient(withFetch()),
+    proveerIconos(),
+  ],
 };

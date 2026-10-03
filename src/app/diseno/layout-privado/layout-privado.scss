@@ -1,0 +1,50 @@
+@use '../../../styles/layout' as layout;
+
+.armazon {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.encabezado {
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container-lowest);
+}
+
+.barra {
+  display: flex;
+  align-items: center;
+  gap: layout.espacio(3);
+  padding-block: layout.espacio(2);
+}
+
+.marca {
+  color: var(--mat-sys-primary);
+  font-size: 1.75rem;
+  text-decoration: none;
+}
+
+nav {
+  display: flex;
+  flex: 1;
+  gap: layout.espacio(1);
+}
+
+.activo {
+  color: var(--mat-sys-primary);
+}
+
+.cliente {
+  display: flex;
+  align-items: center;
+  gap: layout.espacio(1);
+}
+
+.nombre {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}
+
+main {
+  flex: 1;
+}

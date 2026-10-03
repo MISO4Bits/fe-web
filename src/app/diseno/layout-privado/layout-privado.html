@@ -1,0 +1,33 @@
+<div class="armazon">
+  <header class="encabezado">
+    <div class="solventa-contenedor barra">
+      <a class="solventa-logo marca" [routerLink]="rutas.cuenta">Solventa</a>
+
+      <nav aria-label="Navegación de la cuenta">
+        <a
+          matButton
+          [routerLink]="rutas.cuenta"
+          routerLinkActive="activo"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          Mis cotizaciones
+        </a>
+        <a matButton="tonal" [routerLink]="rutas.nuevaCotizacion">
+          <mat-icon svgIcon="plus" />
+          Nueva cotización
+        </a>
+      </nav>
+
+      <div class="cliente">
+        @if (cliente(); as persona) {
+          <span class="nombre">{{ persona.nombre }}</span>
+        }
+        <button matButton (click)="salir()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <router-outlet />
+  </main>
+</div>

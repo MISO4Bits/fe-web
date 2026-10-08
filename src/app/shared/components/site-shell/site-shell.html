@@ -1,0 +1,44 @@
+<div class="shell" [class.large-text]="largeText">
+  <a class="skip" href="#main">Ir al contenido</a>
+  <header>
+    <div class="top-bar">
+      @if (session.account() && router.url.startsWith('/cuenta')) {
+        <button
+          type="button"
+          class="menu-button"
+          aria-label="Menú de cuenta"
+          [attr.aria-expanded]="menuOpen()"
+          (click)="menuOpen.set(!menuOpen())"
+        >
+          <img src="/assets/icons/list.svg" alt="" />
+        </button>
+        @if (menuOpen()) {
+          <nav class="account-menu" aria-label="Cuenta">
+            <a routerLink="/cuenta" (click)="menuOpen.set(false)">Mi cuenta</a
+            ><a routerLink="/confirmar-correo" (click)="menuOpen.set(false)">Confirmar correo</a>
+          </nav>
+        }
+      }
+
+      <a class="brand" routerLink="/cuenta">Solventa</a><span>ES · CO</span
+      ><button
+        type="button"
+        class="text-button accessibility"
+        [attr.aria-pressed]="largeText"
+        (click)="largeText = !largeText"
+      >
+        Accesibilidad
+      </button>
+    </div>
+  </header>
+  <main id="main" tabindex="-1"><router-outlet /></main>
+  <footer>
+    <span>© 2026 Solventa</span>
+    <nav aria-label="Información legal">
+      <button type="button" (click)="legal.open('terms')">Términos y condiciones</button
+      ><button type="button" (click)="legal.open('personal')">Datos personales</button
+      ><button type="button" (click)="legal.open('financial')">Datos financieros</button>
+    </nav>
+  </footer>
+  <app-permission-dialog #legal />
+</div>

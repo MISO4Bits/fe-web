@@ -1,0 +1,53 @@
+@if (session.account(); as account) {
+  <div class="home-page" data-node-id="2102:3895">
+    <h1>Todavía no tienes seguros</h1>
+    <p class="intro">
+      Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.
+    </p>
+    <p class="eyebrow">MIS SEGUROS</p>
+    <section class="card empty">
+      <div>
+        <h2>Todavía no tienes seguros ni cotizaciones</h2>
+        <p>
+          Cotiza el seguro de tu crédito hipotecario. Buscamos los datos de tu crédito en tu banco y
+          te damos un precio preaprobado.
+        </p>
+      </div>
+      <button type="button" class="primary" (click)="quoteNotice.set(true)">
+        Cotizar mi seguro
+      </button>
+    </section>
+    <p class="eyebrow quick-label">ACCESOS RÁPIDOS</p>
+    <button class="card quick" type="button" (click)="quoteNotice.set(true)">
+      <img src="/assets/icons/plus.svg" alt="" /><span
+        ><strong>Nueva cotización</strong><small>Otro crédito o inmueble</small></span
+      ><img class="arrow" src="/assets/icons/arrow.svg" alt="" />
+    </button>
+    @if (!account.emailConfirmed) {
+      <aside class="info">
+        Tu cuenta ya está creada. Confirma tu correo desde el enlace que te enviaremos. Puedes
+        cotizar mientras tanto. <a routerLink="/confirmar-correo">Ver información del correo</a>
+      </aside>
+    }
+    @if (!account.financialConsent) {
+      <aside class="info">
+        Puedes cotizar sin autorizar la consulta financiera. Calcularemos el precio solo con los
+        datos que nos des.
+      </aside>
+    }
+    @if (quoteNotice()) {
+      <p role="status" class="info">
+        El flujo de cotización corresponde a BITS-95/BITS-219 y se integrará por separado.
+      </p>
+    }
+  </div>
+} @else {
+  <div class="home-page">
+    <h1>Entra a tu cuenta</h1>
+    <p>
+      Para esta demostración, crea una cuenta primero. La sesión real se integrará con el BFF y el
+      proveedor de identidad.
+    </p>
+    <a class="primary" routerLink="/crear-cuenta">Crear mi cuenta</a>
+  </div>
+}

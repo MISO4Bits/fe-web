@@ -1,0 +1,30 @@
+<dialog #dialog [attr.aria-labelledby]="headingId">
+  <button type="button" class="close" aria-label="Cerrar" (click)="close()">
+    <img src="/assets/icons/close.svg" alt="" />
+  </button>
+  <p class="eyebrow">{{ policy.badge }}</p>
+  @if (document; as doc) {
+    <h2 [id]="headingId">{{ doc.titulo }}</h2>
+    @if (doc.subtitulo) {
+      <p class="subtitle">{{ doc.subtitulo }}</p>
+    }
+    <p class="subtitle">{{ doc.baseLegal }} · {{ doc.version }}</p>
+    <hr />
+    <div class="legal-content" [innerHTML]="doc.contenido"></div>
+    @if (doc.notaPie) {
+      <p class="note">{{ doc.notaPie }}</p>
+    }
+    @if (allowAcceptance()) {
+      <button type="button" class="primary" (click)="accept()">{{ policy.action }}</button>
+    }
+  } @else {
+    <h2 [id]="headingId">Documento legal</h2>
+    @if (legal.loading()) {
+      <p role="status">Cargando documento…</p>
+    }
+    @if (legal.error()) {
+      <p role="alert">{{ legal.error() }}</p>
+      <button type="button" (click)="legal.load()">Reintentar</button>
+    }
+  }
+</dialog>

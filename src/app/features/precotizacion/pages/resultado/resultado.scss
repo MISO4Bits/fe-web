@@ -1,0 +1,161 @@
+.result-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 68px 0 76px;
+}
+.eyebrow {
+  margin-bottom: 10px;
+}
+h1 {
+  font-size: 38px;
+  line-height: 46px;
+  margin: 0;
+}
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+.price strong {
+  font-size: 56px;
+  line-height: 64px;
+  color: var(--primary);
+}
+.price span {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.price-note {
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--muted);
+  margin: 6px 0 8px;
+}
+.balance {
+  font-size: 16px;
+  line-height: 24px;
+  margin: 0 0 24px;
+}
+.why {
+  background: var(--info-bg);
+  color: var(--info-ink);
+  border-radius: 20px;
+  padding: 22px 24px;
+  min-height: 162px;
+}
+.why h2 {
+  font-size: 17px;
+  line-height: 24px;
+  margin: 0 0 4px;
+}
+.why p {
+  font-size: 13px;
+  line-height: 20px;
+  margin: 0;
+}
+.why p + p {
+  margin-top: 10px;
+}
+.create {
+  margin-top: 16px;
+}
+.disclaimer {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+  margin: 40px 0 0;
+}
+.coverage {
+  padding: 6px 20px;
+  min-height: 268px;
+}
+.coverage section {
+  padding: 12px 0;
+}
+.coverage section + section {
+  border-top: 1px solid var(--border);
+}
+.coverage h2 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 0 0 4px;
+  line-height: 15px;
+}
+.coverage p {
+  font-size: 13px;
+  line-height: 19px;
+  margin: 0;
+}
+.highlight {
+  font-weight: 700;
+  color: var(--primary);
+}
+.next-label {
+  margin-top: 24px;
+  margin-bottom: 14px;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 188px);
+  gap: 18px;
+}
+.steps article {
+  height: 116px;
+  padding: 16px;
+}
+.steps span {
+  display: grid;
+  place-items: center;
+  background: #d9edef;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.steps h2 {
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+.steps p {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--muted);
+  margin: 0;
+}
+.info {
+  min-height: 112px;
+  background: var(--info-bg);
+  color: var(--info-ink);
+  border-radius: 12px;
+  padding: 18px 20px;
+  font-size: 13px;
+  line-height: 20px;
+  margin-top: 24px;
+}
+@media (max-width: 1200px) {
+  .steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 800px) {
+  .result-layout {
+    grid-template-columns: 1fr;
+    padding: 40px 0;
+    gap: 40px;
+  }
+  h1 {
+    font-size: 30px;
+    line-height: 38px;
+  }
+  .price strong {
+    font-size: 48px;
+  }
+  .disclaimer {
+    margin-top: 24px;
+  }
+}

@@ -1,0 +1,76 @@
+<div class="result-layout" data-node-id="2098:1439">
+  <section>
+    <p class="eyebrow">TU PRECOTIZACIÓN</p>
+    <h1>Un seguro para ti desde</h1>
+    <div class="price">
+      <strong>${{ monthlyPrice | number: '1.0-0' : 'es-CO' }}</strong
+      ><span>al mes</span>
+    </div>
+    <p class="price-note">Al elegir otros servicios el valor mensual y anual puede cambiar.</p>
+    <p class="balance">
+      Estimado sobre un saldo de ${{ session.creditBalance() | number: '1.0-0' : 'es-CO' }}, sin tus
+      datos personales.
+    </p>
+    <aside class="why">
+      <h2>Por qué este valor es distinto</h2>
+      <p>
+        El banco aplica una tarifa de grupo, igual para todos los deudores. La nuestra se calcula
+        con tus datos, así que cambia de persona a persona.
+      </p>
+      <p>
+        Y si sumas tu casa y las asistencias pagarás más, pero tendrás mucho más cubierto. Tú
+        decides qué te sirve.
+      </p>
+    </aside>
+    <a class="primary create" routerLink="/crear-cuenta">Crear mi cuenta</a>
+    <p class="disclaimer">
+      Es un estimado. Después de crear tu cuenta, puedes iniciar una cotización con tus datos.
+    </p>
+  </section>
+  <section>
+    <p class="eyebrow">QUÉ TE LLEVAS</p>
+    <div class="card coverage">
+      <section>
+        <h2>Si algún día tú no puedes seguir pagando</h2>
+        <p>Saldamos con el banco lo que quede del crédito. Tu familia se queda con la casa.</p>
+      </section>
+      <section>
+        <h2>Si un accidente te deja sin trabajar</h2>
+        <p>Igual saldamos el crédito. En tu casa nadie tiene que seguir pagando la cuota.</p>
+      </section>
+      <section>
+        <h2>Cuánto cubrimos</h2>
+        <p class="highlight">
+          ${{ session.creditBalance() | number: '1.0-0' : 'es-CO' }} hoy, y baja a medida que
+          abonas.
+        </p>
+      </section>
+      <section>
+        <h2>Y mientras tanto</h2>
+        <p>Puedes sumar tu casa y la ayuda de plomero, electricista, cerrajero y vidriero.</p>
+      </section>
+    </div>
+    <p class="eyebrow next-label">CÓMO SIGUE</p>
+    <div class="steps">
+      <article class="card">
+        <span>1</span>
+        <h2>Creas tu cuenta</h2>
+        <p>Un solo formulario. Dos minutos.</p>
+      </article>
+      <article class="card">
+        <span>2</span>
+        <h2>Inicias tu cotización</h2>
+        <p>Desde tu cuenta, con tus datos.</p>
+      </article>
+      <article class="card">
+        <span>3</span>
+        <h2>Firmas y listo</h2>
+        <p>El pago se suma a la cuota de tu crédito.</p>
+      </article>
+    </div>
+    <aside class="info">
+      Crear la cuenta no te compromete a nada. Luego cotizas y decides con calma. Si prefieres que
+      no revisemos tu historial, igual te cotizamos con los datos que nos des.
+    </aside>
+  </section>
+</div>

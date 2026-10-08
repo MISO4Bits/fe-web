@@ -1,0 +1,257 @@
+<div class="register-page" data-node-id="2098:1491">
+  <div class="stepper" aria-label="Pasos del registro">
+    <span class="dot active">1</span><strong>Tus datos</strong><span class="line"></span
+    ><span class="dot">2</span><span>Tu correo</span>
+  </div>
+  <h1>Crea tu cuenta</h1>
+  <p class="intro">Es una sola pantalla. Después, desde tu cuenta, cotizas tu seguro.</p>
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="registration-grid">
+      <section>
+        <p class="eyebrow">TUS DATOS</p>
+        <p class="caption">Para saber a quién aseguramos y a dónde te escribimos.</p>
+        <div class="fields">
+          <div class="field firstName" [class.invalid]="invalid('firstName')">
+            <label for="firstName">Nombres</label
+            ><input
+              id="firstName"
+              type="text"
+              formControlName="firstName"
+              autocomplete="given-name"
+              [attr.aria-invalid]="invalid('firstName')"
+              [attr.aria-describedby]="invalid('firstName') ? 'firstName-error' : null"
+            />
+            @if (invalid('firstName')) {
+              <img class="error-icon" src="/assets/icons/error.svg" alt="" /><small
+                id="firstName-error"
+                >Ingresa tus nombres.</small
+              >
+            }
+          </div>
+          <div class="field lastName" [class.invalid]="invalid('lastName')">
+            <label for="lastName">Apellidos</label
+            ><input
+              id="lastName"
+              type="text"
+              formControlName="lastName"
+              autocomplete="family-name"
+              [attr.aria-invalid]="invalid('lastName')"
+              [attr.aria-describedby]="invalid('lastName') ? 'lastName-error' : null"
+            />
+            @if (invalid('lastName')) {
+              <img class="error-icon" src="/assets/icons/error.svg" alt="" /><small
+                id="lastName-error"
+                >Ingresa tus apellidos.</small
+              >
+            }
+          </div>
+          <div class="field documentType" [class.invalid]="invalid('documentType')">
+            <label for="documentType">Tipo de documento</label
+            ><select id="documentType" formControlName="documentType">
+              <option value="CC">Cédula de ciudadanía</option>
+              <option value="CE">Cédula de extranjería</option>
+              <option value="PA">Pasaporte</option>
+            </select>
+            @if (invalid('documentType')) {
+              <img class="error-icon" src="/assets/icons/error.svg" alt="" /><small
+                id="documentType-error"
+                >Selecciona un tipo de documento.</small
+              >
+            }
+          </div>
+          <div class="field documentNumber" [class.invalid]="invalid('documentNumber')">
+            <label for="documentNumber">Número de documento</label
+            ><input
+              id="documentNumber"
+              type="text"
+              [value]="documentDisplay()"
+              (input)="onDocumentInput($event)"
+              (blur)="checkAvailability('documentNumber')"
+              autocomplete="off"
+              [attr.aria-invalid]="invalid('documentNumber')"
+              [attr.aria-describedby]="invalid('documentNumber') ? 'documentNumber-error' : null"
+              [attr.inputmode]="form.controls.documentType.value === 'CC' ? 'numeric' : 'text'"
+            />
+            @if (invalid('documentNumber')) {
+              <img class="error-icon" src="/assets/icons/error.svg" alt="" /><small
+                id="documentNumber-error"
+                >{{
+                  form.controls.documentNumber.hasError('duplicate')
+                    ? 'Ya existe una cuenta con este número de documento.'
+                    : form.controls.documentType.value === 'CC'
+                      ? 'Ingresa entre 4 y 10 dígitos.'
+                      : 'Ingresa entre 4 y 16 letras o números.'
+                }}</small
+              >
+            }
+          </div>
+          @if (availabilityLoading().documentNumber) {
+            <p role="status">Comprobando disponibilidad…</p>
+          }
+          @if (availabilityError().documentNumber) {
+            <p role="status">{{ availabilityError().documentNumber }}</p>
+          }
+          <div class="field birthDate" [class.invalid]="invalid('birthDate')">
+            <label for="birthDate">Fecha de nacimiento</label
+            ><input
+              id="birthDate"
+              type="text"
+              formControlName="birthDate"
+              autocomplete="bday"
+              [attr.aria-invalid]="invalid('birthDate')"
+              [attr.aria-describedby]="invalid('birthDate') ? 'birthDate-error' : null"
+              inputmode="numeric"
+            />
+            <button
+              type="button"
+              class="calendar-button"
+              aria-label="Abrir calendario de fecha de nacimiento"
+              (click)="openCalendar(birthCalendar)"
+            >
+              ▦
+            </button>
+            <input
+              #birthCalendar
+              type="date"
+              class="calendar-input"
+              aria-label="Seleccionar fecha de nacimiento en calendario"
+              min="1900-01-01"
+              [max]="today"
+              (change)="selectBirthDate($event)"
+              tabindex="-1"
+            />
+            @if (invalid('birthDate')) {
+              <img class="error-icon" src="/assets/icons/error.svg" alt="" /><small
+                id="birthDate-error"
+                >Ingresa una fecha válida (dd/mm/aaaa).</small
+              >
+            }
+          </div>
+          <div class="field phone" [class.invalid]="invalid('phone')">
+            <label for="phone">Celular</label
+            ><input
+              id="phone"
+              type="tel"
+              formControlName="phone"
+              (input)="onPhoneInput($event)"
+              maxlength="12"
+              autocomplete="tel"
+              [attr.aria-invalid]="invalid('phone')"
+              [attr.aria-describedby]="invalid('phone') ? 'phone-error' : null"
+              inputmode="numeric"
+            />
+            @if (invalid('phone')) {
+              <img class="error-icon" src="/assets/icons/error.svg" alt="" /><small id="phone-error"
+                >Ingresa entre 7 y 12 dígitos.</small
+              >
+            }
+          </div>
+          <div class="field email" [class.invalid]="invalid('email')">
+            <label for="email">Correo electrónico</label
+            ><input
+              id="email"
+              type="email"
+              formControlName="email"
+              (blur)="checkAvailability('email')"
+              autocomplete="email"
+              [attr.aria-invalid]="invalid('email')"
+              [attr.aria-describedby]="invalid('email') ? 'email-error' : null"
+            />
+            @if (invalid('email')) {
+              <img class="error-icon" src="/assets/icons/error.svg" alt="" /><small
+                id="email-error"
+                >{{
+                  form.controls.email.hasError('duplicate')
+                    ? 'Ya tienes una cuenta con este correo.'
+                    : 'Ingresa un correo válido.'
+                }}</small
+              >
+            }
+          </div>
+          @if (availabilityLoading().email) {
+            <p role="status">Comprobando disponibilidad…</p>
+          }
+          @if (availabilityError().email) {
+            <p role="status">{{ availabilityError().email }}</p>
+          }
+          <div class="field password" [class.invalid]="invalid('password')">
+            <label for="password">Contraseña</label
+            ><input
+              id="password"
+              type="password"
+              formControlName="password"
+              autocomplete="new-password"
+              [attr.aria-invalid]="invalid('password')"
+              [attr.aria-describedby]="invalid('password') ? 'password-error' : null"
+            />
+            @if (invalid('password')) {
+              <img class="error-icon" src="/assets/icons/error.svg" alt="" /><small
+                id="password-error"
+                >Usa entre 10 y 128 caracteres.</small
+              >
+            }
+          </div>
+        </div>
+        <p class="optional-note">
+          Puedes seguir sin autorizar la consulta de datos financieros. En ese caso, cuando cotices,
+          calculamos tu precio solo con los datos que nos des.
+        </p>
+        @if (legalDocs.loading()) {
+          <p role="status">Cargando documentos legales…</p>
+        }
+        @if (legalDocs.error()) {
+          <p role="alert">{{ legalDocs.error() }}</p>
+          <button type="button" (click)="legalDocs.load()">Reintentar documentos</button>
+        }
+        <button type="submit" class="primary" [disabled]="busy() || !legalDocs.ready()">
+          {{ busy() ? 'Creando cuenta…' : 'Crear mi cuenta' }}
+        </button>
+      </section>
+      <section>
+        <p class="eyebrow">PERMISOS</p>
+        <p class="caption">
+          Sin esto no podemos consultar ni usar tus datos. Tú decides qué autorizas.
+        </p>
+        <div class="card permissions">
+          <div class="permission" [class.invalid]="invalid('terms')">
+            <label class="checkbox"
+              ><input type="checkbox" formControlName="terms" /><span class="checkmark"
+                ><img src="/assets/icons/check.svg" alt="" /></span
+              ><span>Acepto los términos y el aviso de privacidad.</span></label
+            ><button type="button" class="text-button" (click)="legal.open('terms')">
+              Ver los términos y condiciones
+            </button>
+            @if (invalid('terms')) {
+              <small>Este permiso es necesario para crear la cuenta.</small>
+            }
+          </div>
+          <div class="permission" [class.invalid]="invalid('personalData')">
+            <label class="checkbox"
+              ><input type="checkbox" formControlName="personalData" /><span class="checkmark"
+                ><img src="/assets/icons/check.svg" alt="" /></span
+              ><span>Autorizo el tratamiento de mis datos personales.</span></label
+            ><button type="button" class="text-button" (click)="legal.open('personal')">
+              Ver el aviso de tratamiento de datos
+            </button>
+            @if (invalid('personalData')) {
+              <small>Este permiso es necesario para crear la cuenta.</small>
+            }
+          </div>
+          <div class="permission" [class.invalid]="invalid('financialData')">
+            <label class="checkbox"
+              ><input type="checkbox" formControlName="financialData" /><span class="checkmark"
+                ><img src="/assets/icons/check.svg" alt="" /></span
+              ><span>Autorizo consultar mis datos financieros.</span></label
+            ><button type="button" class="text-button" (click)="legal.open('financial')">
+              Ver la autorización de datos financieros
+            </button>
+          </div>
+        </div>
+        @if (error()) {
+          <div class="error-alert" role="alert">{{ error() }}</div>
+        }
+      </section>
+    </div>
+  </form>
+  <app-permission-dialog #legal [allowAcceptance]="true" (accepted)="accept($event)" />
+</div>

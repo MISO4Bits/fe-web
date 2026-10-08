@@ -1,0 +1,1580 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BFF Web — Onboarding",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/v1/registro": {
+      "post": {
+        "tags": [
+          "Registro"
+        ],
+        "summary": "Registrarse",
+        "operationId": "registrarse_v1_registro_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistroRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistroResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/registro/disponibilidad": {
+      "get": {
+        "tags": [
+          "Registro"
+        ],
+        "summary": "Consultar Disponibilidad",
+        "operationId": "consultar_disponibilidad_v1_registro_disponibilidad_get",
+        "parameters": [
+          {
+            "name": "correo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 254
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Correo"
+            }
+          },
+          {
+            "name": "tipoDocumento",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipodocumento"
+            }
+          },
+          {
+            "name": "numeroDocumento",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 4,
+                  "maxLength": 20
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Numerodocumento"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisponibilidadOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/registro/reenvio-confirmacion": {
+      "post": {
+        "tags": [
+          "Registro"
+        ],
+        "summary": "Reenviar Confirmacion",
+        "operationId": "reenviar_confirmacion_v1_registro_reenvio_confirmacion_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/registro/confirmacion": {
+      "post": {
+        "tags": [
+          "Registro"
+        ],
+        "summary": "Confirmar Cuenta",
+        "operationId": "confirmar_cuenta_v1_registro_confirmacion_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CuentaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sesiones": {
+      "post": {
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Iniciar Sesion",
+        "operationId": "iniciar_sesion_v1_sesiones_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredencialesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sesiones/refresco": {
+      "post": {
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Refrescar Sesion",
+        "operationId": "refrescar_sesion_v1_sesiones_refresco_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefrescoRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cuenta": {
+      "get": {
+        "tags": [
+          "Cuenta"
+        ],
+        "summary": "Obtener Cuenta",
+        "operationId": "obtener_cuenta_v1_cuenta_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CuentaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cuenta/consentimientos": {
+      "get": {
+        "tags": [
+          "Consentimientos"
+        ],
+        "summary": "Listar Mis Consentimientos",
+        "operationId": "listar_mis_consentimientos_v1_cuenta_consentimientos_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentimientoVistaOut"
+                  },
+                  "title": "Response Listar Mis Consentimientos V1 Cuenta Consentimientos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Consentimientos"
+        ],
+        "summary": "Otorgar Mi Consentimiento",
+        "operationId": "otorgar_mi_consentimiento_v1_cuenta_consentimientos_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtorgarConsentimientoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentimientoVistaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cuenta/consentimientos/{scope}": {
+      "delete": {
+        "tags": [
+          "Consentimientos"
+        ],
+        "summary": "Revocar Mi Consentimiento",
+        "operationId": "revocar_mi_consentimiento_v1_cuenta_consentimientos__scope__delete",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scope"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cotizaciones": {
+      "post": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Crear Cotizacion",
+        "operationId": "crear_cotizacion_v1_cotizaciones_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CotizacionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/cotizaciones/{cotizacion_id}": {
+      "get": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Obtener Cotizacion",
+        "operationId": "obtener_cotizacion_v1_cotizaciones__cotizacion_id__get",
+        "parameters": [
+          {
+            "name": "cotizacion_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cotizacion Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documentos-legales": {
+      "get": {
+        "tags": [
+          "Documentos legales"
+        ],
+        "summary": "Listar Documentos Legales",
+        "operationId": "listar_documentos_legales_v1_documentos_legales_get",
+        "parameters": [
+          {
+            "name": "mercado",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "const": "CO",
+              "type": "string",
+              "title": "Mercado"
+            }
+          },
+          {
+            "name": "idioma",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2}-[A-Z]{2}$",
+              "default": "es-CO",
+              "title": "Idioma"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentoLegalOut"
+                  },
+                  "title": "Response Listar Documentos Legales V1 Documentos Legales Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/documentos-legales/{tipo}/versiones/{version}": {
+      "get": {
+        "tags": [
+          "Documentos legales"
+        ],
+        "summary": "Obtener Version Documento Legal",
+        "operationId": "obtener_version_documento_legal_v1_documentos_legales__tipo__versiones__version__get",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "terminos",
+                "open-data",
+                "open-finance"
+              ],
+              "type": "string",
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^V[1-9][0-9]*$",
+              "title": "Version"
+            }
+          },
+          {
+            "name": "mercado",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "const": "CO",
+              "type": "string",
+              "title": "Mercado"
+            }
+          },
+          {
+            "name": "idioma",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z]{2}-[A-Z]{2}$",
+              "default": "es-CO",
+              "title": "Idioma"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentoLegalOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConsentimientoVistaOut": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "OPEN_FINANCE",
+              "OPEN_DATA"
+            ],
+            "title": "Scope"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "OTORGADO",
+              "REVOCADO",
+              "NO_OTORGADO"
+            ],
+            "title": "Estado"
+          },
+          "vigente": {
+            "type": "boolean",
+            "title": "Vigente"
+          },
+          "actualizadoEn": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actualizadoen"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "estado",
+          "vigente"
+        ],
+        "title": "ConsentimientoVistaOut"
+      },
+      "CotizacionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "VIGENTE",
+              "EXPIRADA"
+            ],
+            "title": "Estado"
+          },
+          "producto": {
+            "type": "string",
+            "const": "VIDA_HIPOTECARIO",
+            "title": "Producto"
+          },
+          "oferta": {
+            "$ref": "#/components/schemas/OfertaOut"
+          },
+          "perfilRiesgo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PerfilRiesgoOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vigenciaCotizacion": {
+            "$ref": "#/components/schemas/VigenciaOut"
+          },
+          "creadaEn": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Creadaen"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "estado",
+          "producto",
+          "oferta",
+          "vigenciaCotizacion",
+          "creadaEn"
+        ],
+        "title": "CotizacionOut"
+      },
+      "CotizacionRequest": {
+        "properties": {
+          "datosCredito": {
+            "$ref": "#/components/schemas/DatosCreditoRequest"
+          },
+          "cuestionarioHabitos": {
+            "$ref": "#/components/schemas/CuestionarioHabitosRequest"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "datosCredito",
+          "cuestionarioHabitos"
+        ],
+        "title": "CotizacionRequest"
+      },
+      "CredencialesRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "CredencialesRequest"
+      },
+      "CuentaOut": {
+        "properties": {
+          "clienteId": {
+            "type": "string",
+            "title": "Clienteid"
+          },
+          "primerNombre": {
+            "type": "string",
+            "title": "Primernombre"
+          },
+          "segundoNombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segundonombre"
+          },
+          "primerApellido": {
+            "type": "string",
+            "title": "Primerapellido"
+          },
+          "segundoApellido": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segundoapellido"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefono"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "ACTIVO",
+              "BLOQUEADO",
+              "INACTIVO"
+            ],
+            "title": "Estado"
+          },
+          "correoConfirmado": {
+            "type": "boolean",
+            "title": "Correoconfirmado",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "clienteId",
+          "primerNombre",
+          "primerApellido",
+          "email",
+          "estado"
+        ],
+        "title": "CuentaOut"
+      },
+      "CuestionarioHabitosRequest": {
+        "properties": {
+          "consumeTabaco": {
+            "type": "boolean",
+            "title": "Consumetabaco"
+          },
+          "actividadFisica": {
+            "type": "string",
+            "enum": [
+              "NUNCA",
+              "OCASIONAL",
+              "REGULAR"
+            ],
+            "title": "Actividadfisica"
+          },
+          "condicionesPreexistentes": {
+            "type": "boolean",
+            "title": "Condicionespreexistentes"
+          },
+          "dependientesEconomicos": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 0.0,
+            "title": "Dependienteseconomicos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "consumeTabaco",
+          "actividadFisica",
+          "condicionesPreexistentes",
+          "dependientesEconomicos"
+        ],
+        "title": "CuestionarioHabitosRequest"
+      },
+      "DatosCreditoRequest": {
+        "properties": {
+          "valorCredito": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 10000000.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Valorcredito"
+          },
+          "plazoMeses": {
+            "type": "integer",
+            "maximum": 480.0,
+            "minimum": 12.0,
+            "title": "Plazomeses"
+          },
+          "edad": {
+            "type": "integer",
+            "maximum": 65.0,
+            "minimum": 18.0,
+            "title": "Edad"
+          },
+          "entidadAcreedora": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "Entidadacreedora"
+          },
+          "saldoInsoluto": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Saldoinsoluto"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "valorCredito",
+          "plazoMeses",
+          "edad",
+          "entidadAcreedora",
+          "saldoInsoluto"
+        ],
+        "title": "DatosCreditoRequest"
+      },
+      "DisponibilidadOut": {
+        "properties": {
+          "correoDisponible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correodisponible"
+          },
+          "documentoDisponible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documentodisponible"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DisponibilidadOut"
+      },
+      "DocumentoLegalOut": {
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "terminos",
+              "open-data",
+              "open-finance"
+            ],
+            "title": "Tipo"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "subtitulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitulo"
+          },
+          "baseLegal": {
+            "type": "string",
+            "title": "Baselegal"
+          },
+          "contenido": {
+            "type": "string",
+            "title": "Contenido"
+          },
+          "notaPie": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notapie"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tipo",
+          "version",
+          "titulo",
+          "baseLegal",
+          "contenido"
+        ],
+        "title": "DocumentoLegalOut"
+      },
+      "FactorRiesgoOut": {
+        "properties": {
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "efecto": {
+            "type": "string",
+            "enum": [
+              "POSITIVO",
+              "NEGATIVO"
+            ],
+            "title": "Efecto"
+          },
+          "pesoRelativo": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pesorelativo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "descripcion",
+          "efecto"
+        ],
+        "title": "FactorRiesgoOut"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "OfertaOut": {
+        "properties": {
+          "primaMensual": {
+            "type": "number",
+            "title": "Primamensual"
+          },
+          "primaBaseMensual": {
+            "type": "number",
+            "title": "Primabasemensual"
+          },
+          "sumaAsegurada": {
+            "type": "number",
+            "title": "Sumaasegurada"
+          },
+          "coberturaMeses": {
+            "type": "integer",
+            "title": "Coberturameses"
+          },
+          "moneda": {
+            "type": "string",
+            "const": "COP",
+            "title": "Moneda"
+          },
+          "personalizado": {
+            "type": "boolean",
+            "title": "Personalizado"
+          },
+          "fuentesNoDisponibles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fuentesnodisponibles"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "primaMensual",
+          "primaBaseMensual",
+          "sumaAsegurada",
+          "coberturaMeses",
+          "moneda",
+          "personalizado"
+        ],
+        "title": "OfertaOut"
+      },
+      "OtorgarConsentimientoRequest": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "OPEN_FINANCE",
+              "OPEN_DATA"
+            ],
+            "title": "Scope"
+          },
+          "politicaVersion": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Politicaversion"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scope",
+          "politicaVersion"
+        ],
+        "title": "OtorgarConsentimientoRequest"
+      },
+      "PerfilRiesgoOut": {
+        "properties": {
+          "nivelRiesgo": {
+            "type": "string",
+            "enum": [
+              "BAJO",
+              "MEDIO",
+              "ALTO"
+            ],
+            "title": "Nivelriesgo"
+          },
+          "factores": {
+            "items": {
+              "$ref": "#/components/schemas/FactorRiesgoOut"
+            },
+            "type": "array",
+            "title": "Factores"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nivelRiesgo",
+          "factores"
+        ],
+        "title": "PerfilRiesgoOut"
+      },
+      "RefrescoRequest": {
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "title": "Refreshtoken"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "refreshToken"
+        ],
+        "title": "RefrescoRequest"
+      },
+      "RegistroRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 10,
+            "title": "Password"
+          },
+          "tipoDocumento": {
+            "type": "string",
+            "enum": [
+              "CC",
+              "CE",
+              "PA"
+            ],
+            "title": "Tipodocumento"
+          },
+          "numeroDocumento": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 4,
+            "pattern": "^[0-9A-Za-z-]+$",
+            "title": "Numerodocumento"
+          },
+          "primerNombre": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Primernombre"
+          },
+          "segundoNombre": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segundonombre"
+          },
+          "primerApellido": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Primerapellido"
+          },
+          "segundoApellido": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segundoapellido"
+          },
+          "fechaNacimiento": {
+            "type": "string",
+            "format": "date",
+            "title": "Fechanacimiento"
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\+?[0-9]{7,15}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefono"
+          },
+          "politicaVersion": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Politicaversion"
+          },
+          "aceptaTerminos": {
+            "type": "boolean",
+            "const": true,
+            "title": "Aceptaterminos"
+          },
+          "autorizaTratamientoDatos": {
+            "type": "boolean",
+            "title": "Autorizatratamientodatos"
+          },
+          "politicaVersionTratamientoDatos": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Politicaversiontratamientodatos"
+          },
+          "autorizaDatosFinancieros": {
+            "type": "boolean",
+            "title": "Autorizadatosfinancieros"
+          },
+          "politicaVersionDatosFinancieros": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Politicaversiondatosfinancieros"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "tipoDocumento",
+          "numeroDocumento",
+          "primerNombre",
+          "primerApellido",
+          "fechaNacimiento",
+          "politicaVersion",
+          "aceptaTerminos",
+          "autorizaTratamientoDatos",
+          "autorizaDatosFinancieros"
+        ],
+        "title": "RegistroRequest"
+      },
+      "RegistroResponse": {
+        "properties": {
+          "cuenta": {
+            "$ref": "#/components/schemas/CuentaOut"
+          },
+          "sesion": {
+            "$ref": "#/components/schemas/SesionOut"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "cuenta",
+          "sesion"
+        ],
+        "title": "RegistroResponse"
+      },
+      "SesionOut": {
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "title": "Accesstoken"
+          },
+          "tokenType": {
+            "type": "string",
+            "const": "Bearer",
+            "title": "Tokentype",
+            "default": "Bearer"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "title": "Expiresin"
+          },
+          "refreshToken": {
+            "type": "string",
+            "title": "Refreshtoken"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "refreshToken"
+        ],
+        "title": "SesionOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VigenciaOut": {
+        "properties": {
+          "desde": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Desde"
+          },
+          "hasta": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Hasta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "desde",
+          "hasta"
+        ],
+        "title": "VigenciaOut"
+      }
+    }
+  }
+}

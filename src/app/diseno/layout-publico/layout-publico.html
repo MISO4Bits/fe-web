@@ -1,0 +1,25 @@
+<div class="armazon">
+  <header class="encabezado">
+    <div class="solventa-contenedor barra">
+      <a class="solventa-logo marca" [routerLink]="rutas.inicio">Solventa</a>
+      <nav aria-label="Acceso a la cuenta">
+        <a matButton [routerLink]="rutas.ingreso">Ingresar</a>
+        <a matButton="filled" [routerLink]="rutas.registro">Crear cuenta</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <router-outlet />
+  </main>
+
+  <footer class="pie">
+    <div class="solventa-contenedor">
+      <p>Solventa · Seguro de vida para crédito hipotecario</p>
+      <p class="legal">
+        Los valores que se muestran antes de una cotización son preliminares y no constituyen una
+        oferta. {{ anio }}
+      </p>
+    </div>
+  </footer>
+</div>

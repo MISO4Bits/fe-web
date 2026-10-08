@@ -1,0 +1,134 @@
+@use '../../styles/layout' as layout;
+
+.muestra {
+  padding-block: layout.espacio(6);
+}
+
+.cabecera {
+  display: flex;
+  align-items: baseline;
+  gap: layout.espacio(3);
+  margin-bottom: layout.espacio(5);
+}
+
+.marca {
+  margin: 0;
+  color: var(--mat-sys-primary);
+  font-size: 2rem;
+}
+
+h1 {
+  margin: 0;
+  font: var(--mat-sys-headline-large);
+}
+
+h2 {
+  margin: 0 0 layout.espacio(2);
+  font: var(--mat-sys-title-large);
+}
+
+.pie {
+  max-width: 62ch;
+  margin: layout.espacio(1) 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+section {
+  padding-block: layout.espacio(4);
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.bloque {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: layout.espacio(2);
+  margin-bottom: layout.espacio(2);
+}
+
+.lista {
+  max-width: 420px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-medium);
+  background: var(--mat-sys-surface-container-low);
+}
+
+.iconos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: layout.espacio(2);
+}
+
+.icono {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: layout.espacio(1);
+  margin: 0;
+  padding: layout.espacio(2);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-medium);
+  color: var(--mat-sys-primary);
+
+  figcaption {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-small);
+    text-align: center;
+  }
+}
+
+.roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: layout.espacio(2);
+}
+
+.rol {
+  display: flex;
+  flex-direction: column;
+  gap: layout.espacio(0.5);
+  min-height: 84px;
+  padding: layout.espacio(2);
+  border-radius: var(--mat-sys-corner-medium);
+}
+
+.rol-nombre {
+  font: var(--mat-sys-title-small);
+}
+
+.rol-sobre {
+  font: var(--mat-sys-label-small);
+  opacity: 0.8;
+}
+
+.radio {
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 72px;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font: var(--mat-sys-label-medium);
+}
+
+// Cada parrafo muestra la escala que nombra.
+@each $escala
+  in (
+    display-large,
+    headline-large,
+    headline-small,
+    title-large,
+    title-medium,
+    body-large,
+    body-medium,
+    label-large,
+    label-small
+  )
+{
+  .escala-#{$escala} {
+    margin: 0 0 layout.espacio(1);
+    font: var(--mat-sys-#{$escala});
+    letter-spacing: var(--mat-sys-#{$escala}-tracking);
+  }
+}

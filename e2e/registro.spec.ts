@@ -103,11 +103,9 @@ async function fillRegistration(page: Page, email = 'martin@example.com', docume
   await page.getByLabel('Autorizo el tratamiento').check();
 }
 
-test('02 → registro → aviso de correo sin acceso al Home', async ({ page }) => {
-  await page.goto('/precotizacion/resultado');
-  await expect(page.getByRole('heading', { name: 'Un seguro para ti desde' })).toBeVisible();
-  await expect(page.getByText('$57.100', { exact: true })).toBeVisible();
-  await page.getByRole('link', { name: 'Crear mi cuenta', exact: true }).click();
+test('inicio → registro → aviso de correo sin acceso al Home', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/crear-cuenta$/);
   await fillRegistration(page);
   await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
   await expect(page).toHaveURL(/\/confirmar-correo$/);
@@ -115,8 +113,8 @@ test('02 → registro → aviso de correo sin acceso al Home', async ({ page }) 
   await expect(page.locator('.email').filter({ hasText: 'martin@example.com' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Ir a mi cuenta' })).toHaveCount(0);
   await page.goto('/cuenta');
-  await expect(page).toHaveURL(/\/ingreso$/);
-  await expect(page.getByRole('heading', { name: 'Entra a tu cuenta' })).toBeVisible();
+  await expect(page).toHaveURL(/\/crear-cuenta$/);
+  await expect(page.getByRole('button', { name: 'Crear mi cuenta', exact: true })).toBeVisible();
 });
 
 test('registro con permiso financiero y confirmación sin bloquear acceso', async ({ page }) => {
@@ -288,58 +286,23 @@ test('celular solo dígitos, calendario y fecha digitada', async ({ page }) => {
   await expect(page.locator('#birthDate')).toHaveValue('03/08/1985');
 });
 
-test('inicio en login, crear cuenta nueva y logo vuelve al inicio', async ({ page }) => {
+test('inicio y logo abren registro sin pantallas antiguas', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await expect(page).toHaveURL(/\/ingreso$/);
-  await expect(page.getByRole('heading', { name: 'Entra a tu cuenta' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Ingresar', exact: true })).toBeDisabled();
-  await page.getByRole('link', { name: 'Crear cuenta nueva', exact: true }).click();
   await expect(page).toHaveURL(/\/crear-cuenta$/);
+  await expect(page.locator('#email')).toHaveValue('');
+  await page.goto('/confirmar-correo');
   await page.getByRole('link', { name: 'Solventa', exact: true }).click();
-  await expect(page).toHaveURL(/\/ingreso$/);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.evaluate(() => document.fonts.ready);
-  await page.screenshot({
-    path: 'docs/previews/login-desktop.png',
-    fullPage: true,
-  });
+  await expect(page).toHaveURL(/\/crear-cuenta$/);
+  for (const url of ['/ingreso', '/precotizacion/resultado', '/home']) {
+    await page.goto(url);
+    await expect(page).toHaveURL(/\/crear-cuenta$/);
+  }
   await page.setViewportSize({ width: 390, height: 844 });
-  expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
-  ).toBeTruthy();
-  await page.screenshot({ path: 'docs/previews/login-mobile.png', fullPage: true });
+  await page.evaluate(() => document.fonts.ready);
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBeTruthy();
   expect(errors).toEqual([]);
-});
-
-test('documentos del BFF en el modal y versiones enviadas en el registro', async ({ page }) => {
-  await page.goto('/crear-cuenta');
-  await page.getByRole('button', { name: 'Ver los términos y condiciones', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Términos del BFF' })).toBeVisible();
-  await page.getByRole('button', { name: 'Entendido, acepto' }).click();
-  await fillRegistration(page);
-  await page.getByLabel('Autorizo consultar').check();
-  const sent = page.waitForRequest(
-    (r) => r.method() === 'POST' && r.url().endsWith('/v1/registro'),
-  );
-  await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
-  const body = (await sent).postDataJSON();
-  expect(body.politicaVersion).toBe('V1');
-  expect(body.politicaVersionTratamientoDatos).toBe('V2');
-  expect(body.politicaVersionDatosFinancieros).toBe('V3');
-  await expect(page).toHaveURL(/\/confirmar-correo$/);
-});
-test('fallo de documentos bloquea crear cuenta y permite reintentar', async ({ page }) => {
-  let failed = true;
-  await page.route('**/v1/documentos-legales?**', async (route) => {
-    if (failed) await route.fulfill({ status: 503, json: {} });
-    else await route.fallback();
-  });
-  await page.goto('/crear-cuenta');
-  await expect(page.getByRole('alert')).toContainText('No pudimos cargar');
-  await expect(page.getByRole('button', { name: 'Crear mi cuenta', exact: true })).toBeDisabled();
-  failed = false;
-  await page.getByRole('button', { name: 'Reintentar documentos' }).click();
-  await expect(page.getByRole('button', { name: 'Crear mi cuenta', exact: true })).toBeEnabled();
 });

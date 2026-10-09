@@ -25,7 +25,7 @@ export const routes: Routes = [
     path: '',
     component: SiteShell,
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'ingreso' },
+      { path: '', pathMatch: 'full', redirectTo: 'crear-cuenta' },
       {
         path: 'verificar-correo',
         title: 'Verificar correo · Solventa',
@@ -35,23 +35,12 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'precotizacion/resultado',
-        title: 'Tu precotización · Solventa',
-        loadComponent: () =>
-          import('./features/precotizacion/pages/resultado/resultado').then((m) => m.Resultado),
-      },
-      {
         path: 'crear-cuenta',
         title: 'Crear cuenta · Solventa',
         loadComponent: () =>
           import('./features/registro/pages/crear-cuenta/crear-cuenta').then((m) => m.CrearCuenta),
       },
-      { path: 'cuenta', pathMatch: 'full', redirectTo: 'ingreso' },
-      {
-        path: 'ingreso',
-        title: 'Ingresa a tu cuenta · Solventa',
-        loadComponent: () => import('./features/ingreso/pages/login/login').then((m) => m.Login),
-      },
+      { path: 'cuenta', pathMatch: 'full', redirectTo: 'crear-cuenta' },
       {
         path: 'confirmar-correo',
         title: 'Confirmar correo · Solventa',
@@ -62,7 +51,6 @@ export const routes: Routes = [
       },
       { path: 'registro', redirectTo: 'crear-cuenta', pathMatch: 'full' },
       { path: 'registro/confirma-tu-correo', redirectTo: 'confirmar-correo', pathMatch: 'full' },
-      { path: 'precotizacion', redirectTo: 'precotizacion/resultado', pathMatch: 'full' },
     ],
   },
   {
@@ -92,5 +80,5 @@ export const routes: Routes = [
       pendiente('cotizaciones/:id', 'Tu cotización', '04 Cotización', 'BITS-264'),
     ],
   },
-  { path: '**', redirectTo: 'ingreso' },
+  { path: '**', redirectTo: 'crear-cuenta' },
 ];

@@ -1,6 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
-import { SessionService } from '../../../core/services/session.service';
+import { Component } from '@angular/core';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { PermissionDialog } from '../permission-dialog/permission-dialog';
 @Component({
   selector: 'app-site-shell',
@@ -9,8 +8,5 @@ import { PermissionDialog } from '../permission-dialog/permission-dialog';
   styleUrl: './site-shell.scss',
 })
 export class SiteShell {
-  readonly session = inject(SessionService);
-  readonly router = inject(Router);
-  readonly menuOpen = signal(false);
   largeText = false;
 }

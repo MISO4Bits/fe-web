@@ -85,7 +85,7 @@ export class CrearCuenta {
         Validators.required,
         Validators.email,
         Validators.maxLength(254),
-        Validators.pattern(/^[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)*@[A-Za-z0-9]+(?:\.[A-Za-z0-9]+)+$/),
+        Validators.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
       ],
     ],
     password: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128)]],
@@ -243,7 +243,6 @@ export class CrearCuenta {
           personalVersion: this.legalDocs.document('open-data')!.version,
           financialVersion: this.legalDocs.document('open-finance')!.version,
         },
-        reference: { creditBalance: this.session.creditBalance(), currency: 'COP' },
       })
       .pipe(
         takeUntilDestroyed(this.destroyRef),

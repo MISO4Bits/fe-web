@@ -21,12 +21,7 @@ export class Sesion {
   private readonly cliente = signal<Cliente | null>(null);
 
   private readonly registro = inject(SessionService);
-  readonly actual = computed(() => {
-    const cliente = this.cliente();
-    if (cliente) return cliente;
-    const cuenta = this.registro.account();
-    return cuenta?.status === 'ACTIVE' ? { nombre: cuenta.email, correo: cuenta.email } : null;
-  });
+  readonly actual = this.cliente.asReadonly();
   readonly hayCliente = computed(() => this.actual() !== null);
 
   abrir(cliente: Cliente): void {

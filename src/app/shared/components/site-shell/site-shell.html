@@ -1,30 +1,8 @@
-<div
-  class="shell"
-  [class.large-text]="largeText"
-  [class.login-shell]="router.url.startsWith('/ingreso')"
->
+<div class="shell" [class.large-text]="largeText">
   <a class="skip" href="#main">Ir al contenido</a>
   <header>
     <div class="top-bar">
-      @if (session.account() && router.url.startsWith('/cuenta')) {
-        <button
-          type="button"
-          class="menu-button"
-          aria-label="Menú de cuenta"
-          [attr.aria-expanded]="menuOpen()"
-          (click)="menuOpen.set(!menuOpen())"
-        >
-          <img src="/assets/icons/list.svg" alt="" />
-        </button>
-        @if (menuOpen()) {
-          <nav class="account-menu" aria-label="Cuenta">
-            <a routerLink="/cuenta" (click)="menuOpen.set(false)">Mi cuenta</a
-            ><a routerLink="/confirmar-correo" (click)="menuOpen.set(false)">Confirmar correo</a>
-          </nav>
-        }
-      }
-
-      <a class="brand" routerLink="/ingreso">Solventa</a><span>ES · CO</span
+      <a class="brand" routerLink="/crear-cuenta">Solventa</a><span>ES · CO</span
       ><button
         type="button"
         class="text-button accessibility"

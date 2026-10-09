@@ -71,7 +71,6 @@ describe('CrearCuenta', () => {
     page.form.setValue(values);
     page.submit();
     expect(gateway.register.calls.mostRecent().args[0].identity.birthDate).toBe('1985-08-02');
-    expect(gateway.register.calls.mostRecent().args[0].reference.creditBalance).toBe(320000000);
     expect(router.navigateByUrl).toHaveBeenCalledWith('/confirmar-correo');
     expect(TestBed.inject(SessionService).account()?.status).toBe('ACTIVE');
     expect(page.form.controls.password.value).toBe('');
@@ -168,21 +167,11 @@ describe('CrearCuenta', () => {
     input.value = '+12 abc 3456789012345';
     page.onPhoneInput({ target: input } as unknown as Event);
     expect(input.value).toBe('123456789012');
-    for (const value of ['a@b.c', 'a.b@c.d.co']) {
+    for (const value of ['a@b.c', 'a.b@c.d.co', 'a+b@c.co', 'a_b@c.co', 'a@b-c.co', 'a%z@b.co']) {
       page.form.controls.email.setValue(value);
       expect(page.form.controls.email.valid).toBeTrue();
     }
-    for (const value of [
-      'a@b',
-      '@b.c',
-      'a@.c',
-      'a+b@c.co',
-      'a_b@c.co',
-      'a@b-c.co',
-      'a..b@c.co',
-      'a@b..co',
-      'a%z@b.co',
-    ]) {
+    for (const value of ['a@b', '@b.c', 'a@.c', 'a..b@c.co', 'a@b..co']) {
       page.form.controls.email.setValue(value);
       expect(page.form.controls.email.invalid).toBeTrue();
     }

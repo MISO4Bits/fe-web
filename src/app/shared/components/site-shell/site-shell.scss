@@ -111,60 +111,12 @@ nav button {
   }
 }
 
-.menu-button {
-  position: absolute;
-  left: -60px;
-  top: 12px;
-  width: 48px;
-  height: 48px;
-  border: 0;
-  background: none;
-  display: grid;
-  place-items: center;
-}
-.menu-button img {
-  width: 24px;
-  height: 24px;
-}
-.account-menu {
-  position: absolute;
-  left: 0;
-  top: 64px;
-  z-index: 4;
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 8px 24px #161d1d1a;
-}
-.account-menu a {
-  color: var(--primary);
-}
-@media (max-width: 1350px) {
-  .menu-button {
-    position: static;
-    flex-shrink: 0;
-    margin-left: -12px;
-    margin-right: 8px;
-  }
-}
-
-@media (min-width: 701px) {
-  .login-shell .top-bar,
-  .login-shell footer {
-    width: calc(100% - 96px);
-  }
-}
-
-.login-shell .top-bar span {
-  white-space: nowrap;
-  flex-shrink: 0;
-}
 @media (max-width: 700px) {
-  .login-shell .brand {
+  .brand {
     width: auto;
+  }
+  .top-bar span {
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 }

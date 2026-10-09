@@ -13,6 +13,6 @@ test('la muestra de Material y la ruta privada siguen disponibles', async ({ pag
   await expect(page.locator('app-layout-publico')).toBeVisible();
   await page.screenshot({ path: '/tmp/merge-muestra.png', fullPage: true });
   await page.goto('/cuenta/cotizaciones/nueva');
-  await expect(page).toHaveURL(/\/ingreso\?destino=/);
-  await expect(page.locator('app-login')).toBeVisible();
+  await expect(page).toHaveURL(/\/crear-cuenta\?destino=/);
+  await expect(page.locator('app-crear-cuenta')).toBeVisible();
 });

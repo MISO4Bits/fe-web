@@ -18,5 +18,4 @@ export const request: RegistrationRequest = {
     personalVersion: 'V2',
     financialVersion: 'V3',
   },
-  reference: { creditBalance: 320000000, currency: 'COP' },
 };

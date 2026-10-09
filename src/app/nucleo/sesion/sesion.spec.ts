@@ -26,7 +26,7 @@ describe('Sesion', () => {
     sesion.cerrar();
     expect(sesion.hayCliente()).toBeFalse();
   });
-  it('reconoce la cuenta del registro y la limpia al cerrar', () => {
+  it('registrar una cuenta no inicia sesión y se limpia al cerrar', () => {
     const registro = TestBed.inject(SessionService);
     registro.account.set({
       customerId: '1',
@@ -35,8 +35,8 @@ describe('Sesion', () => {
       email: 'demo@example.com',
       financialConsent: false,
     });
-    expect(sesion.hayCliente()).toBeTrue();
-    expect(sesion.actual()?.correo).toBe('demo@example.com');
+    expect(sesion.hayCliente()).toBeFalse();
+    expect(sesion.actual()).toBeNull();
     sesion.cerrar();
     expect(registro.account()).toBeNull();
     expect(sesion.hayCliente()).toBeFalse();

@@ -5,7 +5,7 @@ import { RUTAS } from '../rutas';
 
 /**
  * Deja pasar a una ruta privada solo si hay sesion. Si no la hay, manda al
- * ingreso y recuerda a donde iba, para devolver a la persona a su destino en
+ * registro mientras no exista login, y recuerda a donde iba, para devolver a la persona a su destino en
  * lugar de dejarla en el home.
  */
 export const guardaSesion: CanActivateFn = (_ruta, estado) => {
@@ -16,7 +16,7 @@ export const guardaSesion: CanActivateFn = (_ruta, estado) => {
     return true;
   }
 
-  return router.createUrlTree([RUTAS.ingreso], {
+  return router.createUrlTree([RUTAS.registro], {
     queryParams: { destino: estado.url },
   });
 };

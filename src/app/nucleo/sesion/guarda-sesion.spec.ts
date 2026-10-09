@@ -18,10 +18,10 @@ describe('guardaSesion', () => {
     expect(ejecutar(guardaSesion, '/cuenta')).toBeTrue();
   });
 
-  it('manda al ingreso cuando no hay sesión', () => {
+  it('manda al registro cuando no hay sesión', () => {
     const resultado = ejecutar(guardaSesion, '/cuenta');
     expect(resultado instanceof UrlTree).toBeTrue();
-    expect(TestBed.inject(Router).serializeUrl(resultado as UrlTree)).toContain('/ingreso');
+    expect(TestBed.inject(Router).serializeUrl(resultado as UrlTree)).toContain('/registro');
   });
 
   it('recuerda a dónde iba la persona', () => {

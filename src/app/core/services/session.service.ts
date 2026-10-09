@@ -5,7 +5,6 @@ import { BffSesion } from '../../features/registro/models/bff-registro.model';
 @Injectable({ providedIn: 'root' })
 export class SessionService {
   readonly account = signal<RegistrationResponse | null>(null);
-  readonly creditBalance = signal(320_000_000);
   // Tokens solo en memoria: recargar requiere una nueva sesión.
   private readonly credentials = signal<BffSesion | null>(null);
   private expiresAt = 0;

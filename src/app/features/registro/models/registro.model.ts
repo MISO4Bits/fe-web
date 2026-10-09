@@ -17,7 +17,6 @@ export interface RegistrationRequest {
     personalVersion: string;
     financialVersion: string;
   };
-  reference: { creditBalance: number; currency: 'COP' };
 }
 
 export interface RegistrationResponse {

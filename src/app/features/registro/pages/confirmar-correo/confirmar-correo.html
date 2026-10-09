@@ -3,24 +3,27 @@
     <span class="dot"><img src="/assets/icons/step-check.svg" alt="Completado" /></span
     ><span>Tus datos</span><i></i><span class="dot">2</span><strong>Tu correo</strong>
   </div>
-  <h1>{{ confirmed() ? 'Correo confirmado' : 'Confirma tu correo' }}</h1>
+  <h1>Confirma tu correo</h1>
   <p class="intro">
     Tu cuenta ya está creada. Confirmar el correo será necesario para formalizar el contrato.
   </p>
   <div class="columns">
     <section class="card">
       <h2>Te escribimos a tu correo</h2>
-      <p>Busca el mensaje y entra desde el enlace. Si no aparece, revisa el correo no deseado.</p>
+      <p>
+        Busca el mensaje
+        @if (session.account(); as account) {
+          en <strong>{{ account.email }}</strong>
+        }
+        y entra desde el enlace. Si no aparece, revisa el correo no deseado.
+      </p>
       @if (session.account(); as account) {
         <div class="email">{{ account.email }}</div>
         <button type="button" class="text-button" [disabled]="busy()" (click)="resend()">
           Reenviarme el correo
         </button>
       } @else {
-        <p>
-          Abre el enlace recibido en tu correo. La recuperación sin sesión se integrará con el
-          proveedor de identidad.
-        </p>
+        <p>Abre el enlace recibido en tu correo para confirmar tu dirección.</p>
       }
       <p class="small">Si cierras ahora, puedes volver con el mismo enlace.</p>
       @if (message()) {
@@ -50,7 +53,6 @@
           <p>Confirma tu correo antes de formalizar el contrato.</p>
         </li>
       </ul>
-      <a class="primary" routerLink="/cuenta">Ir a mi cuenta</a>
     </section>
   </div>
 </div>

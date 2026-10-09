@@ -12,15 +12,34 @@
         ],
         "summary": "Registrarse",
         "operationId": "registrarse_v1_registro_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RegistroRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -179,24 +198,16 @@
         ],
         "summary": "Confirmar Cuenta",
         "operationId": "confirmar_cuenta_v1_registro_confirmacion_post",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmacionRequest"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -769,6 +780,23 @@
   },
   "components": {
     "schemas": {
+      "ConfirmacionRequest": {
+        "properties": {
+          "oobCode": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 10,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "title": "Oobcode"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "oobCode"
+        ],
+        "title": "ConfirmacionRequest"
+      },
       "ConsentimientoVistaOut": {
         "properties": {
           "scope": {
@@ -945,14 +973,7 @@
             "title": "Email"
           },
           "telefono": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Telefono"
           },
           "estado": {
@@ -977,6 +998,7 @@
           "primerNombre",
           "primerApellido",
           "email",
+          "telefono",
           "estado"
         ],
         "title": "CuentaOut"
@@ -1396,15 +1418,8 @@
             "title": "Fechanacimiento"
           },
           "telefono": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^\\+?[0-9]{7,15}$"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "pattern": "^\\+?[0-9]{7,15}$",
             "title": "Telefono"
           },
           "politicaVersion": {
@@ -1460,6 +1475,7 @@
           "primerNombre",
           "primerApellido",
           "fechaNacimiento",
+          "telefono",
           "politicaVersion",
           "aceptaTerminos",
           "autorizaTratamientoDatos",

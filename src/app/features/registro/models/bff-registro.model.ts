@@ -7,7 +7,7 @@ export interface BffRegistroRequest {
   primerNombre: string;
   primerApellido: string;
   fechaNacimiento: string;
-  telefono: string | null;
+  telefono: string;
   politicaVersion: string;
   aceptaTerminos: boolean;
   autorizaTratamientoDatos: boolean;

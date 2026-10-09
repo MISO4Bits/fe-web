@@ -25,7 +25,15 @@ export const routes: Routes = [
     path: '',
     component: SiteShell,
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'cuenta' },
+      { path: '', pathMatch: 'full', redirectTo: 'ingreso' },
+      {
+        path: 'verificar-correo',
+        title: 'Verificar correo · Solventa',
+        loadComponent: () =>
+          import('./features/registro/pages/verificar-correo/verificar-correo').then(
+            (m) => m.VerificarCorreo,
+          ),
+      },
       {
         path: 'precotizacion/resultado',
         title: 'Tu precotización · Solventa',
@@ -38,10 +46,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/registro/pages/crear-cuenta/crear-cuenta').then((m) => m.CrearCuenta),
       },
+      { path: 'cuenta', pathMatch: 'full', redirectTo: 'ingreso' },
       {
-        path: 'cuenta',
-        title: 'Mi cuenta · Solventa',
-        loadComponent: () => import('./features/cuenta/pages/home/home').then((m) => m.Home),
+        path: 'ingreso',
+        title: 'Ingresa a tu cuenta · Solventa',
+        loadComponent: () => import('./features/ingreso/pages/login/login').then((m) => m.Login),
       },
       {
         path: 'confirmar-correo',
@@ -61,7 +70,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./diseno/layout-publico/layout-publico').then((m) => m.LayoutPublico),
     children: [
-      pendiente('ingreso', 'Ingresa a tu cuenta', '01 Inicio de sesión', 'BITS-261'),
       {
         path: 'muestra',
         title: 'Solventa · Muestra del tema',
@@ -84,5 +92,5 @@ export const routes: Routes = [
       pendiente('cotizaciones/:id', 'Tu cotización', '04 Cotización', 'BITS-264'),
     ],
   },
-  { path: '**', redirectTo: 'cuenta' },
+  { path: '**', redirectTo: 'ingreso' },
 ];

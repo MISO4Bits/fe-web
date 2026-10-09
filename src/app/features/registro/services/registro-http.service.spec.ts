@@ -81,17 +81,16 @@ describe('RegistrationHttpService — contrato BFF', () => {
       http.expectNone('/api/v1/registro');
     });
   }
-  it('no interpreta null como un duplicado; registra autorización financiera y teléfono opcional', () => {
+  it('no interpreta null como un duplicado; registra autorización financiera y teléfono obligatorio', () => {
     service
       .register({
         ...request,
-        phone: '',
         consents: { ...request.consents, personalData: false, financialData: true },
       })
       .subscribe();
     http.expectOne((r) => r.url.endsWith('/disponibilidad')).flush({ correoDisponible: null });
     const req = http.expectOne('/api/v1/registro');
-    expect(req.request.body.telefono).toBeNull();
+    expect(req.request.body.telefono).toBe(request.phone);
     expect(req.request.body.politicaVersionTratamientoDatos).toBeNull();
     expect(req.request.body.politicaVersionDatosFinancieros).toBe(
       request.consents.financialVersion,
@@ -118,11 +117,11 @@ describe('RegistrationHttpService — contrato BFF', () => {
       .flush({ ...response, cuenta: { ...response.cuenta, estado: 'BLOQUEADO' } });
     expect(session.accessToken()).toBeNull();
   });
-  it('confirma con Authorization y reenvía sin body usando la sesión', () => {
+  it('confirma públicamente con oobCode y reenvía sin body usando la sesión', () => {
     service.confirmEmail('confirmation').subscribe();
     const c = http.expectOne('/api/v1/registro/confirmacion');
-    expect(c.request.headers.get('Authorization')).toBe('Bearer confirmation');
-    expect(c.request.body).toBeNull();
+    expect(c.request.headers.has('Authorization')).toBeFalse();
+    expect(c.request.body).toEqual({ oobCode: 'confirmation' });
     c.flush({ ...response.cuenta, correoConfirmado: true });
     session.setCredentials(response.sesion);
     service.resendEmail(request.email).subscribe();
@@ -155,4 +154,36 @@ describe('RegistrationHttpService — contrato BFF', () => {
     session.clear();
     expect(session.account()).toBeNull();
   });
+  it('reutiliza la clave al reintentar y la cambia al modificar datos o completar el registro', () => {
+    function attempt(email: string, success = false) {
+      service.register({ ...request, email }).subscribe({ error: () => undefined });
+      http
+        .expectOne((r) => r.url.endsWith('/disponibilidad'))
+        .flush({ correoDisponible: true, documentoDisponible: true });
+      const r = http.expectOne('/api/v1/registro');
+      const key = r.request.headers.get('Idempotency-Key');
+      expect(key?.length).toBeLessThanOrEqual(64);
+      if (success) r.flush(response);
+      else r.flush({}, { status: 503, statusText: 'Unavailable' });
+      return key;
+    }
+    const first = attempt(request.email);
+    expect(attempt(request.email)).toBe(first);
+    const changed = attempt('otro@example.com');
+    expect(changed).not.toBe(first);
+    expect(attempt('otro@example.com', true)).toBe(changed);
+    expect(attempt('otro@example.com')).not.toBe(changed);
+  });
+  for (const [status, code] of [
+    [400, 'INVALID_TOKEN'],
+    [422, 'EXPIRED_TOKEN'],
+    [503, 'UNAVAILABLE'],
+  ] as const) {
+    it(`clasifica confirmación ${status}`, () => {
+      service.confirmEmail('demo-valid').subscribe({ error: (e) => expect(e.code).toBe(code) });
+      http
+        .expectOne('/api/v1/registro/confirmacion')
+        .flush({ detail: 'privado' }, { status, statusText: 'Error' });
+    });
+  }
 });

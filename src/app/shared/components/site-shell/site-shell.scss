@@ -151,3 +151,20 @@ nav button {
     margin-right: 8px;
   }
 }
+
+@media (min-width: 701px) {
+  .login-shell .top-bar,
+  .login-shell footer {
+    width: calc(100% - 96px);
+  }
+}
+
+.login-shell .top-bar span {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+@media (max-width: 700px) {
+  .login-shell .brand {
+    width: auto;
+  }
+}

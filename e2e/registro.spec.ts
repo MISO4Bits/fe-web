@@ -43,11 +43,12 @@ test.beforeEach(async ({ page }) => {
       expect(req.headers()['authorization']).toBe('Bearer test-access');
       await route.fulfill({ status: 204 });
     } else if (url.pathname.endsWith('/confirmacion')) {
-      const token = req.headers()['authorization'];
-      if (token !== 'Bearer demo-valid') {
+      expect(req.headers()['authorization']).toBeUndefined();
+      const token = req.postDataJSON().oobCode;
+      if (token !== 'demo-valid') {
         await route.fulfill({
-          status: 410,
-          json: { code: token === 'Bearer expired' ? 'EXPIRED_TOKEN' : 'INVALID_TOKEN' },
+          status: token === 'expired-code' ? 422 : 400,
+          json: { code: token === 'expired-code' ? 'EXPIRED_TOKEN' : 'INVALID_TOKEN' },
         });
       } else {
         await route.fulfill({
@@ -102,7 +103,7 @@ async function fillRegistration(page: Page, email = 'martin@example.com', docume
   await page.getByLabel('Autorizo el tratamiento').check();
 }
 
-test('02 → registro → Home sin cotizaciones; consulta financiera opcional', async ({ page }) => {
+test('02 → registro → aviso de correo sin acceso al Home', async ({ page }) => {
   await page.goto('/precotizacion/resultado');
   await expect(page.getByRole('heading', { name: 'Un seguro para ti desde' })).toBeVisible();
   await expect(page.getByText('$57.100', { exact: true })).toBeVisible();
@@ -111,16 +112,11 @@ test('02 → registro → Home sin cotizaciones; consulta financiera opcional', 
   await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
   await expect(page).toHaveURL(/\/confirmar-correo$/);
   await expect(page.getByRole('heading', { name: 'Confirma tu correo' })).toBeVisible();
-  await expect(page.getByText('martin@example.com', { exact: true })).toBeVisible();
-  await page.getByRole('link', { name: 'Ir a mi cuenta', exact: true }).click();
-  await expect(page).toHaveURL(/\/cuenta$/);
-  await expect(
-    page.getByRole('heading', { name: 'Todavía no tienes seguros ni cotizaciones' }),
-  ).toBeVisible();
-  await expect(
-    page.getByText('Puedes cotizar sin autorizar la consulta financiera.'),
-  ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Cotizar mi seguro' })).toBeEnabled();
+  await expect(page.locator('.email').filter({ hasText: 'martin@example.com' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Ir a mi cuenta' })).toHaveCount(0);
+  await page.goto('/cuenta');
+  await expect(page).toHaveURL(/\/ingreso$/);
+  await expect(page.getByRole('heading', { name: 'Entra a tu cuenta' })).toBeVisible();
 });
 
 test('registro con permiso financiero y confirmación sin bloquear acceso', async ({ page }) => {
@@ -129,10 +125,6 @@ test('registro con permiso financiero y confirmación sin bloquear acceso', asyn
   await page.getByLabel('Autorizo consultar').check();
   await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
   await expect(page).toHaveURL(/\/confirmar-correo$/);
-  await page.getByRole('link', { name: 'Ir a mi cuenta', exact: true }).click();
-  await expect(page).toHaveURL(/\/cuenta$/);
-  await expect(page.getByText('Puedes cotizar sin autorizar')).toHaveCount(0);
-  await page.getByRole('link', { name: 'Ver información del correo' }).click();
   await page.getByRole('button', { name: 'Reenviarme el correo' }).click();
   await expect(page.getByRole('status')).toContainText('Solicitud recibida');
 });
@@ -178,12 +170,48 @@ test('validaciones y permisos obligatorios; modal con teclado', async ({ page })
 });
 
 test('enlace válido, expirado y manipulado', async ({ page }) => {
-  await page.goto('/confirmar-correo?token=demo-valid');
-  await expect(page.getByRole('heading', { name: 'Correo confirmado' })).toBeVisible();
-  await page.goto('/confirmar-correo?token=expired');
-  await expect(page.getByRole('status')).toContainText('El enlace expiró');
-  await page.goto('/confirmar-correo?token=incorrect');
-  await expect(page.getByRole('status')).toContainText('No pudimos validar');
+  await page.goto('/verificar-correo?oobCode=demo-valid');
+  await expect(page.getByRole('heading', { name: 'Listo, confirmamos tu correo.' })).toBeVisible();
+  await expect(page).toHaveURL(/\/verificar-correo$/);
+  await expect(page.getByText('martin@example.com', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: /entrar|iniciar sesión/i })).toHaveCount(0);
+  await page.goto('/verificar-correo?oobCode=expired-code');
+  await expect(
+    page.getByRole('heading', { name: 'Este enlace ya se usó o venció.' }),
+  ).toBeVisible();
+  await page.goto('/verificar-correo?oobCode=incorrect-code');
+  await expect(page.getByRole('heading', { name: 'Enlace inválido' })).toBeVisible();
+});
+
+test('sin código no confirma; fallo temporal permite reintentar sin exponer el código', async ({
+  page,
+}) => {
+  let calls = 0;
+  await page.route('**/v1/registro/confirmacion', async (route) => {
+    calls++;
+    expect(new URL(page.url()).searchParams.has('oobCode')).toBe(false);
+    expect(route.request().method()).toBe('POST');
+    expect(route.request().postDataJSON()).toEqual({ oobCode: 'retry-code-123' });
+    await route.fulfill(
+      calls === 1
+        ? { status: 503, json: { detail: 'privado' } }
+        : { json: { email: 'otro@example.com', correoConfirmado: true } },
+    );
+  });
+  for (const suffix of ['', '?oobCode=short', '?oobCode=one-code-123&oobCode=two-code-123']) {
+    await page.goto('/verificar-correo' + suffix);
+    await expect(page.getByRole('heading', { name: 'Enlace inválido' })).toBeVisible();
+  }
+  expect(calls).toBe(0);
+  await page.goto('/verificar-correo?oobCode=retry-code-123');
+  await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible();
+  await expect(page.getByText('privado')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Reintentar' }).click();
+  await expect(page.getByRole('heading', { name: 'Listo, confirmamos tu correo.' })).toBeVisible();
+  expect(calls).toBe(2);
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Enlace inválido' })).toBeVisible();
+  expect(calls).toBe(2);
 });
 
 test('sin desbordamiento horizontal en móvil y recursos originales cargados', async ({ page }) => {
@@ -260,17 +288,29 @@ test('celular solo dígitos, calendario y fecha digitada', async ({ page }) => {
   await expect(page.locator('#birthDate')).toHaveValue('03/08/1985');
 });
 
-test('inicio en cuenta, enlace visible y logo vuelve al inicio', async ({ page }) => {
+test('inicio en login, crear cuenta nueva y logo vuelve al inicio', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await expect(page).toHaveURL(/\/cuenta$/);
+  await expect(page).toHaveURL(/\/ingreso$/);
   await expect(page.getByRole('heading', { name: 'Entra a tu cuenta' })).toBeVisible();
-  const create = page.getByRole('link', { name: 'Crear mi cuenta', exact: true });
-  await expect(create).toBeVisible();
-  expect(await create.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(255, 255, 255)');
-  await create.click();
+  await expect(page.getByRole('button', { name: 'Ingresar', exact: true })).toBeDisabled();
+  await page.getByRole('link', { name: 'Crear cuenta nueva', exact: true }).click();
   await expect(page).toHaveURL(/\/crear-cuenta$/);
   await page.getByRole('link', { name: 'Solventa', exact: true }).click();
-  await expect(page).toHaveURL(/\/cuenta$/);
+  await expect(page).toHaveURL(/\/ingreso$/);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(() => document.fonts.ready);
+  await page.screenshot({
+    path: 'docs/previews/login-desktop.png',
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBeTruthy();
+  await page.screenshot({ path: 'docs/previews/login-mobile.png', fullPage: true });
+  expect(errors).toEqual([]);
 });
 
 test('documentos del BFF en el modal y versiones enviadas en el registro', async ({ page }) => {

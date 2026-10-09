@@ -53,13 +53,13 @@ export class RegistrationMockService implements RegistrationGateway {
     );
   }
 
-  confirmEmail(token: string): Observable<void> {
+  confirmEmail(token: string): Observable<{ email: string }> {
     return of(token).pipe(
       delay(300),
       mergeMap((value) => {
         if (value === 'expired') return throwError(() => new RegistrationError('EXPIRED_TOKEN'));
         if (value !== 'demo-valid') return throwError(() => new RegistrationError('INVALID_TOKEN'));
-        return of(undefined);
+        return of({ email: 'demo@solventa.test' });
       }),
     );
   }

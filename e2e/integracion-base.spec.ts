@@ -14,5 +14,5 @@ test('la muestra de Material y la ruta privada siguen disponibles', async ({ pag
   await page.screenshot({ path: '/tmp/merge-muestra.png', fullPage: true });
   await page.goto('/cuenta/cotizaciones/nueva');
   await expect(page).toHaveURL(/\/ingreso\?destino=/);
-  await expect(page.locator('app-pantalla-pendiente')).toBeVisible();
+  await expect(page.locator('app-login')).toBeVisible();
 });

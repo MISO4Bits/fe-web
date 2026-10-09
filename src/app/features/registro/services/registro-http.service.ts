@@ -34,6 +34,8 @@ export class RegistrationHttpService implements RegistrationGateway {
       );
   }
 
+  private pendingRegistration: { body: string; key: string } | null = null;
+
   register(request: RegistrationRequest): Observable<RegistrationResponse> {
     const body: BffRegistroRequest = {
       email: request.email,
@@ -43,7 +45,7 @@ export class RegistrationHttpService implements RegistrationGateway {
       primerNombre: request.identity.firstName,
       primerApellido: request.identity.lastName,
       fechaNacimiento: request.identity.birthDate,
-      telefono: request.phone || null,
+      telefono: request.phone,
       politicaVersion: request.consents.version,
       aceptaTerminos: request.consents.terms,
       autorizaTratamientoDatos: request.consents.personalData,
@@ -55,6 +57,11 @@ export class RegistrationHttpService implements RegistrationGateway {
         ? request.consents.financialVersion
         : null,
     };
+    const serialized = JSON.stringify(body);
+    if (this.pendingRegistration?.body !== serialized) {
+      this.pendingRegistration = { body: serialized, key: crypto.randomUUID() };
+    }
+    const key = this.pendingRegistration.key;
     return this.http
       .get<BffDisponibilidad>(`${this.baseUrl}/v1/registro/disponibilidad`, {
         params: {
@@ -71,11 +78,14 @@ export class RegistrationHttpService implements RegistrationGateway {
           if (availability.documentoDisponible === false)
             return throwError(() => new RegistrationError('DOCUMENT_EXISTS'));
           return this.http
-            .post<BffRegistroResponse>(`${this.baseUrl}/v1/registro`, body)
+            .post<BffRegistroResponse>(`${this.baseUrl}/v1/registro`, body, {
+              headers: { 'Idempotency-Key': key },
+            })
             .pipe(timeout(apiConfig.timeoutMs));
         }),
         map((response) => {
           if (response.cuenta.estado !== 'ACTIVO') throw new RegistrationError('UNAVAILABLE');
+          this.pendingRegistration = null;
           this.session.setCredentials(response.sesion);
           return {
             customerId: response.cuenta.clienteId,
@@ -89,20 +99,27 @@ export class RegistrationHttpService implements RegistrationGateway {
       );
   }
 
-  confirmEmail(token: string): Observable<void> {
-    // Convención provisional: el token del enlace se envía como Bearer.
-    // El contrato solo declara Authorization; validar su significado con el BFF.
-    return this.http
-      .post<BffCuenta>(`${this.baseUrl}/v1/registro/confirmacion`, null, {
-        headers: new HttpHeaders({ Authorization: `Bearer ${token}` }),
-      })
-      .pipe(
-        timeout(apiConfig.timeoutMs),
-        map((account) => {
-          if (!account.correoConfirmado) throw new RegistrationError('INVALID_TOKEN');
-        }),
-        catchError((error: unknown) => this.mapError(error)),
-      );
+  confirmEmail(oobCode: string): Observable<{ email: string }> {
+    return this.http.post<BffCuenta>(`${this.baseUrl}/v1/registro/confirmacion`, { oobCode }).pipe(
+      timeout(apiConfig.timeoutMs),
+      map((account) => {
+        if (
+          account.correoConfirmado !== true ||
+          typeof account.email !== 'string' ||
+          !account.email
+        )
+          throw new RegistrationError('INVALID_TOKEN');
+        return { email: account.email };
+      }),
+      catchError((error: unknown) => {
+        // Los estados anunciados complementan el contrato; no se muestra el detail del BFF.
+        if (error instanceof HttpErrorResponse && error.status === 400)
+          return throwError(() => new RegistrationError('INVALID_TOKEN'));
+        if (error instanceof HttpErrorResponse && error.status === 422)
+          return throwError(() => new RegistrationError('EXPIRED_TOKEN'));
+        return this.mapError(error);
+      }),
+    );
   }
 
   resendEmail(email: string): Observable<void> {

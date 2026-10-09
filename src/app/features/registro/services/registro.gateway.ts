@@ -13,7 +13,7 @@ export interface RegistrationGateway {
     query: AvailabilityQuery,
   ): Observable<{ correoDisponible?: boolean | null; documentoDisponible?: boolean | null }>;
   register(request: RegistrationRequest): Observable<RegistrationResponse>;
-  confirmEmail(token: string): Observable<void>;
+  confirmEmail(oobCode: string): Observable<{ email: string }>;
   resendEmail(email: string): Observable<void>;
 }
 

@@ -1,3 +1,35 @@
+@use 'styles/theme';
+@use 'styles/layout';
+
+// Base del documento. Los valores salen del tema, no de constantes locales.
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  letter-spacing: var(--mat-sys-body-medium-tracking);
+  -webkit-font-smoothing: antialiased;
+}
+
+// El logo es lo unico que usa Dancing Script y el Accent Teal de la marca.
+.solventa-logo {
+  font-family: var(--solventa-logo-font), cursive;
+  font-weight: var(--solventa-logo-weight);
+}
+
+// Foco visible en todo el producto, requisito de accesibilidad.
+:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}
+
+/* Compatibilidad con las pantallas de registro BITS-93. */
 @font-face {
   font-family: 'Dancing Script';
   font-style: normal;
@@ -45,93 +77,96 @@
   --info-ink: #1b4a7a;
   --error: #ba1a1a;
 }
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  color: var(--text);
-  background: var(--surface);
-}
-button,
-input,
-select {
-  font-family: inherit;
-}
-button,
-a {
-  -webkit-tap-highlight-color: transparent;
-}
-button {
-  cursor: pointer;
-}
-h1,
-h2,
-h3 {
-  color: var(--ink);
-}
-button:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
-.primary {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  background: var(--primary);
-  color: white;
-  padding: 16px 24px;
-  border: 0;
-  border-radius: 100px;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px;
-  letter-spacing: 0.15px;
-  text-decoration: none;
-}
-.primary:hover {
-  background: #00565d;
-}
-.text-button {
-  border: 0;
-  background: none;
-  color: var(--primary);
-  padding: 0;
-}
-.eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.88px;
-  line-height: 14px;
-  color: var(--muted);
-  margin: 0;
-}
-.card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-}
-:focus-visible {
-  outline: 3px solid var(--primary);
-  outline-offset: 4px;
-}
-
-/* El contenido legal del BFF se inserta con la sanitización HTML de Angular. */
-.legal-content {
-  overflow-wrap: anywhere;
-  h3 {
-    font-size: 14px;
-    line-height: 20px;
-    margin: 20px 0 4px;
+app-site-shell {
+  display: block;
+  * {
+    box-sizing: border-box;
   }
-  p,
-  li {
-    font-size: 14px;
-    line-height: 22px;
+  & {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     color: var(--text);
+    background: var(--surface);
   }
-  p {
-    margin: 0 0 16px;
+  button,
+  input,
+  select {
+    font-family: inherit;
+  }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    cursor: pointer;
+  }
+  h1,
+  h2,
+  h3 {
+    color: var(--ink);
+  }
+  button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+  .primary {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--primary);
+    color: white;
+    padding: 16px 24px;
+    border: 0;
+    border-radius: 100px;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.15px;
+    text-decoration: none;
+  }
+  .primary:hover {
+    background: #00565d;
+  }
+  .text-button {
+    border: 0;
+    background: none;
+    color: var(--primary);
+    padding: 0;
+  }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.88px;
+    line-height: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+  :focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 4px;
+  }
+
+  /* El contenido legal del BFF se inserta con la sanitización HTML de Angular. */
+  .legal-content {
+    overflow-wrap: anywhere;
+    h3 {
+      font-size: 14px;
+      line-height: 20px;
+      margin: 20px 0 4px;
+    }
+    p,
+    li {
+      font-size: 14px;
+      line-height: 22px;
+      color: var(--text);
+    }
+    p {
+      margin: 0 0 16px;
+    }
   }
 }

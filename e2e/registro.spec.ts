@@ -141,7 +141,7 @@ test('correo duplicado resalta el campo y conserva datos', async ({ page }) => {
   await page.goto('/crear-cuenta');
   await fillRegistration(page, 'sofia.pedraza@correo.com');
   await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Ya tienes una cuenta con este correo');
+  await expect(page.locator('#email-error')).toContainText('Ya tienes una cuenta con este correo');
   await expect(page.getByLabel('Correo electrónico')).toHaveAttribute('aria-invalid', 'true');
   await expect(page.getByLabel('Nombres', { exact: true })).toHaveValue('Martín');
   await page.getByLabel('Correo electrónico').fill('otro@example.com');
@@ -153,7 +153,7 @@ test('documento duplicado, correo desechable y falla de servicio', async ({ page
   await page.goto('/crear-cuenta');
   await fillRegistration(page, 'martin@example.com', '1018456723');
   await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('número de documento');
+  await expect(page.locator('#documentNumber-error')).toContainText('número de documento');
   await page.getByLabel('Número de documento', { exact: true }).fill('987654321');
   await page.getByLabel('Correo electrónico').fill('test@mailinator.com');
   await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
@@ -239,7 +239,7 @@ test('máscara visual de cédula, envío sin puntos y límites según tipo', asy
   await page.locator('#documentType').selectOption('CC');
   await page.locator('#documentNumber').fill('123456789');
   const outgoing = page.waitForRequest(
-    (r) => new URL(r.url()).pathname === '/v1/registro' && r.method() === 'POST',
+    (r) => new URL(r.url()).pathname.endsWith('/v1/registro') && r.method() === 'POST',
   );
   await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
   expect((await outgoing).postDataJSON().numeroDocumento).toBe('123456789');

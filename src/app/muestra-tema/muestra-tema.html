@@ -1,0 +1,114 @@
+<div class="solventa-contenedor muestra">
+  <header class="cabecera">
+    <p class="solventa-logo marca">Solventa</p>
+    <div>
+      <h1>Muestra del tema</h1>
+      <p class="pie">
+        Los cinco componentes que usan las pantallas del Sprint 1, los roles de color del esquema y
+        la escala tipográfica, tal como salen del archivo de Figma.
+      </p>
+    </div>
+  </header>
+
+  <section>
+    <h2>Componentes</h2>
+
+    <div class="bloque">
+      <mat-form-field appearance="outline">
+        <mat-label>Saldo de tu crédito</mat-label>
+        <input matInput placeholder="320.000.000" />
+        <span matTextPrefix>$&nbsp;</span>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Correo electrónico</mat-label>
+        <input matInput value="sofia@correo.com" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Con error</mat-label>
+        <input matInput value="valor fuera de rango" class="campo-invalido" />
+        <mat-hint>El saldo debe estar entre 50 y 2.000 millones</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div class="bloque">
+      <button matButton="filled">Continuar</button>
+      <button matButton="tonal">Ver el detalle</button>
+      <button matButton="outlined">Volver</button>
+      <button matButton>Cancelar</button>
+      <button matIconButton aria-label="Cerrar"><mat-icon svgIcon="x" /></button>
+    </div>
+
+    <div class="bloque">
+      <mat-checkbox checked>Autorizo la consulta de mis datos financieros</mat-checkbox>
+      <mat-checkbox>Autorizo la consulta de mis datos públicos</mat-checkbox>
+      <mat-checkbox disabled>Opción no disponible</mat-checkbox>
+    </div>
+
+    <mat-list class="lista">
+      <mat-list-item>
+        <span matListItemTitle>Bancolombia</span>
+        <span matListItemLine>Crédito hipotecario</span>
+      </mat-list-item>
+      <mat-list-item>
+        <span matListItemTitle>Davivienda</span>
+        <span matListItemLine>Crédito hipotecario</span>
+      </mat-list-item>
+      <mat-list-item>
+        <span matListItemTitle>Banco de Bogotá</span>
+        <span matListItemLine>Crédito hipotecario</span>
+      </mat-list-item>
+    </mat-list>
+  </section>
+
+  <section>
+    <h2>Íconos</h2>
+    <p class="pie">
+      Once de Phosphor en peso Regular y tres de Material Symbols, los mismos del prototipo. Toman
+      el color del texto que los rodea.
+    </p>
+    <div class="iconos">
+      @for (icono of iconos; track icono) {
+        <figure class="icono">
+          <mat-icon [svgIcon]="icono" />
+          <figcaption>{{ icono }}</figcaption>
+        </figure>
+      }
+    </div>
+  </section>
+
+  <section>
+    <h2>Roles de color</h2>
+    <div class="roles">
+      @for (rol of roles; track rol.nombre) {
+        <div
+          class="rol"
+          [style.background]="'var(--mat-sys-' + rol.fondo + ')'"
+          [style.color]="'var(--mat-sys-' + rol.texto + ')'"
+        >
+          <span class="rol-nombre">{{ rol.nombre }}</span>
+          <span class="rol-sobre">sobre {{ rol.texto }}</span>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section>
+    <h2>Escala tipográfica</h2>
+    @for (escala of escalas; track escala.nombre) {
+      <p [class]="escala.clase">{{ escala.nombre }} · Solventa protege tu crédito hipotecario</p>
+    }
+  </section>
+
+  <section>
+    <h2>Radios</h2>
+    <div class="bloque">
+      @for (radio of radios; track radio.token) {
+        <div class="radio" [style.border-radius]="'var(--mat-sys-' + radio.token + ')'">
+          {{ radio.etiqueta }}
+        </div>
+      }
+    </div>
+  </section>
+</div>

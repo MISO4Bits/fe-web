@@ -11,7 +11,6 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE: ${{ vars.GCP_ARTIFACT_REGISTRY }}/fe-web
   NODE_VERSION: "22"
 
 jobs:
@@ -117,20 +116,33 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # No corre en pull_request — solo al hacer push a main/develop o al
-  # taguear una versión semver.
-  image:
-    name: image
+  # Publica el portal en línea (Cloud Storage + Cloud CDN, DI-012). Solo al
+  # hacer push a develop, y solo si pasaron todos los checks. No hace falta
+  # invalidar la caché de la CDN: index.html va con no-cache y los .js/.css
+  # llevan hash en el nombre, así que cada build trae archivos nuevos.
+  deploy:
+    name: deploy
     runs-on: ubuntu-latest
     needs: [gitleaks, quality, e2e, sonar]
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/develop'
     permissions:
       contents: read
       id-token: write # requerido por google-github-actions/auth (WIF)
-    outputs:
-      sha_short: ${{ steps.tags.outputs.sha_short }}
+    env:
+      BUCKET: gs://solventa-dev-portal
     steps:
       - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build de producción
+        run: npm run build
 
       - id: auth
         name: Autenticar contra GCP (Workload Identity Federation)
@@ -139,86 +151,20 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
-      - name: Configurar Docker para Artifact Registry
-        run: gcloud auth configure-docker "${IMAGE%%/*}" --quiet
+      - uses: google-github-actions/setup-gcloud@v3
 
-      - uses: docker/setup-buildx-action@v4
-
-      - name: Calcular tags de la imagen
-        id: tags
+      - name: Publicar archivos estáticos
+        working-directory: dist/fe-web/browser
         run: |
-          sha_short=$(git rev-parse --short=7 HEAD)
-          echo "sha_short=${sha_short}" >> "$GITHUB_OUTPUT"
-          {
-            echo "tags<<EOF"
-            echo "${IMAGE}:sha-${sha_short}"
-            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              echo "${IMAGE}:main"
-            elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-              echo "${IMAGE}:develop"
-            elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-              echo "${IMAGE}:${GITHUB_REF_NAME#v}"
-            fi
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Build y push
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.tags.outputs.tags }}
-
-  # Write-back de GitOps: fija el tag inmutable (sha-<corto>) de esta build
-  # en apps/fe-web/overlays/dev del repo `deploy`, para que Argo CD vea un
-  # cambio real de texto y dispare el rollout (auto-sync). Solo desde
-  # develop por ahora — overlays/prod no existe todavía; cuando exista, ese
-  # camino va por PR + 2 revisiones, no por commit directo como este.
-  deploy:
-    name: deploy
-    runs-on: ubuntu-latest
-    needs: image
-    if: github.ref == 'refs/heads/develop'
-    permissions:
-      contents: read
-    steps:
-      - name: Generar token de instalación de la GitHub App
-        id: app-token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ vars.DEPLOY_GITHUB_APP_ID }}
-          private-key: ${{ secrets.DEPLOY_GITHUB_APP_PRIVATE_KEY }}
-          owner: MISO4Bits
-          repositories: deploy
-
-      - name: Clonar deploy
-        uses: actions/checkout@v7
-        with:
-          repository: MISO4Bits/deploy
-          token: ${{ steps.app-token.outputs.token }}
-          path: deploy
-
-      - name: Instalar kustomize
-        run: |
-          curl -sSfL -o kustomize.tar.gz \
-            https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_linux_amd64.tar.gz
-          tar -xzf kustomize.tar.gz kustomize
-          sudo mv kustomize /usr/local/bin/kustomize
-
-      - name: Fijar el tag en apps/fe-web/overlays/dev
-        working-directory: deploy/apps/fe-web/overlays/dev
-        run: kustomize edit set image "${IMAGE}=${IMAGE}:sha-${{ needs.image.outputs.sha_short }}"
-
-      - name: Commitear y pushear a deploy
-        working-directory: deploy
-        run: |
-          git config user.name "${{ steps.app-token.outputs.app-slug }}[bot]"
-          git config user.email "${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com"
-          git add apps/fe-web/overlays/dev/kustomization.yaml
-          if git diff --cached --quiet; then
-            echo "Sin cambios de imagen, nada que commitear."
-            exit 0
-          fi
-          git commit -m "fe-web: desplegar sha-${{ needs.image.outputs.sha_short }} en dev"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          # 1) Todo menos index.html, con caché corta (assets sin hash).
+          #    Se borra del bucket lo que ya no existe en el build.
+          gcloud storage rsync . "${BUCKET}" --recursive \
+            --delete-unmatched-destination-objects \
+            --exclude='^index\.html$' \
+            --cache-control="public,max-age=300"
+          # 2) .js y .css llevan hash en el nombre: caché de un año.
+          gcloud storage cp ./*.js ./*.css "${BUCKET}/" \
+            --cache-control="public,max-age=31536000,immutable"
+          # 3) index.html al final y sin caché: es lo que apunta al build nuevo.
+          gcloud storage cp index.html "${BUCKET}/index.html" \
+            --cache-control="no-cache"

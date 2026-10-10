@@ -252,30 +252,23 @@
               <small>Este permiso es necesario para crear la cuenta.</small>
             }
           </div>
-          <div class="permission" [class.invalid]="invalid('personalData')">
+          <div class="permission">
             <label class="checkbox"
               ><input
                 type="checkbox"
                 aria-label="Autorizo el tratamiento de mis datos personales."
                 formControlName="personalData"
-                aria-required="true"
               /><span class="checkmark"><img src="/assets/icons/check.svg" alt="" /></span
-              ><span
-                >Autorizo el tratamiento de mis datos personales.
-                <span aria-hidden="true">*</span></span
-              ></label
+              ><span>Autorizo el tratamiento de mis datos personales. (Opcional)</span></label
             ><button type="button" class="text-button" (click)="legal.open('personal')">
               Ver el aviso de tratamiento de datos
             </button>
-            @if (invalid('personalData')) {
-              <small>Este permiso es necesario para crear la cuenta.</small>
-            }
           </div>
           <div class="permission" [class.invalid]="invalid('financialData')">
             <label class="checkbox"
               ><input type="checkbox" formControlName="financialData" /><span class="checkmark"
                 ><img src="/assets/icons/check.svg" alt="" /></span
-              ><span>Autorizo consultar mis datos financieros.</span></label
+              ><span>Autorizo consultar mis datos financieros. (Opcional)</span></label
             ><button type="button" class="text-button" (click)="legal.open('financial')">
               Ver la autorización de datos financieros
             </button>

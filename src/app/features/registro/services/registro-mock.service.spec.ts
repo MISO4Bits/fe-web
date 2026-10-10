@@ -52,10 +52,9 @@ describe('RegistrationMockService', () => {
         jasmine.objectContaining({ code }),
       );
     });
-  it('confirma y reenvía en modo demo', async () => {
+  it('confirma en modo demo', async () => {
     expect(await firstValueFrom(service.confirmEmail('demo-valid'))).toEqual({
       email: 'demo@solventa.test',
     });
-    expect(await firstValueFrom(service.resendEmail())).toBeUndefined();
   });
 });

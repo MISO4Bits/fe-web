@@ -117,18 +117,12 @@ describe('RegistrationHttpService — contrato BFF', () => {
       .flush({ ...response, cuenta: { ...response.cuenta, estado: 'BLOQUEADO' } });
     expect(session.accessToken()).toBeNull();
   });
-  it('confirma públicamente con oobCode y reenvía sin body usando la sesión', () => {
+  it('confirma públicamente con oobCode', () => {
     service.confirmEmail('confirmation').subscribe();
     const c = http.expectOne('/api/v1/registro/confirmacion');
     expect(c.request.headers.has('Authorization')).toBeFalse();
     expect(c.request.body).toEqual({ oobCode: 'confirmation' });
     c.flush({ ...response.cuenta, correoConfirmado: true });
-    session.setCredentials(response.sesion);
-    service.resendEmail(request.email).subscribe();
-    const r = http.expectOne('/api/v1/registro/reenvio-confirmacion');
-    expect(r.request.headers.get('Authorization')).toBe('Bearer access');
-    expect(r.request.body).toBeNull();
-    r.flush(null);
   });
   it('no reporta éxito si el BFF no confirmó el correo', () => {
     service
@@ -136,21 +130,13 @@ describe('RegistrationHttpService — contrato BFF', () => {
       .subscribe({ error: (e) => expect(e.code).toBe('INVALID_TOKEN') });
     http.expectOne('/api/v1/registro/confirmacion').flush(response.cuenta);
   });
-  it('controla confirmación expirada y reenvío sin sesión o con sesión vencida', () => {
+  it('controla confirmación expirada', () => {
     service
       .confirmEmail('expired')
       .subscribe({ error: (e) => expect(e.code).toBe('EXPIRED_TOKEN') });
     http
       .expectOne('/api/v1/registro/confirmacion')
       .flush({ code: 'EXPIRED_TOKEN' }, { status: 410, statusText: 'Gone' });
-    service
-      .resendEmail(request.email)
-      .subscribe({ error: (e) => expect(e.code).toBe('SESSION_REQUIRED') });
-    session.setCredentials({ ...response.sesion, expiresIn: -1 });
-    service
-      .resendEmail(request.email)
-      .subscribe({ error: (e) => expect(e.code).toBe('SESSION_REQUIRED') });
-    http.expectNone('/api/v1/registro/reenvio-confirmacion');
     session.clear();
     expect(session.account()).toBeNull();
   });

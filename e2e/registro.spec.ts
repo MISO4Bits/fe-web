@@ -39,9 +39,6 @@ test.beforeEach(async ({ page }) => {
           documentoDisponible: url.searchParams.get('numeroDocumento') !== '1018456723',
         },
       });
-    } else if (url.pathname.endsWith('/reenvio-confirmacion')) {
-      expect(req.headers()['authorization']).toBe('Bearer test-access');
-      await route.fulfill({ status: 204 });
     } else if (url.pathname.endsWith('/confirmacion')) {
       expect(req.headers()['authorization']).toBeUndefined();
       const token = req.postDataJSON().oobCode;
@@ -123,8 +120,7 @@ test('registro con permiso financiero y confirmación sin bloquear acceso', asyn
   await page.getByLabel('Autorizo consultar').check();
   await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
   await expect(page).toHaveURL(/\/confirmar-correo$/);
-  await page.getByRole('button', { name: 'Reenviarme el correo' }).click();
-  await expect(page.getByRole('status')).toContainText('Solicitud recibida');
+  await expect(page.getByRole('button', { name: 'Reenviarme el correo' })).toHaveCount(0);
 });
 
 test('correo duplicado resalta el campo y conserva datos', async ({ page }) => {
@@ -305,4 +301,26 @@ test('inicio y logo abren registro sin pantallas antiguas', async ({ page }) => 
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
     .toBeTruthy();
   expect(errors).toEqual([]);
+});
+
+test('solo términos es obligatorio y ambos permisos adicionales son opcionales', async ({
+  page,
+}) => {
+  await page.goto('/crear-cuenta');
+  await fillRegistration(page);
+  await page.getByLabel('Autorizo el tratamiento de mis datos personales.').uncheck();
+  await page.getByLabel('Acepto los términos').uncheck();
+  await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
+  await expect(page.getByText('Este permiso es necesario para crear la cuenta.')).toBeVisible();
+  await page.getByLabel('Acepto los términos').check();
+  const response = page.waitForResponse(
+    (r) => r.url().endsWith('/v1/registro') && r.request().method() === 'POST',
+  );
+  await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
+  const body = (await response).request().postDataJSON();
+  expect(body.autorizaTratamientoDatos).toBe(false);
+  expect(body.autorizaDatosFinancieros).toBe(false);
+  expect(body.politicaVersionTratamientoDatos).toBeNull();
+  expect(body.politicaVersionDatosFinancieros).toBeNull();
+  await expect(page).toHaveURL(/\/confirmar-correo$/);
 });

@@ -63,8 +63,4 @@ export class RegistrationMockService implements RegistrationGateway {
       }),
     );
   }
-
-  resendEmail(): Observable<void> {
-    return of(undefined).pipe(delay(300));
-  }
 }

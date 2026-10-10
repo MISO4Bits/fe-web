@@ -90,7 +90,7 @@ export class CrearCuenta {
     ],
     password: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(128)]],
     terms: [false, Validators.requiredTrue],
-    personalData: [false, Validators.requiredTrue],
+    personalData: [false],
     financialData: [false],
   });
   constructor() {

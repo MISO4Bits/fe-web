@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, switchMap, throwError, timeout } from 'rxjs';
 import { apiConfig, BFF_BASE_URL } from '../../../core/config/api.config';
@@ -120,21 +120,6 @@ export class RegistrationHttpService implements RegistrationGateway {
         return this.mapError(error);
       }),
     );
-  }
-
-  resendEmail(email: string): Observable<void> {
-    // La interfaz demo recibe email; el contrato HTTP identifica al usuario por sesión.
-    void email;
-    const token = this.session.accessToken();
-    if (!token) return throwError(() => new RegistrationError('SESSION_REQUIRED'));
-    return this.http
-      .post<void>(`${this.baseUrl}/v1/registro/reenvio-confirmacion`, null, {
-        headers: new HttpHeaders({ Authorization: `Bearer ${token}` }),
-      })
-      .pipe(
-        timeout(apiConfig.timeoutMs),
-        catchError((error: unknown) => this.mapError(error)),
-      );
   }
 
   private mapError(error: unknown): Observable<never> {

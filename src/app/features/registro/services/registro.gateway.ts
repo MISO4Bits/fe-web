@@ -14,7 +14,6 @@ export interface RegistrationGateway {
   ): Observable<{ correoDisponible?: boolean | null; documentoDisponible?: boolean | null }>;
   register(request: RegistrationRequest): Observable<RegistrationResponse>;
   confirmEmail(oobCode: string): Observable<{ email: string }>;
-  resendEmail(email: string): Observable<void>;
 }
 
 export const REGISTRATION_GATEWAY = new InjectionToken<RegistrationGateway>('REGISTRATION_GATEWAY');

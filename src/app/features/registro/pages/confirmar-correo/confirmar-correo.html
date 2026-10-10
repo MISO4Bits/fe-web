@@ -19,19 +19,10 @@
       </p>
       @if (session.account(); as account) {
         <div class="email">{{ account.email }}</div>
-        <button type="button" class="text-button" [disabled]="busy()" (click)="resend()">
-          Reenviarme el correo
-        </button>
       } @else {
         <p>Abre el enlace recibido en tu correo para confirmar tu dirección.</p>
       }
       <p class="small">Si cierras ahora, puedes volver con el mismo enlace.</p>
-      @if (message()) {
-        <p class="message" role="status">{{ message() }}</p>
-      }
-      @if (busy()) {
-        <p role="status">Procesando…</p>
-      }
     </section>
     <section class="card">
       <h2>Lo que sigue</h2>

@@ -248,4 +248,42 @@ describe('CrearCuenta', () => {
     expect(page.availabilityError().email).toBe('');
     expect(page.form.controls.email.valid).toBeTrue();
   });
+  it('desmarca y deshabilita permisos cuando sus documentos dejan de estar disponibles', () => {
+    page.form.setValue({ ...values, financialData: true });
+    TestBed.inject(DocumentosLegalesService).documents.set([]);
+    fixture.detectChanges();
+    for (const name of ['terms', 'personalData', 'financialData'] as const) {
+      expect(page.form.controls[name].value).toBeFalse();
+      expect(page.form.controls[name].disabled).toBeTrue();
+    }
+  });
+  it('habilita los permisos al recuperar los documentos sin aceptarlos automáticamente', () => {
+    const legalDocs = TestBed.inject(DocumentosLegalesService);
+    legalDocs.documents.set([]);
+    fixture.detectChanges();
+    legalDocs.documents.set(mockDocuments);
+    fixture.detectChanges();
+    for (const name of ['terms', 'personalData', 'financialData'] as const) {
+      expect(page.form.controls[name].enabled).toBeTrue();
+      expect(page.form.controls[name].value).toBeFalse();
+    }
+    expect(page.form.controls.terms.invalid).toBeTrue();
+    expect(page.form.controls.personalData.valid).toBeTrue();
+    expect(page.form.controls.financialData.valid).toBeTrue();
+  });
+  it('impide aceptar permisos y registrar sin documentos legales disponibles', () => {
+    page.form.setValue(values);
+    TestBed.inject(DocumentosLegalesService).documents.set([]);
+    fixture.detectChanges();
+    page.accept('terms');
+    page.accept('personal');
+    page.accept('financial');
+    for (const name of ['terms', 'personalData', 'financialData'] as const) {
+      expect(page.form.controls[name].value).toBeFalse();
+    }
+    page.submit();
+    expect(gateway.register).not.toHaveBeenCalled();
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(page.error()).toContain('documentos legales');
+  });
 });

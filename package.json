@@ -12,7 +12,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,html,scss}\" \"e2e/**/*.ts\"",
     "e2e": "playwright test",
     "tokens:build": "node tools/tokens-to-scss.mjs",
-    "icons:build": "node tools/build-icons.mjs"
+    "icons:build": "node tools/build-icons.mjs",
+    "build:dev": "ng build --configuration=production,dev"
   },
   "private": true,
   "packageManager": "npm@10.9.3",

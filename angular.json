@@ -64,6 +64,14 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/config/api-base-url.ts",
+                  "with": "src/app/core/config/api-base-url.dev.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

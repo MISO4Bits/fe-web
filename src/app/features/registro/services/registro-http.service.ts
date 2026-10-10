@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { catchError, map, Observable, switchMap, throwError, timeout } from 'rxjs';
+import { catchError, map, of, Observable, switchMap, throwError, timeout } from 'rxjs';
 import { apiConfig, BFF_BASE_URL } from '../../../core/config/api.config';
 import { SessionService } from '../../../core/services/session.service';
 import {
@@ -72,6 +72,8 @@ export class RegistrationHttpService implements RegistrationGateway {
       })
       .pipe(
         timeout(apiConfig.timeoutMs),
+        // La comprobación previa es orientativa; el POST valida duplicados de forma definitiva.
+        catchError(() => of({} as BffDisponibilidad)),
         switchMap((availability) => {
           if (availability.correoDisponible === false)
             return throwError(() => new RegistrationError('EMAIL_EXISTS'));

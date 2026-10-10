@@ -324,3 +324,32 @@ test('solo términos es obligatorio y ambos permisos adicionales son opcionales'
   expect(body.politicaVersionDatosFinancieros).toBeNull();
   await expect(page).toHaveURL(/\/confirmar-correo$/);
 });
+
+test('fallo de disponibilidad no desplaza campos ni impide registrar', async ({ page }) => {
+  await page.route('**/v1/registro/disponibilidad?**', (route) =>
+    route.fulfill({ status: 503, json: { title: 'Unavailable' } }),
+  );
+  await page.goto('/crear-cuenta');
+  const before = await page.locator('#birthDate').boundingBox();
+  await fillRegistration(page);
+  await expect(page.locator('#documentNumber-availability')).toBeVisible();
+  await expect(page.locator('#email-availability')).toBeVisible();
+  expect((await page.locator('#birthDate').boundingBox())?.y).toBe(before?.y);
+  await expect(page.getByText('Comprobando disponibilidad…')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
+  await expect(page).toHaveURL(/\/confirmar-correo$/);
+});
+
+test('documentos no disponibles bloquean permisos sin botón de reintento', async ({ page }) => {
+  await page.route('**/v1/documentos-legales?**', (route) =>
+    route.fulfill({ status: 503, json: { title: 'Unavailable' } }),
+  );
+  await page.goto('/crear-cuenta');
+  await expect(page.getByText('Documento no disponible.', { exact: true })).toHaveCount(3);
+  for (const checkbox of await page.locator('input[type=checkbox]').all()) {
+    await expect(checkbox).toBeDisabled();
+    await expect(checkbox).not.toBeChecked();
+  }
+  await expect(page.getByRole('button', { name: 'Reintentar documentos' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Crear mi cuenta', exact: true })).toBeDisabled();
+});

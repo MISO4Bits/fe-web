@@ -1,5 +1,5 @@
 import { DocumentosLegalesService } from '../../../../core/services/documentos-legales.service';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -94,6 +94,21 @@ export class CrearCuenta {
     financialData: [false],
   });
   constructor() {
+    effect(() => {
+      for (const [name, type] of [
+        ['terms', 'terminos'],
+        ['personalData', 'open-data'],
+        ['financialData', 'open-finance'],
+      ] as const) {
+        const control = this.form.controls[name];
+        if (this.legalDocs.document(type)) {
+          if (control.disabled) control.enable({ emitEvent: false });
+        } else {
+          control.setValue(false, { emitEvent: false });
+          control.disable({ emitEvent: false });
+        }
+      }
+    });
     this.legalDocs.load();
     for (const field of ['email', 'documentNumber'] as const) {
       this.form.controls[field].valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
@@ -141,7 +156,7 @@ export class CrearCuenta {
           if (typeof available !== 'boolean') {
             this.availabilityError.update((state) => ({
               ...state,
-              [field]: 'No pudimos comprobar este dato. Vuelve a salir del campo para reintentar.',
+              [field]: 'No se pudo verificar. Puedes continuar.',
             }));
             return;
           }
@@ -151,7 +166,7 @@ export class CrearCuenta {
         error: () =>
           this.availabilityError.update((state) => ({
             ...state,
-            [field]: 'No pudimos comprobar este dato. Vuelve a salir del campo para reintentar.',
+            [field]: 'No se pudo verificar. Puedes continuar.',
           })),
       });
   }
@@ -204,6 +219,9 @@ export class CrearCuenta {
     return control.touched && control.invalid;
   }
   accept(kind: PermissionKind) {
+    const type =
+      kind === 'personal' ? 'open-data' : kind === 'financial' ? 'open-finance' : 'terminos';
+    if (!this.legalDocs.document(type)) return;
     this.form.controls[
       kind === 'personal' ? 'personalData' : kind === 'financial' ? 'financialData' : 'terms'
     ].setValue(true);

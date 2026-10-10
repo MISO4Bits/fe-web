@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Sesion } from './sesion';
+import { SessionService } from '../../core/services/session.service';
 
 describe('Sesion', () => {
   let sesion: Sesion;
@@ -23,6 +24,21 @@ describe('Sesion', () => {
   it('lo olvida cuando se cierra', () => {
     sesion.abrir({ nombre: 'Sofía', correo: 'sofia@correo.com' });
     sesion.cerrar();
+    expect(sesion.hayCliente()).toBeFalse();
+  });
+  it('registrar una cuenta no inicia sesión y se limpia al cerrar', () => {
+    const registro = TestBed.inject(SessionService);
+    registro.account.set({
+      customerId: '1',
+      status: 'ACTIVE',
+      emailConfirmed: false,
+      email: 'demo@example.com',
+      financialConsent: false,
+    });
+    expect(sesion.hayCliente()).toBeFalse();
+    expect(sesion.actual()).toBeNull();
+    sesion.cerrar();
+    expect(registro.account()).toBeNull();
     expect(sesion.hayCliente()).toBeFalse();
   });
 });

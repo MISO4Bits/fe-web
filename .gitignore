@@ -38,6 +38,8 @@ yarn-error.log
 testem.log
 /typings
 __screenshots__/
+/docs/
+/design-qa.md
 
 # Playwright
 /test-results/
@@ -50,3 +52,5 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+/fe-web.zip

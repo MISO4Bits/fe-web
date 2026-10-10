@@ -10,13 +10,13 @@ describe('LayoutPublico', () => {
     }).compileComponents();
   });
 
-  it('ofrece ingresar y crear cuenta', () => {
+  it('ofrece crear cuenta sin login', () => {
     const fixture = TestBed.createComponent(LayoutPublico);
     fixture.detectChanges();
     const enlaces = Array.from<HTMLAnchorElement>(
       fixture.nativeElement.querySelectorAll('nav a'),
     ).map((a) => a.getAttribute('href'));
-    expect(enlaces).toContain('/ingreso');
+    expect(enlaces).not.toContain('/ingreso');
     expect(enlaces).toContain('/registro');
   });
 

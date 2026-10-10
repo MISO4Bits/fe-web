@@ -4,4 +4,8 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { App } from './app/app';
 
+import { prepareVerificationCode } from './app/core/services/verification-code';
+
+prepareVerificationCode();
+
 bootstrapApplication(App, appConfig).catch((err) => console.error(err));

@@ -1,0 +1,58 @@
+<div class="email-page">
+  <div class="stepper">
+    <span class="dot"><img src="/assets/icons/step-check.svg" alt="Completado" /></span
+    ><span>Tus datos</span><i></i><span class="dot">2</span><strong>Tu correo</strong>
+  </div>
+  @switch (state()) {
+    @case ('loading') {
+      <h1>Estamos verificando tu correo…</h1>
+      <p role="status">Espera un momento.</p>
+    }
+    @case ('success') {
+      <h1>Listo, confirmamos tu correo.</h1>
+      <p class="intro">Ya puedes iniciar sesión en la web o en la app de Solventa.</p>
+      <div class="columns">
+        <section class="card">
+          <h2>Correo confirmado</h2>
+          <p>{{ email() }} quedó verificado.</p>
+        </section>
+        <section class="card">
+          <h2>Lo que sigue</h2>
+          <p>Cuando inicies sesión, puedes iniciar una cotización y configurar coberturas.</p>
+          <ul>
+            <li>
+              <strong>Tu cotización</strong>
+              <p>La inicias desde tu cuenta. El registro no la genera automáticamente.</p>
+            </li>
+            <li>
+              <strong>Coberturas y servicios</strong>
+              <p>
+                Ahí decides si sumas tu casa y la ayuda de plomero, electricista, cerrajero y
+                vidriero.
+              </p>
+            </li>
+            <li>
+              <strong>Sin pagos por separado</strong>
+              <p>El pago se recauda con la cuota de tu crédito. No haces un pago aparte.</p>
+            </li>
+          </ul>
+        </section>
+      </div>
+    }
+    @case ('invalid') {
+      <h1>Enlace inválido</h1>
+      <p role="alert">Abre el enlace de verificación que recibiste en tu correo.</p>
+    }
+    @case ('used') {
+      <h1>Este enlace ya se usó o venció.</h1>
+      <p role="alert">Si ya confirmaste tu correo, inicia sesión.</p>
+    }
+    @case ('error') {
+      <h1>No pudimos confirmar tu correo.</h1>
+      <p role="alert">Intenta nuevamente en unos momentos.</p>
+      <button class="primary" type="button" [disabled]="busy()" (click)="verify()">
+        Reintentar
+      </button>
+    }
+  }
+</div>

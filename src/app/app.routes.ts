@@ -1,4 +1,5 @@
 import { Route, Routes } from '@angular/router';
+import { SiteShell } from './shared/components/site-shell/site-shell';
 import { guardaSesion } from './nucleo/sesion/guarda-sesion';
 
 /**
@@ -19,36 +20,44 @@ function pendiente(path: string, title: string, pantalla: string, historia: stri
   };
 }
 
-/**
- * Rutas del recorrido del Sprint 1.
- *
- * Lo publico no exige sesion: la estimacion preliminar, el registro y el
- * ingreso. Lo privado si: el home de la cuenta y la cotizacion.
- */
 export const routes: Routes = [
+  {
+    path: '',
+    component: SiteShell,
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'crear-cuenta' },
+      {
+        path: 'verificar-correo',
+        title: 'Verificar correo · Solventa',
+        loadComponent: () =>
+          import('./features/registro/pages/verificar-correo/verificar-correo').then(
+            (m) => m.VerificarCorreo,
+          ),
+      },
+      {
+        path: 'crear-cuenta',
+        title: 'Crear cuenta · Solventa',
+        loadComponent: () =>
+          import('./features/registro/pages/crear-cuenta/crear-cuenta').then((m) => m.CrearCuenta),
+      },
+      { path: 'cuenta', pathMatch: 'full', redirectTo: 'crear-cuenta' },
+      {
+        path: 'confirmar-correo',
+        title: 'Confirmar correo · Solventa',
+        loadComponent: () =>
+          import('./features/registro/pages/confirmar-correo/confirmar-correo').then(
+            (m) => m.ConfirmarCorreo,
+          ),
+      },
+      { path: 'registro', redirectTo: 'crear-cuenta', pathMatch: 'full' },
+      { path: 'registro/confirma-tu-correo', redirectTo: 'confirmar-correo', pathMatch: 'full' },
+    ],
+  },
   {
     path: '',
     loadComponent: () =>
       import('./diseno/layout-publico/layout-publico').then((m) => m.LayoutPublico),
     children: [
-      pendiente('', 'Cotiza tu seguro de vida', '01 Landing con precotización', 'BITS-258'),
-      pendiente(
-        'precotizacion',
-        'Tu estimación preliminar',
-        '02 Precotización, resultado',
-        'BITS-258',
-      ),
-      pendiente('registro', 'Crea tu cuenta', '03 Crear cuenta', 'BITS-259 y BITS-260'),
-      pendiente(
-        'registro/confirma-tu-correo',
-        'Confirma tu correo',
-        '04 Confirma tu correo',
-        'BITS-259',
-      ),
-      pendiente('ingreso', 'Ingresa a tu cuenta', '01 Inicio de sesión', 'BITS-261'),
-      // Muestra del tema. No es una pantalla del producto: sirve para comparar
-      // los componentes contra el prototipo. Se retira cuando el Design System
-      // quede verificado.
       {
         path: 'muestra',
         title: 'Solventa · Muestra del tema',
@@ -62,7 +71,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./diseno/layout-privado/layout-privado').then((m) => m.LayoutPrivado),
     children: [
-      pendiente('', 'Mis cotizaciones', '02 Home, primera vez', 'BITS-262'),
       pendiente(
         'cotizaciones/nueva',
         'Nueva cotización',
@@ -72,5 +80,5 @@ export const routes: Routes = [
       pendiente('cotizaciones/:id', 'Tu cotización', '04 Cotización', 'BITS-264'),
     ],
   },
-  { path: '**', redirectTo: '' },
+  { path: '**', redirectTo: 'crear-cuenta' },
 ];

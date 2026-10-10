@@ -1,4 +1,6 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+
+import { SessionService } from '../../core/services/session.service';
 
 /** Lo minimo que el shell necesita saber de quien esta dentro. */
 export interface Cliente {
@@ -18,8 +20,9 @@ export interface Cliente {
 export class Sesion {
   private readonly cliente = signal<Cliente | null>(null);
 
+  private readonly registro = inject(SessionService);
   readonly actual = this.cliente.asReadonly();
-  readonly hayCliente = computed(() => this.cliente() !== null);
+  readonly hayCliente = computed(() => this.actual() !== null);
 
   abrir(cliente: Cliente): void {
     this.cliente.set(cliente);
@@ -27,5 +30,6 @@ export class Sesion {
 
   cerrar(): void {
     this.cliente.set(null);
+    this.registro.clear();
   }
 }

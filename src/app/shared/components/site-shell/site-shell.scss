@@ -1,0 +1,122 @@
+.shell {
+  min-height: max(900px, 100dvh);
+  display: flex;
+  flex-direction: column;
+}
+header {
+  height: 72px;
+  background: white;
+  border-bottom: 1px solid var(--border);
+}
+.top-bar {
+  position: relative;
+  width: min(1248px, calc(100% - 64px));
+  height: 100%;
+  margin: auto;
+  display: flex;
+  align-items: center;
+}
+.brand {
+  font:
+    700 30px 'Dancing Script',
+    cursive;
+  color: var(--primary);
+  text-decoration: none;
+  margin-right: auto;
+  width: 200px;
+}
+.top-bar span,
+.accessibility {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 600;
+}
+.top-bar span {
+  width: 110px;
+  margin-right: 6px;
+}
+.accessibility {
+  width: 136px;
+  text-align: left;
+}
+main {
+  width: min(1248px, calc(100% - 64px));
+  margin: 0 auto;
+  flex: 1;
+  outline: none;
+}
+footer {
+  width: min(1248px, calc(100% - 64px));
+  border-top: 1px solid var(--border);
+  height: 88px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-top: 26px;
+  color: var(--muted);
+  font-size: 12px;
+}
+nav {
+  display: flex;
+  gap: 24px;
+}
+nav button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+}
+.skip {
+  position: absolute;
+  left: 20px;
+  top: -80px;
+  z-index: 5;
+  background: white;
+  padding: 12px;
+}
+.skip:focus {
+  top: 12px;
+}
+.large-text {
+  zoom: 1.1;
+}
+@media (max-width: 700px) {
+  .shell {
+    min-height: 100dvh;
+  }
+  .top-bar,
+  main,
+  footer {
+    width: calc(100% - 40px);
+  }
+  .top-bar span {
+    width: auto;
+    margin-right: 16px;
+  }
+  .accessibility {
+    width: auto;
+  }
+  footer {
+    height: auto;
+    padding: 24px 0;
+    gap: 16px;
+    flex-direction: column;
+  }
+  nav {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 700px) {
+  .brand {
+    width: auto;
+  }
+  .top-bar span {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}

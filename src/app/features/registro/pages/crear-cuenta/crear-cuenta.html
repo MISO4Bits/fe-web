@@ -81,7 +81,13 @@
               (blur)="checkAvailability('documentNumber')"
               autocomplete="off"
               [attr.aria-invalid]="invalid('documentNumber')"
-              [attr.aria-describedby]="invalid('documentNumber') ? 'documentNumber-error' : null"
+              [attr.aria-describedby]="
+                invalid('documentNumber')
+                  ? 'documentNumber-error'
+                  : availabilityError().documentNumber
+                    ? 'documentNumber-availability'
+                    : null
+              "
               [attr.inputmode]="form.controls.documentType.value === 'CC' ? 'numeric' : 'text'"
             />
             @if (invalid('documentNumber')) {
@@ -95,14 +101,12 @@
                       : 'Ingresa entre 4 y 16 letras o números.'
                 }}</small
               >
+            } @else if (availabilityError().documentNumber) {
+              <small id="documentNumber-availability" class="availability-error" role="status">{{
+                availabilityError().documentNumber
+              }}</small>
             }
           </div>
-          @if (availabilityLoading().documentNumber) {
-            <p role="status">Comprobando disponibilidad…</p>
-          }
-          @if (availabilityError().documentNumber) {
-            <p role="status">{{ availabilityError().documentNumber }}</p>
-          }
           <div class="field birthDate" [class.invalid]="invalid('birthDate')">
             <label for="birthDate">Fecha de nacimiento <span aria-hidden="true">*</span></label
             ><input
@@ -173,7 +177,13 @@
               (blur)="checkAvailability('email')"
               autocomplete="email"
               [attr.aria-invalid]="invalid('email')"
-              [attr.aria-describedby]="invalid('email') ? 'email-error' : null"
+              [attr.aria-describedby]="
+                invalid('email')
+                  ? 'email-error'
+                  : availabilityError().email
+                    ? 'email-availability'
+                    : null
+              "
             />
             @if (invalid('email')) {
               <img class="error-icon" src="/assets/icons/error.svg" alt="" /><small
@@ -184,14 +194,12 @@
                     : 'Ingresa un correo válido.'
                 }}</small
               >
+            } @else if (availabilityError().email) {
+              <small id="email-availability" class="availability-error" role="status">{{
+                availabilityError().email
+              }}</small>
             }
           </div>
-          @if (availabilityLoading().email) {
-            <p role="status">Comprobando disponibilidad…</p>
-          }
-          @if (availabilityError().email) {
-            <p role="status">{{ availabilityError().email }}</p>
-          }
           <div class="field password" [class.invalid]="invalid('password')">
             <label for="password">Contraseña <span aria-hidden="true">*</span></label
             ><input
@@ -216,13 +224,6 @@
           Puedes seguir sin autorizar la consulta de datos financieros. En ese caso, cuando cotices,
           calculamos tu precio solo con los datos que nos des.
         </p>
-        @if (legalDocs.loading()) {
-          <p role="status">Cargando documentos legales…</p>
-        }
-        @if (legalDocs.error()) {
-          <p role="alert">{{ legalDocs.error() }}</p>
-          <button type="button" (click)="legalDocs.load()">Reintentar documentos</button>
-        }
         <button type="submit" class="primary" [disabled]="busy() || !legalDocs.ready()">
           {{ busy() ? 'Creando cuenta…' : 'Crear mi cuenta' }}
         </button>
@@ -245,10 +246,18 @@
                 >Acepto los términos y el aviso de privacidad.
                 <span aria-hidden="true">*</span></span
               ></label
-            ><button type="button" class="text-button" (click)="legal.open('terms')">
+            ><button
+              type="button"
+              class="text-button"
+              (click)="legal.open('terms')"
+              [disabled]="!legalDocs.document('terminos')"
+            >
               Ver los términos y condiciones
             </button>
-            @if (invalid('terms')) {
+            @if (legalDocs.error() && !legalDocs.document('terminos')) {
+              <small class="legal-error" role="status">Documento no disponible.</small>
+            }
+            @if (invalid('terms') && legalDocs.document('terminos')) {
               <small>Este permiso es necesario para crear la cuenta.</small>
             }
           </div>
@@ -260,18 +269,34 @@
                 formControlName="personalData"
               /><span class="checkmark"><img src="/assets/icons/check.svg" alt="" /></span
               ><span>Autorizo el tratamiento de mis datos personales. (Opcional)</span></label
-            ><button type="button" class="text-button" (click)="legal.open('personal')">
+            ><button
+              type="button"
+              class="text-button"
+              (click)="legal.open('personal')"
+              [disabled]="!legalDocs.document('open-data')"
+            >
               Ver el aviso de tratamiento de datos
             </button>
+            @if (legalDocs.error() && !legalDocs.document('open-data')) {
+              <small class="legal-error" role="status">Documento no disponible.</small>
+            }
           </div>
           <div class="permission" [class.invalid]="invalid('financialData')">
             <label class="checkbox"
               ><input type="checkbox" formControlName="financialData" /><span class="checkmark"
                 ><img src="/assets/icons/check.svg" alt="" /></span
               ><span>Autorizo consultar mis datos financieros. (Opcional)</span></label
-            ><button type="button" class="text-button" (click)="legal.open('financial')">
+            ><button
+              type="button"
+              class="text-button"
+              (click)="legal.open('financial')"
+              [disabled]="!legalDocs.document('open-finance')"
+            >
               Ver la autorización de datos financieros
             </button>
+            @if (legalDocs.error() && !legalDocs.document('open-finance')) {
+              <small class="legal-error" role="status">Documento no disponible.</small>
+            }
           </div>
         </div>
         @if (error()) {

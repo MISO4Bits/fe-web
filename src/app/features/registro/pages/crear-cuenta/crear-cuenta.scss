@@ -111,7 +111,9 @@ h1 {
 }
 .field small {
   display: block;
-  margin-top: 4px;
+  position: absolute;
+  top: 60px;
+  margin: 0;
   font-size: 11px;
   line-height: 14px;
 }
@@ -285,4 +287,18 @@ h1 {
   height: 56px;
   opacity: 1;
   pointer-events: auto;
+}
+
+.availability-error,
+.permission .legal-error {
+  color: var(--error);
+}
+.permission small {
+  position: absolute;
+  bottom: 0;
+  margin-block: 0;
+  line-height: 14px;
+}
+.checkbox input:disabled + .checkmark {
+  opacity: 0.5;
 }

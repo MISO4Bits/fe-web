@@ -40,6 +40,15 @@ describe('RegistrationHttpService — contrato BFF', () => {
     expect(check.request.params.get('numeroDocumento')).toBe(request.identity.documentNumber);
     check.flush({ correoDisponible: true, documentoDisponible: true });
   }
+  it('continúa con el POST si falla la comprobación previa', () => {
+    service.register(request).subscribe((account) => expect(account.customerId).toBe('1'));
+    http
+      .expectOne((r) => r.url.endsWith('/disponibilidad'))
+      .flush({}, { status: 503, statusText: 'Unavailable' });
+    const registration = http.expectOne('/api/v1/registro');
+    expect(registration.request.method).toBe('POST');
+    registration.flush(response);
+  });
   it('consulta disponibilidad, envía solo el DTO del BFF y conserva la sesión en memoria', () => {
     service.register(request).subscribe((r) =>
       expect(r).toEqual({

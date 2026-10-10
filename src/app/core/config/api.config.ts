@@ -1,9 +1,10 @@
 import { InjectionToken } from '@angular/core';
+import { API_BASE_URL } from './api-base-url';
 
-// Prefijo del BFF en el mismo origen. No agregar /v1 aquí.
+// La URL base se reemplaza al construir para el entorno de nube.
 export const apiConfig = {
   useMocks: false,
-  baseUrl: '/web', // Proxy local y gateway en nube.
+  baseUrl: API_BASE_URL,
   timeoutMs: 10000,
   legalMarket: 'CO',
   legalLanguage: 'es-CO',

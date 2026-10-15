@@ -26,7 +26,9 @@ describe('LayoutPrivado', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.solventa-logo').textContent).toContain('Solventa');
     expect(fixture.nativeElement.querySelector('#menu-cuenta')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.hamburguesa').getAttribute('aria-expanded')).toBe('false');
+    expect(fixture.nativeElement.querySelector('.hamburguesa').getAttribute('aria-expanded')).toBe(
+      'false',
+    );
   });
 
   it('abre y cierra el menú hamburguesa', () => {

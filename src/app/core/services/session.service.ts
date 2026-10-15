@@ -24,13 +24,17 @@ export class SessionService {
     return Date.now() < this.expiresAt ? (this.credentials()?.accessToken ?? null) : null;
   }
 
-  hasRefreshToken(): boolean { return !!this.credentials()?.refreshToken; }
+  hasRefreshToken(): boolean {
+    return !!this.credentials()?.refreshToken;
+  }
 
   async validAccessToken(): Promise<string | null> {
     if (this.accessToken() && Date.now() < this.expiresAt - 30000) return this.accessToken();
     if (!this.credentials()?.refreshToken) return null;
     if (!this.refreshPending) {
-      this.refreshPending = this.refresh().finally(() => { this.refreshPending = null; });
+      this.refreshPending = this.refresh().finally(() => {
+        this.refreshPending = null;
+      });
     }
     return this.refreshPending;
   }
@@ -39,9 +43,9 @@ export class SessionService {
     const refreshToken = this.credentials()?.refreshToken;
     if (!refreshToken) return null;
     try {
-      const next = await firstValueFrom(this.http.post<BffSesion>(
-        `${this.baseUrl}/v1/sesiones/refresco`, { refreshToken },
-      ));
+      const next = await firstValueFrom(
+        this.http.post<BffSesion>(`${this.baseUrl}/v1/sesiones/refresco`, { refreshToken }),
+      );
       this.setCredentials(next);
       return next.accessToken;
     } catch {

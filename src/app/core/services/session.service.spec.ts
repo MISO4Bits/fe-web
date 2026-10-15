@@ -9,7 +9,13 @@ describe('SessionService (tokens y renovación)', () => {
   let http: HttpTestingController;
   let now: number;
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: BFF_BASE_URL, useValue: '/api' }] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: BFF_BASE_URL, useValue: '/api' },
+      ],
+    });
     service = TestBed.inject(SessionService);
     http = TestBed.inject(HttpTestingController);
     now = Date.now();
@@ -50,7 +56,9 @@ describe('SessionService (tokens y renovación)', () => {
     service.setCredentials(initial);
     now += 121_000;
     const result = service.validAccessToken();
-    http.expectOne('/api/v1/sesiones/refresco').flush({}, { status: 401, statusText: 'Unauthorized' });
+    http
+      .expectOne('/api/v1/sesiones/refresco')
+      .flush({}, { status: 401, statusText: 'Unauthorized' });
     expect(await result).toBeNull();
     expect(service.hasRefreshToken()).toBeFalse();
     expect(service.accessToken()).toBeNull();

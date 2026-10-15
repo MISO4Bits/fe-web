@@ -12,15 +12,12 @@ describe('Login', () => {
 
   beforeEach(async () => {
     service = jasmine.createSpyObj<LoginService>('LoginService', ['ingresar']);
-    
+
     service.ingresar.and.resolveTo();
-    
+
     await TestBed.configureTestingModule({
       imports: [Login],
-      providers: [
-        { provide: LoginService, useValue: service },
-        provideRouter([]),
-      ],
+      providers: [{ provide: LoginService, useValue: service }, provideRouter([])],
     }).compileComponents();
     router = TestBed.inject(Router);
     navigate = spyOn(router, 'navigateByUrl').and.resolveTo(true);
@@ -68,7 +65,9 @@ describe('Login', () => {
     fixture.nativeElement.querySelector('button.ingresar').click();
     await fixture.whenStable();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('incorrectos');
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
+      'incorrectos',
+    );
     expect(navigate).not.toHaveBeenCalled();
   });
 
@@ -78,12 +77,18 @@ describe('Login', () => {
     fixture.nativeElement.querySelector('button.ingresar').click();
     await fixture.whenStable();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Demasiados intentos');
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
+      'Demasiados intentos',
+    );
   });
 
   it('evita envíos simultáneos', async () => {
     let complete!: () => void;
-    service.ingresar.and.returnValue(new Promise<void>(resolve => { complete = resolve; }));
+    service.ingresar.and.returnValue(
+      new Promise<void>((resolve) => {
+        complete = resolve;
+      }),
+    );
     fill(fixture);
     const button: HTMLButtonElement = fixture.nativeElement.querySelector('button.ingresar');
     button.click();

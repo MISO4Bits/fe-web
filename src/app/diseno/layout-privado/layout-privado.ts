@@ -15,7 +15,9 @@ export class LayoutPrivado {
   protected readonly rutas = RUTAS;
   protected readonly menuAbierto = signal(false);
 
-  protected cerrarMenu(): void { this.menuAbierto.set(false); }
+  protected cerrarMenu(): void {
+    this.menuAbierto.set(false);
+  }
 
   protected salir(): void {
     this.cerrarMenu();

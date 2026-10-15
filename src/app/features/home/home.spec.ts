@@ -5,7 +5,10 @@ import { Home } from './home';
 describe('Home', () => {
   let fixture: ComponentFixture<Home>;
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [Home], providers: [provideRouter([])] }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [Home],
+      providers: [provideRouter([])],
+    }).compileComponents();
     fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
   });
@@ -17,10 +20,14 @@ describe('Home', () => {
     fixture.nativeElement.querySelector('button.close').click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Todavía no tienes seguros ni cotizaciones');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Todavía no tienes seguros ni cotizaciones',
+    );
   });
   it('permite cotizar desde Home y bienvenida', () => {
     const links = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];
-    expect(links.filter(link => link.getAttribute('href') === '/cuenta/cotizaciones/nueva').length).toBe(3);
+    expect(
+      links.filter((link) => link.getAttribute('href') === '/cuenta/cotizaciones/nueva').length,
+    ).toBe(3);
   });
 });

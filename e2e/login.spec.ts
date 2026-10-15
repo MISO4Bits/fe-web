@@ -42,5 +42,7 @@ test('login válido redirige al Home privado', async ({ page }) => {
   await page.locator('#clave-login').fill('ClaveDemo123');
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
   await expect(page).toHaveURL(/\/cuenta$/);
-  await expect(page.getByRole('heading', { name: 'Todavía no tienes seguros' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Todavía no tienes seguros', exact: true }),
+  ).toBeVisible();
 });

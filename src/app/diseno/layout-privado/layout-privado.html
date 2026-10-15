@@ -1,9 +1,14 @@
 <div class="armazon">
   <header class="encabezado">
     <div class="solventa-contenedor barra">
-      <button class="hamburguesa" type="button" aria-label="Abrir menú"
-        aria-controls="menu-cuenta" [attr.aria-expanded]="menuAbierto()"
-        (click)="menuAbierto.set(!menuAbierto())">
+      <button
+        class="hamburguesa"
+        type="button"
+        aria-label="Abrir menú"
+        aria-controls="menu-cuenta"
+        [attr.aria-expanded]="menuAbierto()"
+        (click)="menuAbierto.set(!menuAbierto())"
+      >
         <span></span><span></span><span></span>
       </button>
       <a class="solventa-logo marca" [routerLink]="rutas.cuenta" (click)="cerrarMenu()">Solventa</a>

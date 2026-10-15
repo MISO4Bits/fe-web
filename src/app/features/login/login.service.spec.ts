@@ -11,10 +11,19 @@ describe('LoginService', () => {
   let http: HttpTestingController;
   let session: SessionService;
   let sesion: Sesion;
-  const tokens = { accessToken: 'access', refreshToken: 'refresh', expiresIn: 3600, tokenType: 'Bearer' as const };
+  const tokens = {
+    accessToken: 'access',
+    refreshToken: 'refresh',
+    expiresIn: 3600,
+    tokenType: 'Bearer' as const,
+  };
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: BFF_BASE_URL, useValue: '/api' }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: BFF_BASE_URL, useValue: '/api' },
+      ],
     });
     service = TestBed.inject(LoginService);
     http = TestBed.inject(HttpTestingController);
@@ -32,7 +41,12 @@ describe('LoginService', () => {
     await Promise.resolve();
     const cuenta = http.expectOne('/api/v1/cuenta');
     expect(cuenta.request.headers.get('Authorization')).toBe('Bearer access');
-    cuenta.flush({ clienteId: '1', primerNombre: 'Ana', email: 'persona@correo.com', estado: 'ACTIVO' });
+    cuenta.flush({
+      clienteId: '1',
+      primerNombre: 'Ana',
+      email: 'persona@correo.com',
+      estado: 'ACTIVO',
+    });
     await result;
     expect(session.accessToken()).toBe('access');
     expect(sesion.actual()?.nombre).toBe('Ana');

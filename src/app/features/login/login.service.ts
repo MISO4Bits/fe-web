@@ -14,15 +14,16 @@ export class LoginService {
   private readonly sesion = inject(Sesion);
 
   async ingresar(email: string, password: string): Promise<void> {
-    const tokens = await firstValueFrom(this.http.post<BffSesion>(
-      `${this.baseUrl}/v1/sesiones`, { email, password },
-    ));
+    const tokens = await firstValueFrom(
+      this.http.post<BffSesion>(`${this.baseUrl}/v1/sesiones`, { email, password }),
+    );
     this.tokens.setCredentials(tokens);
     try {
-      const cuenta = await firstValueFrom(this.http.get<BffCuenta>(
-        `${this.baseUrl}/v1/cuenta`,
-        { headers: { Authorization: `Bearer ${tokens.accessToken}` } },
-      ));
+      const cuenta = await firstValueFrom(
+        this.http.get<BffCuenta>(`${this.baseUrl}/v1/cuenta`, {
+          headers: { Authorization: `Bearer ${tokens.accessToken}` },
+        }),
+      );
       this.sesion.abrir({ nombre: cuenta.primerNombre, correo: cuenta.email });
     } catch (error) {
       this.tokens.clear();

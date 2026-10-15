@@ -1,13 +1,99 @@
-.armazon {min-height:100vh; display:flex; flex-direction:column; background:#f5fafb;}
-.encabezado {position:relative; background:white; border-bottom:1px solid #dde4e5;}
-.barra {display:flex; align-items:center; gap:12px; min-height:71px; box-sizing:border-box; padding:8px 20px;}
-.marca {font-size:1.8rem; color:#006971; text-decoration:none;}
-.derecha {display:flex; align-items:center; gap:44px; margin-left:auto; color:#3f484a; font-size:12px; font-weight:600;}
-.hamburguesa {width:34px; height:34px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px; background:transparent; border:0; cursor:pointer;}
-.hamburguesa span {width:17px; height:1.5px; background:#526163;}
-.menu-desplegable {position:absolute; top:65px; left:max(16px, calc((100vw - 1260px)/2)); z-index:90; width:230px; padding:8px; border:1px solid #dde4e5; border-radius:10px; background:white; box-shadow:0 12px 28px #0002;}
-.menu-desplegable button {width:100%; border:0; background:transparent; padding:12px 15px; font:inherit; text-align:left; color:#263638; cursor:pointer; border-radius:6px;}
-.menu-desplegable button:hover {background:#eaf4f4;}
-main {flex:1;}
-.pie {display:flex; justify-content:space-between; gap:15px; padding:22px 20px; border-top:1px solid #dde4e5; color:#718083; font-size:11px; width:100%; box-sizing:border-box;}
-@media(max-width:600px) {.derecha{gap:12px;font-size:10px}.pie{font-size:10px}}
+.armazon {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5fafb;
+}
+.encabezado {
+  position: relative;
+  background: white;
+  border-bottom: 1px solid #dde4e5;
+}
+.barra {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 71px;
+  box-sizing: border-box;
+  padding: 8px 20px;
+}
+.marca {
+  font-size: 1.8rem;
+  color: #006971;
+  text-decoration: none;
+}
+.derecha {
+  display: flex;
+  align-items: center;
+  gap: 44px;
+  margin-left: auto;
+  color: #3f484a;
+  font-size: 12px;
+  font-weight: 600;
+}
+.hamburguesa {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.hamburguesa span {
+  width: 17px;
+  height: 1.5px;
+  background: #526163;
+}
+.menu-desplegable {
+  position: absolute;
+  top: 65px;
+  left: max(16px, calc((100vw - 1260px) / 2));
+  z-index: 90;
+  width: 230px;
+  padding: 8px;
+  border: 1px solid #dde4e5;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 12px 28px #0002;
+}
+.menu-desplegable button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 12px 15px;
+  font: inherit;
+  text-align: left;
+  color: #263638;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.menu-desplegable button:hover {
+  background: #eaf4f4;
+}
+main {
+  flex: 1;
+}
+.pie {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 22px 20px;
+  border-top: 1px solid #dde4e5;
+  color: #718083;
+  font-size: 11px;
+  width: 100%;
+  box-sizing: border-box;
+}
+@media (max-width: 600px) {
+  .derecha {
+    gap: 12px;
+    font-size: 10px;
+  }
+  .pie {
+    font-size: 10px;
+  }
+}

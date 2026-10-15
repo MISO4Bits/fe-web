@@ -8,7 +8,9 @@ describe('Sesion', () => {
   let sesion: Sesion;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), { provide: BFF_BASE_URL, useValue: '/api' }] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), { provide: BFF_BASE_URL, useValue: '/api' }],
+    });
     sesion = TestBed.inject(Sesion);
   });
 

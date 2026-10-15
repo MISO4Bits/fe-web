@@ -24,18 +24,27 @@ export class Login {
   });
 
   protected async ingresar(): Promise<void> {
-    if (this.form.invalid || this.esperando()) { this.form.markAllAsTouched(); return; }
-    this.error.set(''); this.esperando.set(true);
+    if (this.form.invalid || this.esperando()) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.error.set('');
+    this.esperando.set(true);
     try {
       const { email, password } = this.form.getRawValue();
       await this.login.ingresar(email.trim(), password);
       await this.router.navigateByUrl(RUTAS.cuenta);
     } catch (error) {
       const status = error instanceof HttpErrorResponse ? error.status : 0;
-      this.error.set(status === 401 || status === 403
-        ? 'Correo o contraseña incorrectos.'
-        : status === 429 ? 'Demasiados intentos. Inténtalo más tarde.'
-        : 'No pudimos iniciar sesión. Inténtalo nuevamente.');
-    } finally { this.esperando.set(false); }
+      this.error.set(
+        status === 401 || status === 403
+          ? 'Correo o contraseña incorrectos.'
+          : status === 429
+            ? 'Demasiados intentos. Inténtalo más tarde.'
+            : 'No pudimos iniciar sesión. Inténtalo nuevamente.',
+      );
+    } finally {
+      this.esperando.set(false);
+    }
   }
 }

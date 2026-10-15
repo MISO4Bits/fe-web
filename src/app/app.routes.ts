@@ -41,8 +41,9 @@ export const routes: Routes = [
           import('./features/registro/pages/crear-cuenta/crear-cuenta').then((m) => m.CrearCuenta),
       },
       {
-        path: 'ingreso', title: 'Iniciar sesión · Solventa',
-        loadComponent: () => import('./features/login/login').then(m => m.Login),
+        path: 'ingreso',
+        title: 'Iniciar sesión · Solventa',
+        loadComponent: () => import('./features/login/login').then((m) => m.Login),
       },
       {
         path: 'confirmar-correo',
@@ -75,8 +76,10 @@ export const routes: Routes = [
       import('./diseno/layout-privado/layout-privado').then((m) => m.LayoutPrivado),
     children: [
       {
-        path: '', pathMatch: 'full', title: 'Home · Solventa',
-        loadComponent: () => import('./features/home/home').then(m => m.Home),
+        path: '',
+        pathMatch: 'full',
+        title: 'Home · Solventa',
+        loadComponent: () => import('./features/home/home').then((m) => m.Home),
       },
       pendiente(
         'cotizaciones/nueva',

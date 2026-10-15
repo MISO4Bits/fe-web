@@ -3,6 +3,7 @@ import { Router, UrlTree, type CanActivateFn } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { guardaSesion } from './guarda-sesion';
 import { Sesion } from './sesion';
+import { SessionService } from '../../core/services/session.service';
 
 function ejecutar(guarda: CanActivateFn, url: string) {
   return TestBed.runInInjectionContext(() => guarda({} as never, { url } as never));
@@ -10,7 +11,7 @@ function ejecutar(guarda: CanActivateFn, url: string) {
 
 describe('guardaSesion', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: SessionService, useValue: { hasRefreshToken: () => true, clear: () => {}, account: { set: () => {} } } }] });
   });
 
   it('deja pasar cuando hay sesión', () => {
@@ -18,10 +19,10 @@ describe('guardaSesion', () => {
     expect(ejecutar(guardaSesion, '/cuenta')).toBeTrue();
   });
 
-  it('manda al registro cuando no hay sesión', () => {
+  it('manda al login cuando no hay sesión', () => {
     const resultado = ejecutar(guardaSesion, '/cuenta');
     expect(resultado instanceof UrlTree).toBeTrue();
-    expect(TestBed.inject(Router).serializeUrl(resultado as UrlTree)).toContain('/registro');
+    expect(TestBed.inject(Router).serializeUrl(resultado as UrlTree)).toContain('/ingreso');
   });
 
   it('recuerda a dónde iba la persona', () => {

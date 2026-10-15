@@ -1,0 +1,21 @@
+.login-page {padding: 72px 0 80px; text-align:center; color:#161d1d;}
+h1 {font-size:30px; line-height:1.35; margin:0 0 8px; font-weight:700;}
+.intro {font-size:14px; color:#3f484a; margin:0 0 38px;}
+.login-card {box-sizing:border-box; max-width:660px; margin:0 auto; padding:36px 32px 20px;
+  border-radius:16px; background:#fff; display:flex; flex-direction:column; gap:24px; text-align:left;}
+.field {position:relative;}
+.field label {position:absolute; top:-8px; left:12px; padding:0 4px; background:#fff;
+  color:#3f484a; font-size:12px; z-index:1;}
+.field input {box-sizing:border-box; width:100%; height:56px; padding:0 16px;
+  border:1px solid #6f797a; border-radius:4px; font:inherit; font-size:16px;}
+.field input:focus {outline:2px solid #006971; outline-offset:0;}
+.field input[aria-invalid=true] {border-color:#b3261e;}
+.field small,.error {color:#b3261e; font-size:12px;}
+.ingresar {width:100%; min-height:56px; border:0; border-radius:100px;
+  background:#006971; color:white; font:inherit; font-weight:600; cursor:pointer;}
+.ingresar:disabled {opacity:.6; cursor:wait;}
+.olvido {align-self:flex-start; border:0; padding:8px 24px; color:#006971;
+  background:transparent; font:inherit; font-weight:500; opacity:.65; cursor:not-allowed;}
+.registro-pregunta {font-size:13px; color:#6f797a; margin:24px 0 0;}
+.registro-link {display:inline-block; color:#006971; font-weight:600; padding:16px; text-decoration:none;}
+@media(max-width:700px){.login-page{padding:48px 0}.login-card{padding:28px 18px}}

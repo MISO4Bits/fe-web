@@ -1,0 +1,29 @@
+<section class="login-page">
+  <h1>Entra a tu cuenta</h1>
+  <p class="intro">Tus cotizaciones y tus seguros, en un solo lugar.</p>
+  <form class="login-card" [formGroup]="form" (ngSubmit)="ingresar()" novalidate>
+    <div class="field">
+      <label for="correo-login">Correo electrónico</label>
+      <input id="correo-login" type="email" formControlName="email" autocomplete="username"
+ [attr.aria-invalid]="form.controls.email.invalid && form.controls.email.touched" />
+      @if (form.controls.email.touched && form.controls.email.invalid) {
+        <small>Ingresa un correo electrónico válido.</small>
+      }
+    </div>
+    <div class="field">
+      <label for="clave-login">Contraseña</label>
+      <input id="clave-login" type="password" formControlName="password" autocomplete="current-password"
+ [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched" />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <small>Ingresa tu contraseña.</small>
+      }
+    </div>
+    @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+    <button class="ingresar" type="submit" [disabled]="esperando()">
+      {{ esperando() ? 'Ingresando…' : 'Ingresar' }}
+    </button>
+    <button type="button" class="olvido" disabled title="Disponible próximamente">¿Olvidaste tu contraseña?</button>
+  </form>
+  <p class="registro-pregunta">¿Todavía no tienes cuenta?</p>
+  <a class="registro-link" [routerLink]="rutas.registro">Crear cuenta nueva</a>
+</section>

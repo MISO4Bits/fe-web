@@ -11,7 +11,19 @@ function ejecutar(guarda: CanActivateFn, url: string) {
 
 describe('guardaSesion', () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: SessionService, useValue: { hasRefreshToken: () => true, clear: () => {}, account: { set: () => {} } } }] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        {
+          provide: SessionService,
+          useValue: {
+            hasRefreshToken: () => true,
+            clear: jasmine.createSpy('clear'),
+            account: { set: jasmine.createSpy('set') },
+          },
+        },
+      ],
+    });
   });
 
   it('deja pasar cuando hay sesión', () => {

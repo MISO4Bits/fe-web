@@ -6,7 +6,7 @@ import { SessionService } from '../../core/services/session.service';
 
 /**
  * Deja pasar a una ruta privada solo si hay sesion. Si no la hay, manda al
- * registro mientras no exista login, y recuerda a donde iba, para devolver a la persona a su destino en
+ * inicio de sesión, y recuerda a donde iba, para devolver a la persona a su destino en
  * lugar de dejarla en el home.
  */
 export const guardaSesion: CanActivateFn = (_ruta, estado) => {

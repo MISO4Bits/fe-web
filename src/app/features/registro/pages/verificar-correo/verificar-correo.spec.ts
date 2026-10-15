@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { BFF_BASE_URL } from '../../../../core/config/api.config';
 import { Subject } from 'rxjs';
 import { VERIFICATION_CODE } from '../../../../core/services/verification-code';
 import { SessionService } from '../../../../core/services/session.service';
@@ -12,6 +14,8 @@ describe('VerificarCorreo', () => {
     const confirmEmail = jasmine.createSpy('confirmEmail').and.returnValue(result);
     TestBed.configureTestingModule({
       providers: [
+        provideHttpClient(),
+        { provide: BFF_BASE_URL, useValue: '/web' },
         { provide: VERIFICATION_CODE, useValue: () => code },
         { provide: REGISTRATION_GATEWAY, useValue: { confirmEmail } },
       ],

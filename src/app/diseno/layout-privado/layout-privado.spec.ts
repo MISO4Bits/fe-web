@@ -1,7 +1,7 @@
+import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { MatIconRegistry } from '@angular/material/icon';
-import { DomSanitizer } from '@angular/platform-browser';
+import { BFF_BASE_URL } from '../../core/config/api.config';
 import { LayoutPrivado } from './layout-privado';
 import { Sesion } from '../../nucleo/sesion/sesion';
 
@@ -11,34 +11,49 @@ describe('LayoutPrivado', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [LayoutPrivado],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        { provide: BFF_BASE_URL, useValue: '/web' },
+      ],
     }).compileComponents();
-
-    TestBed.inject(MatIconRegistry).addSvgIconSetLiteral(
-      TestBed.inject(DomSanitizer).bypassSecurityTrustHtml(
-        '<svg xmlns="http://www.w3.org/2000/svg"><symbol id="plus" viewBox="0 0 24 24"><path d="M0 0h24v24H0z"/></symbol></svg>',
-      ),
-    );
     sesion = TestBed.inject(Sesion);
   });
 
-  it('muestra el nombre de quien tiene la sesión', () => {
+  it('muestra el encabezado y mantiene el menú cerrado inicialmente', () => {
     sesion.abrir({ nombre: 'Sofía', correo: 'sofia@correo.com' });
     const fixture = TestBed.createComponent(LayoutPrivado);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.nombre').textContent).toContain('Sofía');
+    expect(fixture.nativeElement.querySelector('.solventa-logo').textContent).toContain('Solventa');
+    expect(fixture.nativeElement.querySelector('#menu-cuenta')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.hamburguesa').getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('cierra la sesión y devuelve al inicio', async () => {
+  it('abre y cierra el menú hamburguesa', () => {
+    const fixture = TestBed.createComponent(LayoutPrivado);
+    fixture.detectChanges();
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.hamburguesa');
+    button.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#menu-cuenta')).not.toBeNull();
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    button.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#menu-cuenta')).toBeNull();
+  });
+
+  it('cierra la sesión desde el menú y redirige al login', () => {
     sesion.abrir({ nombre: 'Sofía', correo: 'sofia@correo.com' });
     const router = TestBed.inject(Router);
     const navegar = spyOn(router, 'navigateByUrl').and.resolveTo(true);
-
     const fixture = TestBed.createComponent(LayoutPrivado);
     fixture.detectChanges();
-    fixture.nativeElement.querySelector('.cliente button').click();
-
+    fixture.nativeElement.querySelector('.hamburguesa').click();
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('#menu-cuenta button').click();
+    fixture.detectChanges();
     expect(sesion.hayCliente()).toBeFalse();
-    expect(navegar).toHaveBeenCalledWith('/');
+    expect(fixture.nativeElement.querySelector('#menu-cuenta')).toBeNull();
+    expect(navegar).toHaveBeenCalledWith('/ingreso');
   });
 });

@@ -1,12 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { Sesion } from './sesion';
 import { SessionService } from '../../core/services/session.service';
+import { provideHttpClient } from '@angular/common/http';
+import { BFF_BASE_URL } from '../../core/config/api.config';
 
 describe('Sesion', () => {
   let sesion: Sesion;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), { provide: BFF_BASE_URL, useValue: '/api' }],
+    });
     sesion = TestBed.inject(Sesion);
   });
 

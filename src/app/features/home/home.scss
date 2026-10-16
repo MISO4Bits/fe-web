@@ -1,0 +1,206 @@
+.home {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 52px 48px 90px;
+  min-height: calc(100vh - 155px);
+  box-sizing: border-box;
+}
+.home h1 {
+  font-size: 30px;
+  line-height: 1.25;
+  margin: 0 0 12px;
+  font-weight: 750;
+  color: #161d1d;
+}
+.intro {
+  font-size: 13px;
+  color: #3f484a;
+  margin: 0 0 28px;
+}
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: #657476;
+  margin: 0 0 9px;
+}
+.insurance-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  background: white;
+  border: 1px solid #dde4e5;
+  border-radius: 12px;
+  padding: 26px 24px;
+  min-height: 110px;
+  box-sizing: border-box;
+}
+.card-copy h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+  color: #161d1d;
+}
+.card-copy p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #58676a;
+  margin: 0;
+  max-width: 660px;
+}
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 100px;
+  background: #006971;
+  color: white;
+  padding: 13px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.primary:hover {
+  background: #00565d;
+}
+.quick-label {
+  margin-top: 32px;
+}
+.quick-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #dde4e5;
+  border-radius: 10px;
+  padding: 12px 18px;
+  text-decoration: none;
+  color: #161d1d;
+}
+.plus {
+  color: #006971;
+  font-size: 25px;
+  font-weight: 300;
+}
+.quick-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.quick-copy strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+.quick-copy small {
+  font-size: 11px;
+  color: #637174;
+}
+.arrow {
+  margin-left: auto;
+  font-size: 24px;
+  color: #4d5b5d;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 22, 24, 0.45);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.welcome {
+  position: relative;
+  width: min(100%, 600px);
+  background: white;
+  border-radius: 18px;
+  padding: 38px 36px 34px;
+  box-shadow: 0 14px 30px #0003;
+  box-sizing: border-box;
+  text-align: left;
+}
+.close {
+  position: absolute;
+  top: 24px;
+  right: 26px;
+  border: 1px solid #dde4e5;
+  background: #f5fafb;
+  color: #4b5a5c;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+.eyebrow {
+  font-size: 10px;
+  color: #006971;
+  font-weight: 750;
+  margin: 0 0 8px;
+}
+.welcome h2 {
+  font-size: 23px;
+  line-height: 1.25;
+  margin: 0 0 10px;
+  color: #161d1d;
+}
+.welcome-intro {
+  font-size: 13px;
+  color: #4b575a;
+  margin: 0 0 23px;
+  line-height: 1.5;
+}
+.step {
+  display: flex;
+  gap: 11px;
+  margin: 0 0 17px;
+  align-items: flex-start;
+}
+.dot {
+  flex-shrink: 0;
+  background: #006971;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+}
+.step strong {
+  font-size: 13px;
+  color: #161d1d;
+}
+.step p {
+  font-size: 11px;
+  color: #58676a;
+  margin: 5px 0 0;
+  line-height: 1.5;
+}
+.welcome-note {
+  font-size: 11px;
+  color: #718083;
+  margin: 21px 0 18px;
+}
+@media (max-width: 650px) {
+  .home {
+    padding: 36px 18px 65px;
+  }
+  .home h1 {
+    font-size: 25px;
+  }
+  .insurance-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .welcome {
+    padding: 34px 23px 28px;
+  }
+  .welcome h2 {
+    font-size: 21px;
+  }
+}

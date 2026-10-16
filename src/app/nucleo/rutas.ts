@@ -6,8 +6,10 @@
  * historia que la pide.
  */
 export const RUTAS = {
-  /** Registro de cuenta. BITS-93 */
+  /** Ruta raíz: redirige al login. */
   inicio: '/',
+  /** 05 Inicio de sesión. */
+  login: '/ingreso',
   /** 03 Crear cuenta. BITS-93 y BITS-94 */
   registro: '/registro',
   /** 04 Confirma tu correo. BITS-93 */

@@ -100,8 +100,10 @@ async function fillRegistration(page: Page, email = 'martin@example.com', docume
   await page.getByLabel('Autorizo el tratamiento').check();
 }
 
-test('inicio → registro → aviso de correo sin acceso al Home', async ({ page }) => {
+test('login → crear cuenta → aviso de correo sin acceso al Home', async ({ page }) => {
   await page.goto('/');
+  await expect(page).toHaveURL(/\/ingreso$/);
+  await page.getByRole('link', { name: 'Crear cuenta nueva' }).click();
   await expect(page).toHaveURL(/\/crear-cuenta$/);
   await fillRegistration(page);
   await page.getByRole('button', { name: 'Crear mi cuenta', exact: true }).click();
@@ -110,8 +112,8 @@ test('inicio → registro → aviso de correo sin acceso al Home', async ({ page
   await expect(page.locator('.email').filter({ hasText: 'martin@example.com' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Ir a mi cuenta' })).toHaveCount(0);
   await page.goto('/cuenta');
-  await expect(page).toHaveURL(/\/crear-cuenta$/);
-  await expect(page.getByRole('button', { name: 'Crear mi cuenta', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/ingreso\?destino=/);
+  await expect(page.getByRole('button', { name: 'Ingresar', exact: true })).toBeVisible();
 });
 
 test('registro con permiso financiero y confirmación sin bloquear acceso', async ({ page }) => {
@@ -282,18 +284,29 @@ test('celular solo dígitos, calendario y fecha digitada', async ({ page }) => {
   await expect(page.locator('#birthDate')).toHaveValue('03/08/1985');
 });
 
-test('inicio y logo abren registro sin pantallas antiguas', async ({ page }) => {
+test('ruta principal y logo abren login; registro solo desde crear cuenta', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
+  await expect(page).toHaveURL(/\/ingreso$/);
+  await expect(page.getByRole('heading', { name: 'Entra a tu cuenta' })).toBeVisible();
+  await expect(page.locator('#correo-login')).toHaveValue('');
+  await expect(page.locator('#clave-login')).toHaveValue('');
+
+  await page.getByRole('link', { name: 'Crear cuenta nueva' }).click();
   await expect(page).toHaveURL(/\/crear-cuenta$/);
-  await expect(page.locator('#email')).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Crear mi cuenta', exact: true })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Solventa', exact: true }).click();
+  await expect(page).toHaveURL(/\/ingreso$/);
+
   await page.goto('/confirmar-correo');
   await page.getByRole('link', { name: 'Solventa', exact: true }).click();
-  await expect(page).toHaveURL(/\/crear-cuenta$/);
-  for (const url of ['/ingreso', '/precotizacion/resultado', '/home']) {
+  await expect(page).toHaveURL(/\/ingreso$/);
+
+  for (const url of ['/precotizacion/resultado', '/home']) {
     await page.goto(url);
-    await expect(page).toHaveURL(/\/crear-cuenta$/);
+    await expect(page).toHaveURL(/\/ingreso$/);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => document.fonts.ready);

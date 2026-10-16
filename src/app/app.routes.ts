@@ -25,7 +25,7 @@ export const routes: Routes = [
     path: '',
     component: SiteShell,
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'crear-cuenta' },
+      { path: '', pathMatch: 'full', redirectTo: 'ingreso' },
       {
         path: 'verificar-correo',
         title: 'Verificar correo · Solventa',
@@ -40,7 +40,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/registro/pages/crear-cuenta/crear-cuenta').then((m) => m.CrearCuenta),
       },
-      { path: 'cuenta', pathMatch: 'full', redirectTo: 'crear-cuenta' },
+      {
+        path: 'ingreso',
+        title: 'Iniciar sesión · Solventa',
+        loadComponent: () => import('./features/login/login').then((m) => m.Login),
+      },
       {
         path: 'confirmar-correo',
         title: 'Confirmar correo · Solventa',
@@ -71,6 +75,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./diseno/layout-privado/layout-privado').then((m) => m.LayoutPrivado),
     children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        title: 'Home · Solventa',
+        loadComponent: () => import('./features/home/home').then((m) => m.Home),
+      },
       pendiente(
         'cotizaciones/nueva',
         'Nueva cotización',
@@ -80,5 +90,5 @@ export const routes: Routes = [
       pendiente('cotizaciones/:id', 'Tu cotización', '04 Cotización', 'BITS-264'),
     ],
   },
-  { path: '**', redirectTo: 'crear-cuenta' },
+  { path: '**', redirectTo: 'ingreso' },
 ];

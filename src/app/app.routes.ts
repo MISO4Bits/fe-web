@@ -81,12 +81,12 @@ export const routes: Routes = [
         title: 'Home · Solventa',
         loadComponent: () => import('./features/home/home').then((m) => m.Home),
       },
-      pendiente(
-        'cotizaciones/nueva',
-        'Nueva cotización',
-        '12 Nueva cotización, elige tu banco',
-        'BITS-263',
-      ),
+      {
+        path: 'cotizaciones/nueva',
+        title: 'Nueva cotización · Solventa',
+        loadComponent: () =>
+          import('./features/cotizacion/nueva-cotizacion').then((m) => m.NuevaCotizacion),
+      },
       pendiente('cotizaciones/:id', 'Tu cotización', '04 Cotización', 'BITS-264'),
     ],
   },

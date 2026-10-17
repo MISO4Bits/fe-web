@@ -43,6 +43,17 @@ export class NuevaCotizacion {
     plazoMeses: null as number | null,
   };
   protected readonly errores = signal<string[]>([]);
+  protected readonly fechaConsultaFormateada = computed(() => {
+    const fecha = this.consultado()?.fechaConsulta;
+    if (!fecha) return null;
+    const valor = new Date(fecha);
+    if (Number.isNaN(valor.getTime())) return null;
+    return new Intl.DateTimeFormat('es-CO', {
+      dateStyle: 'long',
+      timeStyle: 'short',
+      timeZone: 'America/Bogota',
+    }).format(valor);
+  });
   protected readonly moneda = new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
@@ -58,6 +69,8 @@ export class NuevaCotizacion {
     this.entidad.set(nombre);
     this.mensaje.set('');
     this.errores.set([]);
+    this.consultado.set(null);
+    this.creditos.set([]);
   }
 
   protected async continuar(): Promise<void> {
@@ -129,6 +142,19 @@ export class NuevaCotizacion {
   protected volver(): void {
     this.paso.set('banco');
     this.mensaje.set('');
+  }
+
+  protected cambiarBanco(): void {
+    this.volver();
+    this.entidad.set('');
+    this.consultado.set(null);
+    this.creditos.set([]);
+    this.seleccionado.set(0);
+    this.errores.set([]);
+  }
+
+  protected reintentar(): Promise<void> {
+    return this.continuar();
   }
 
   protected guardarVerificado(): void {

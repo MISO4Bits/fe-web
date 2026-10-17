@@ -27,10 +27,6 @@
           </dd>
         </div>
       </dl>
-      <p class="nota">
-        Estos datos quedan conservados durante el recorrido. La creación de la cotización se
-        implementa en otra historia.
-      </p>
     </div>
   } @else if (paso() === 'banco' || paso() === 'consultando') {
     <div class="contenido">
@@ -125,6 +121,9 @@
             </p>
           </div>
         }
+        @if (fechaConsultaFormateada(); as fecha) {
+          <p class="fecha-consulta">Fecha de consulta: {{ fecha }}</p>
+        }
         <p class="nota verificacion-nota">
           Vienen de {{ entidad() }} por open finance, con el permiso que nos diste. Si el saldo no
           coincide, pídele la actualización a tu banco: volvemos a consultar cada 24 horas.
@@ -146,6 +145,14 @@
       </p>
       @if (mensaje()) {
         <p class="aviso" role="status">{{ mensaje() }}</p>
+        @if (bancoFijado()) {
+          <div class="acciones-consulta">
+            <button type="button" class="secundario" (click)="reintentar()">Reintentar</button>
+            <button type="button" class="secundario" (click)="cambiarBanco()">
+              Cambiar de banco
+            </button>
+          </div>
+        }
       }
       <form (ngSubmit)="guardarManual()" #formulario="ngForm" novalidate>
         <div class="bloque-banco">

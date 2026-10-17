@@ -34,7 +34,7 @@ export interface CreditosHipotecariosRespuesta {
 export class CreditoHipotecarioService {
   private readonly http = inject(HttpClient);
   private readonly session = inject(SessionService);
-  private readonly baseUrl = inject(BFF_BASE_URL).replace(/\/+$/, '');
+  private readonly baseUrl = inject(BFF_BASE_URL).replace(/\/$/, '');
 
   async tieneConsentimientoFinanciero(): Promise<boolean> {
     const token = await this.session.validAccessToken();

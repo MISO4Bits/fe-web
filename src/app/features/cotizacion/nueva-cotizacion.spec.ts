@@ -29,6 +29,9 @@ interface CotizacionTestAccess {
   elegirBanco(nombre: string): void;
   continuar(): Promise<void>;
   volver(): void;
+  cambiarBanco(): void;
+  reintentar(): Promise<void>;
+  fechaConsultaFormateada(): string | null;
   usarManual(): void;
   bancoFijado(): boolean;
   guardarManual(): void;
@@ -287,5 +290,55 @@ describe('NuevaCotizacion BITS-219', () => {
     component.paso.set('consultando');
     await component.continuar();
     expect(api.consultar).not.toHaveBeenCalled();
+  });
+  it('AC-3: reintenta con el banco seleccionado tras un error', async () => {
+    api.consultar.and.rejectWith(new Error('SERVICIO_NO_DISPONIBLE'));
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.elegirBanco('Bancolombia');
+    await component.continuar();
+    fixture.detectChanges();
+    const botones = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ) as HTMLButtonElement[];
+    expect(botones.some((b) => b.textContent?.trim() === 'Reintentar')).toBeTrue();
+    api.consultar.and.resolveTo(respuesta);
+    await component.reintentar();
+    expect(api.consultar).toHaveBeenCalledTimes(2);
+    expect(component.paso()).toBe('datos');
+  });
+
+  it('AC-3: permite cambiar de banco después de un error', async () => {
+    api.consultar.and.rejectWith(new Error('SERVICIO_NO_DISPONIBLE'));
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.elegirBanco('Bancolombia');
+    await component.continuar();
+    fixture.detectChanges();
+    const botones = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ) as HTMLButtonElement[];
+    expect(botones.some((b) => b.textContent?.trim() === 'Cambiar de banco')).toBeTrue();
+    component.cambiarBanco();
+    fixture.detectChanges();
+    expect(component.paso()).toBe('banco');
+    expect((fixture.nativeElement.querySelector('#banco') as HTMLSelectElement).value).toBe('');
+  });
+
+  it('AC-2: muestra fecha de consulta del BFF en horario colombiano', async () => {
+    api.consultar.and.resolveTo(respuesta);
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.elegirBanco('Bancolombia');
+    await component.continuar();
+    fixture.detectChanges();
+    expect(component.fechaConsultaFormateada()).toContain('16 de octubre de 2026');
+    expect(fixture.nativeElement.textContent).toContain('Fecha de consulta:');
+  });
+
+  it('no presenta al cliente notas sobre otras historias', () => {
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('se implementa en otra historia');
   });
 });

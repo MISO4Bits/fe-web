@@ -210,7 +210,10 @@ describe('NuevaCotizacion BITS-219', () => {
     component.manual.saldoInsoluto = 1000000;
     component.manual.plazoMeses = 12;
     component.guardarManual();
-    expect(component.guardado().entidadAcreedora).toBe('BBVA Colombia');
+    const guardado = component.guardado();
+
+    expect(guardado).not.toBeNull();
+    expect(guardado?.entidadAcreedora).toBe('BBVA Colombia');
   });
 
   it('valida entidad, saldo y plazo antes de guardar el crédito manual', () => {

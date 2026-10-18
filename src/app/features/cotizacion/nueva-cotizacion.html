@@ -158,6 +158,30 @@
         <button type="button" class="secundario" (click)="cambiarBanco()">Cambiar de banco</button>
       </div>
       <form (ngSubmit)="guardarManual()" #formulario="ngForm" novalidate>
+        @if (
+          erroresCampo()['entidad'] ||
+          erroresCampo()['valor'] ||
+          erroresCampo()['saldo'] ||
+          erroresCampo()['plazo']
+        ) {
+          <div
+            role="alert"
+            style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0"
+          >
+            @if (erroresCampo()['entidad']; as error) {
+              <span>{{ error }}</span>
+            }
+            @if (erroresCampo()['valor']; as error) {
+              <span>{{ error }}</span>
+            }
+            @if (erroresCampo()['saldo']; as error) {
+              <span>{{ error }}</span>
+            }
+            @if (erroresCampo()['plazo']; as error) {
+              <span>{{ error }}</span>
+            }
+          </div>
+        }
         <div class="bloque-banco">
           <div class="seccion-label">TU BANCO</div>
           <p class="ayuda">
@@ -185,7 +209,7 @@
               required
             />
             @if (erroresCampo()['entidad']; as error) {
-              <span id="error-entidad" class="error-campo" role="alert">{{ error }}</span>
+              <span id="error-entidad" class="error-campo">{{ error }}</span>
             }
           </label>
         </div>
@@ -211,7 +235,7 @@
                 required
               />
               @if (erroresCampo()['valor']; as error) {
-                <span id="error-valor" class="error-campo" role="alert">{{ error }}</span>
+                <span id="error-valor" class="error-campo">{{ error }}</span>
               }
             </label>
             <label
@@ -232,7 +256,7 @@
                 required
               />
               @if (erroresCampo()['saldo']; as error) {
-                <span id="error-saldo" class="error-campo" role="alert">{{ error }}</span>
+                <span id="error-saldo" class="error-campo">{{ error }}</span>
               }
             </label>
             <label
@@ -254,7 +278,7 @@
                 required
               />
               @if (erroresCampo()['plazo']; as error) {
-                <span id="error-plazo" class="error-campo" role="alert">{{ error }}</span>
+                <span id="error-plazo" class="error-campo">{{ error }}</span>
               }
             </label>
           </div>

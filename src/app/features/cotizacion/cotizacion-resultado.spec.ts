@@ -78,16 +78,8 @@ describe('CotizacionResultado BITS-292', () => {
   it('muestra la prima base real del BFF en el modal', async () => {
     const fixture = await montar({
       ...cotizacion,
-      oferta: {
-        ...cotizacion.oferta,
-        personalizado: true,
-        primaBaseMensual: 27332,
-        fuentesNoDisponibles: [],
-      },
-      perfilRiesgo: {
-        nivelRiesgo: 'BAJO',
-        factores: [{ descripcion: 'Pagos', efecto: 'POSITIVO' }],
-      },
+      oferta: { ...cotizacion.oferta, personalizado: true, primaBaseMensual: 27332, fuentesNoDisponibles: [] },
+      perfilRiesgo: { nivelRiesgo: 'BAJO', factores: [{ descripcion: 'Pagos', efecto: 'POSITIVO' }] },
     });
     (fixture.nativeElement.querySelector('button.enlace') as HTMLButtonElement).click();
     fixture.detectChanges();

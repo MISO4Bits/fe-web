@@ -192,7 +192,9 @@
         <h3>Pagas {{ moneda.format(c.oferta.primaMensual) }} al mes</h3>
 
         <p>
-          {{ 'Tu prima incorpora el ajuste de tu perfil de riesgo.' }}
+          {{
+            'Tu prima incorpora el ajuste de tu perfil de riesgo.'
+          }}
         </p>
 
         @if (c.perfilRiesgo) {
@@ -208,10 +210,7 @@
           }
         }
 
-        <p>
-          La tarifa estándar para tu crédito es {{ moneda.format(c.oferta.primaBaseMensual) }} al
-          mes.
-        </p>
+        <p>La tarifa estándar para tu crédito es {{ moneda.format(c.oferta.primaBaseMensual) }} al mes.</p>
         <h3>No miramos tus saldos ni tus deudas exactas</h3>
         <p>
           Solo usamos el impacto de cada señal, nunca tus cifras. Puedes revocar el permiso cuando

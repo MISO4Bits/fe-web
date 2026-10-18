@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NuevaCotizacion } from './nueva-cotizacion';
+import { CotizacionApiService } from './cotizacion-api.service';
 import {
   CreditoHipotecarioService,
   CreditosHipotecariosRespuesta,
@@ -55,15 +56,22 @@ interface CotizacionTestAccess {
 
 describe('NuevaCotizacion BITS-219', () => {
   let api: jasmine.SpyObj<CreditoHipotecarioService>;
+  let cotizaciones: jasmine.SpyObj<CotizacionApiService>;
   beforeEach(async () => {
     api = jasmine.createSpyObj<CreditoHipotecarioService>('CreditoHipotecarioService', [
       'consultar',
       'tieneConsentimientoFinanciero',
     ]);
     api.tieneConsentimientoFinanciero.and.resolveTo(true);
+    cotizaciones = jasmine.createSpyObj<CotizacionApiService>('CotizacionApiService', ['crear']);
+    cotizaciones.crear.and.resolveTo({} as Awaited<ReturnType<CotizacionApiService['crear']>>);
     await TestBed.configureTestingModule({
       imports: [NuevaCotizacion],
-      providers: [provideRouter([]), { provide: CreditoHipotecarioService, useValue: api }],
+      providers: [
+        provideRouter([]),
+        { provide: CreditoHipotecarioService, useValue: api },
+        { provide: CotizacionApiService, useValue: cotizaciones },
+      ],
     }).compileComponents();
   });
 
@@ -74,7 +82,7 @@ describe('NuevaCotizacion BITS-219', () => {
     expect(fixture.nativeElement.querySelector('button.primario').disabled).toBeTrue();
   });
 
-  it('muestra datos verificados para la entidad seleccionada', async () => {
+  it('envía los datos verificados para la entidad seleccionada', async () => {
     api.consultar.and.resolveTo(respuesta);
     const fixture = TestBed.createComponent(NuevaCotizacion);
     const component = fixture.componentInstance as unknown as {
@@ -87,8 +95,13 @@ describe('NuevaCotizacion BITS-219', () => {
     await component.continuar();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Tu crédito hipotecario');
-    component.guardarVerificado();
-    expect(component.guardado()?.origen).toBe('VERIFICADO');
+    await component.guardarVerificado();
+    expect(cotizaciones.crear).toHaveBeenCalledOnceWith({
+      entidadAcreedora: 'Bancolombia',
+      valorCredito: 90000000,
+      saldoInsoluto: 50000000,
+      plazoRestanteMeses: 120,
+    });
   });
 
   it('muestra un modal con indicador de carga mientras consulta al banco', async () => {
@@ -181,7 +194,7 @@ describe('NuevaCotizacion BITS-219', () => {
     expect(component.mensaje()).toBe('');
   });
 
-  it('guarda datos declarados válidos para un banco no listado', () => {
+  it('envía datos declarados válidos para un banco no listado', async () => {
     const component = TestBed.createComponent(NuevaCotizacion)
       .componentInstance as unknown as CotizacionTestAccess;
     component.elegirBanco('__OTRO__');
@@ -190,21 +203,17 @@ describe('NuevaCotizacion BITS-219', () => {
     component.manual.valorCredito = 80000000;
     component.manual.saldoInsoluto = 40000000;
     component.manual.plazoMeses = 180;
-    component.guardarManual();
+    await component.guardarManual();
     expect(component.errores()).toEqual([]);
-    expect(component.guardado()).toEqual(
-      jasmine.objectContaining({
-        entidadAcreedora: 'Banco de prueba',
-        origen: 'DECLARADO',
-        fechaConsulta: null,
-        valorCredito: 80000000,
-        saldoInsoluto: 40000000,
-        plazoMeses: 180,
-      }),
-    );
+    expect(cotizaciones.crear).toHaveBeenCalledOnceWith({
+      entidadAcreedora: 'Banco de prueba',
+      valorCredito: 80000000,
+      saldoInsoluto: 40000000,
+      plazoRestanteMeses: 180,
+    });
   });
 
-  it('mantiene el banco seleccionado al guardar datos declarados', () => {
+  it('mantiene el banco seleccionado al enviar datos declarados', async () => {
     const component = TestBed.createComponent(NuevaCotizacion)
       .componentInstance as unknown as CotizacionTestAccess;
     component.elegirBanco('BBVA Colombia');
@@ -214,11 +223,13 @@ describe('NuevaCotizacion BITS-219', () => {
     component.manual.valorCredito = 10000000;
     component.manual.saldoInsoluto = 1000000;
     component.manual.plazoMeses = 12;
-    component.guardarManual();
-    const guardado = component.guardado();
-
-    expect(guardado).not.toBeNull();
-    expect(guardado?.entidadAcreedora).toBe('BBVA Colombia');
+    await component.guardarManual();
+    expect(cotizaciones.crear).toHaveBeenCalledOnceWith({
+      entidadAcreedora: 'BBVA Colombia',
+      valorCredito: 10000000,
+      saldoInsoluto: 1000000,
+      plazoRestanteMeses: 12,
+    });
   });
 
   it('valida entidad, saldo y plazo antes de guardar el crédito manual', () => {
@@ -362,7 +373,7 @@ describe('NuevaCotizacion BITS-219', () => {
     );
   });
 
-  it('AC-5: permite saldo igual al monto original', () => {
+  it('AC-5: permite saldo igual al monto original', async () => {
     const component = TestBed.createComponent(NuevaCotizacion)
       .componentInstance as unknown as CotizacionTestAccess;
     component.usarManual();
@@ -370,9 +381,14 @@ describe('NuevaCotizacion BITS-219', () => {
     component.manual.valorCredito = 200000000;
     component.manual.saldoInsoluto = 200000000;
     component.manual.plazoMeses = 180;
-    component.guardarManual();
+    await component.guardarManual();
     expect(component.erroresCampo()['saldo']).toBeUndefined();
-    expect(component.guardado()?.origen).toBe('DECLARADO');
+    expect(cotizaciones.crear).toHaveBeenCalledOnceWith({
+      entidadAcreedora: 'Otra entidad',
+      valorCredito: 200000000,
+      saldoInsoluto: 200000000,
+      plazoRestanteMeses: 180,
+    });
   });
 
   it('AC-5: marca errores por campo y los limpia al corregir el valor', () => {

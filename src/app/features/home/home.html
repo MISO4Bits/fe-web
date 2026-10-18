@@ -1,21 +1,53 @@
 <section class="home">
-  <h1>Todavía no tienes seguros</h1>
+  <h1>{{ cotizacionActual() ? 'Tienes una cotización en curso' : 'Todavía no tienes seguros' }}</h1>
   <p class="intro">
-    Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.
+    {{
+      cotizacionActual()
+        ? 'Aquí vas a ver tus seguros. Tu cotización sigue abierta, puedes retomarla cuando quieras.'
+        : 'Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.'
+    }}
   </p>
 
-  <p class="section-label">MIS SEGUROS</p>
-  <section class="insurance-card" aria-label="Mis seguros">
-    <div class="card-copy">
-      <h2>Todavía no tienes seguros ni cotizaciones</h2>
-      <p>
-        Cotiza el seguro de tu crédito hipotecario. Buscamos los datos de tu crédito en tu banco y
-        te damos un precio preparado.
-      </p>
+  @if (errorCotizacion()) {
+    <div class="insurance-card" role="alert">
+      <div class="card-copy">
+        <h2>No pudimos consultar tus cotizaciones</h2>
+        <p>Comprueba tu conexión e inténtalo de nuevo.</p>
+      </div>
+      <button class="primary" type="button" (click)="cargarCotizacion()">Reintentar</button>
     </div>
-    <a class="primary" [routerLink]="rutas.nuevaCotizacion">Cotizar mi seguro</a>
-  </section>
-
+  }
+  <p class="section-label">MIS SEGUROS</p>
+  @if (cotizacionActual(); as c) {
+    <a
+      class="insurance-card quote-card"
+      routerLink="/cuenta/cotizaciones/actual"
+      aria-label="Retomar cotización vigente"
+    >
+      <div class="card-copy">
+        <span class="escudo" aria-hidden="true">♢</span>
+        <h2>Vida deudores</h2>
+        <p>
+          Crédito con {{ c.datosCredito.entidadAcreedora }} · saldo
+          {{ moneda.format(c.datosCredito.saldoInsoluto) }}
+        </p>
+        <strong class="prima-home">{{ moneda.format(c.oferta.primaMensual) }} al mes</strong>
+      </div>
+      <span class="etiqueta-cotizacion">Cotización</span>
+    </a>
+  }
+  @if (!cotizacionActual() && !errorCotizacion() && !cargandoCotizacion()) {
+    <section class="insurance-card" aria-label="Mis seguros">
+      <div class="card-copy">
+        <h2>Todavía no tienes seguros ni cotizaciones</h2>
+        <p>
+          Cotiza el seguro de tu crédito hipotecario. Buscamos los datos de tu crédito en tu banco y
+          te damos un precio preparado.
+        </p>
+      </div>
+      <a class="primary" [routerLink]="rutas.nuevaCotizacion">Cotizar mi seguro</a>
+    </section>
+  }
   <p class="section-label quick-label">ACCESOS RÁPIDOS</p>
   <a class="quick-card" [routerLink]="rutas.nuevaCotizacion">
     <span class="plus" aria-hidden="true">＋</span>

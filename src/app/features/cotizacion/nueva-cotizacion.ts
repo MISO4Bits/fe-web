@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { CotizacionApiService } from './cotizacion-api.service';
 import {
   CreditoHipotecario,
   CreditoHipotecarioService,
@@ -33,6 +35,10 @@ interface DatosCotizacion {
 })
 export class NuevaCotizacion {
   private readonly api = inject(CreditoHipotecarioService);
+  private readonly cotizaciones = inject(CotizacionApiService);
+  private readonly router = inject(Router);
+  protected readonly enviando = signal(false);
+  protected readonly errorCotizacion = signal('');
   protected readonly paso = signal<Paso>('banco');
   protected readonly entidad = signal('');
   protected readonly bancoNoListado = '__OTRO__';
@@ -193,10 +199,10 @@ export class NuevaCotizacion {
     return this.puedeReintentar() ? this.continuar() : Promise.resolve();
   }
 
-  protected guardarVerificado(): void {
+  protected async guardarVerificado(): Promise<void> {
     const credito = this.credito();
     if (!credito) return;
-    this.guardado.set({
+    await this.crearCotizacion({
       entidadAcreedora: credito.entidadNombre,
       valorCredito: credito.valorCredito,
       saldoInsoluto: credito.saldoInsoluto,
@@ -206,7 +212,7 @@ export class NuevaCotizacion {
     });
   }
 
-  protected guardarManual(): void {
+  protected async guardarManual(): Promise<void> {
     const d = this.manual;
     const campos: Record<string, string> = {};
     if (d.entidadAcreedora.trim().length < 2 || d.entidadAcreedora.trim().length > 80)
@@ -232,7 +238,7 @@ export class NuevaCotizacion {
     const errores = Object.values(campos);
     this.errores.set(errores);
     if (errores.length) return;
-    this.guardado.set({
+    await this.crearCotizacion({
       entidadAcreedora: this.bancoFijado() ? this.entidad() : d.entidadAcreedora.trim(),
       valorCredito: d.valorCredito!,
       saldoInsoluto: d.saldoInsoluto!,
@@ -240,5 +246,23 @@ export class NuevaCotizacion {
       origen: 'DECLARADO',
       fechaConsulta: null,
     });
+  }
+  private async crearCotizacion(datos: DatosCotizacion): Promise<void> {
+    if (this.enviando()) return;
+    this.enviando.set(true);
+    this.errorCotizacion.set('');
+    try {
+      await this.cotizaciones.crear({
+        entidadAcreedora: datos.entidadAcreedora,
+        valorCredito: datos.valorCredito,
+        saldoInsoluto: datos.saldoInsoluto,
+        plazoRestanteMeses: datos.plazoMeses,
+      });
+      await this.router.navigateByUrl('/cuenta/cotizaciones/actual');
+    } catch {
+      this.errorCotizacion.set('No pudimos generar tu cotización. Inténtalo nuevamente.');
+    } finally {
+      this.enviando.set(false);
+    }
   }
 }

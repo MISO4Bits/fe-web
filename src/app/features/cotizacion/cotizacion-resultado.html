@@ -1,0 +1,229 @@
+<section class="resultado">
+  @if (cargando()) {
+    <p role="status">Consultando tu cotización...</p>
+  } @else if (error()) {
+    <p role="alert">{{ error() }}</p>
+    <button class="boton" type="button" (click)="cargar()">Reintentar</button>
+  } @else if (cotizacion(); as c) {
+    <nav class="pasos" aria-label="Progreso de cotización">
+      <span class="completado">✓ <small>Tus datos</small></span
+      ><i></i><span class="completado">✓ <small>Tu correo</small></span
+      ><i></i><span class="activo">3 <small>Tu cotización</small></span
+      ><i></i><span class="pendiente">4 <small>Firma</small></span>
+    </nav>
+    <div class="columnas">
+      <main class="principal">
+        <h1>Seguro de vida deudores</h1>
+        <div class="precio">{{ moneda.format(c.oferta.primaMensual) }} <span>al mes</span></div>
+        @if (estadoVista === '04') {
+          <p class="descripcion">
+            Se suma a la cuota de tu crédito. Calculado sobre un saldo de
+            {{ moneda.format(c.datosCredito.saldoInsoluto) }} con
+            {{ c.datosCredito.entidadAcreedora }}.
+          </p>
+        } @else if (datosVerificados) {
+          <p class="descripcion">Precio estimado. Los datos de tu crédito vienen de tu banco.</p>
+        } @else {
+          <p class="descripcion">
+            Precio estimado. Lo calculamos con los datos de crédito que tú declaraste.
+          </p>
+        }
+        <article class="panel datos-credito" aria-label="Datos de tu crédito">
+          <h2>Datos de tu crédito</h2>
+          <dl>
+            <div>
+              <dt>Entidad acreedora</dt>
+              <dd>{{ c.datosCredito.entidadAcreedora }}</dd>
+            </div>
+            <div>
+              <dt>Valor del crédito</dt>
+              <dd>{{ moneda.format(c.datosCredito.valorCredito) }}</dd>
+            </div>
+            <div>
+              <dt>Saldo insoluto</dt>
+              <dd>{{ moneda.format(c.datosCredito.saldoInsoluto) }}</dd>
+            </div>
+            <div>
+              <dt>Plazo restante</dt>
+              <dd>{{ c.datosCredito.plazoRestanteMeses }} meses</dd>
+            </div>
+          </dl>
+        </article>
+        <article class="panel cobertura">
+          <span class="pill">Va siempre</span>
+          <h2>Vida para tu crédito</h2>
+          <p>
+            Si algún día tú no puedes seguir pagando, porque faltas o porque quedas incapacitado,
+            nosotros saldamos con el banco lo que quede del crédito. Tu familia se queda con la
+            casa.
+          </p>
+          <div class="suma">
+            <span>Cuánto cubrimos hoy</span
+            ><strong>{{ moneda.format(c.oferta.sumaAsegurada) }}</strong>
+          </div>
+          <small>Va bajando a medida que abonas a tu crédito.</small>
+        </article>
+        @if (estadoVista === '04') {
+          <div class="aviso azul">
+            Después te mostramos el documento para firmar y lo subes aquí mismo. No pagas nada aquí:
+            el seguro se cobra cada mes con la cuota de tu crédito.
+          </div>
+        } @else if (estadoVista === '04H') {
+          <div class="aviso azul">
+            <strong>Estamos analizando tu perfil</strong>
+            <p>
+              Cuando termine te avisamos y tu precio queda preaprobado. No tienes que hacer nada.
+            </p>
+          </div>
+        } @else if (estadoVista === '04G') {
+          <div class="aviso azul">
+            <strong>Falta confirmar los datos de tu crédito</strong>
+            <p>
+              Ahora usamos lo que tú declaraste. Si los traemos desde tu banco, el precio queda
+              preaprobado y no cambia después.
+            </p>
+          </div>
+        } @else if (estadoVista === 'SIN_AUTORIZACION') {
+          <div class="aviso azul">
+            <strong>Esta cotización usa la tarifa estándar</strong>
+            <p>
+              No autorizaste la consulta de tus datos financieros, así que tu precio no considera tu
+              historial. Si la autorizas, tu precio puede bajar.
+            </p>
+          </div>
+        } @else {
+          <div class="aviso azul">
+            <strong>Esta cotización es estimada</strong>
+            <p>
+              Estamos analizando tu perfil. Para que el precio quede preaprobado también necesitamos
+              los datos de tu crédito desde tu banco.
+            </p>
+          </div>
+        }
+      </main>
+      <aside class="lateral">
+        <article class="desglose">
+          <div>
+            <span>Vida para tu crédito</span>
+            <strong>{{ moneda.format(c.oferta.primaMensual) }}/mes</strong>
+          </div>
+          <div class="total">
+            <strong>Pagas cada mes</strong>
+            <strong>{{ moneda.format(c.oferta.primaMensual) }}</strong>
+          </div>
+          <small>Se cobra con la cuota de tu crédito.</small>
+        </article>
+        @if (estadoVista === '04') {
+          <label class="condiciones panel"
+            ><input
+              type="checkbox"
+              [checked]="aceptaCondiciones()"
+              (change)="aceptaCondiciones.set(!aceptaCondiciones())"
+            /><span
+              >He leído y acepto las condiciones del seguro<br /><a href="#condiciones"
+                >Leer las condiciones</a
+              ></span
+            ></label
+          ><button
+            type="button"
+            class="boton"
+            [disabled]="!aceptaCondiciones()"
+            title="La firma corresponde a otra historia"
+          >
+            Continuar
+          </button>
+        } @else if (estadoVista === '04H') {
+          <div class="aviso amarillo">
+            <strong>Tu cotización queda en espera</strong>
+            <p>
+              Te avisamos apenas tengamos el resultado. Mientras tanto no puedes subir documentos ni
+              pagar.
+            </p>
+          </div>
+          <a routerLink="/cuenta" class="boton">Ir a mis seguros</a>
+        } @else if (estadoVista === 'SIN_AUTORIZACION') {
+          <div class="aviso amarillo">
+            <strong>Para continuar necesitamos tu autorización</strong>
+            <p>
+              Autoriza la consulta de tus datos financieros y trae tu crédito desde tu banco.
+              Mientras tanto no puedes subir documentos ni firmar.
+            </p>
+          </div>
+          <a routerLink="/cuenta" class="boton">Ir a mis seguros</a>
+        } @else {
+          <div class="aviso amarillo">
+            <strong>{{
+              estadoVista === '04G'
+                ? 'Para continuar necesitamos los datos de tu banco'
+                : 'Trae tu crédito desde tu banco'
+            }}</strong>
+            <p>
+              {{
+                estadoVista === '04G'
+                  ? 'Busca tu crédito en tu banco y confirmamos monto, saldo y plazo. Mientras tanto no puedes subir documentos ni pagar.'
+                  : 'Tu perfil está en análisis y te avisamos cuando termine. Mientras tanto no puedes subir documentos ni pagar.'
+              }}
+            </p>
+          </div>
+          <a routerLink="/cuenta/cotizaciones/nueva" class="boton">Buscar mi crédito en el banco</a>
+        }
+        @if (personalizado) {
+          <button type="button" class="enlace" (click)="abrirExplicacion()">
+            ¿Por qué este precio?
+          </button>
+        }
+      </aside>
+    </div>
+  } @else {
+    <h1>Todavía no tienes cotizaciones</h1>
+    <p>Empieza cotizando el seguro de tu crédito hipotecario.</p>
+    <a class="boton" routerLink="/cuenta/cotizaciones/nueva">Cotizar mi seguro</a>
+  }
+</section>
+
+@if (mostrarExplicacion() && personalizado) {
+  @if (cotizacion(); as c) {
+    <div class="velo">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-precio">
+        <p class="etiqueta">TU PRECIO PERSONALIZADO</p>
+
+        <h2 id="modal-precio">¿Por qué este precio?</h2>
+
+        <h3>Pagas {{ moneda.format(c.oferta.primaMensual) }} al mes</h3>
+
+        <p>
+          {{
+            personalizado
+              ? 'Tu prima incorpora el ajuste de tu perfil de riesgo.'
+              : 'Es la tarifa estándar para tu crédito.'
+          }}
+        </p>
+
+        @if (personalizado && c.perfilRiesgo) {
+          @for (factor of c.perfilRiesgo.factores; track $index) {
+            <h3>{{ factor.descripcion }}</h3>
+            <p>
+              {{
+                factor.efecto === 'POSITIVO'
+                  ? 'Este factor favorece tu precio.'
+                  : 'Este factor puede aumentar tu precio.'
+              }}
+            </p>
+          }
+        } @else {
+          <h3>Tu historial no cambia tu precio</h3>
+          <p>Revisamos tus datos y ninguna señal lo sube ni lo baja.</p>
+          <p class="sr-only">Sin factores de personalización</p>
+        }
+
+        <h3>No miramos tus saldos ni tus deudas exactas</h3>
+        <p>
+          Solo usamos el impacto de cada señal, nunca tus cifras. Puedes revocar el permiso cuando
+          quieras.
+        </p>
+
+        <button class="boton" type="button" (click)="cerrarExplicacion()">Entendido</button>
+      </section>
+    </div>
+  }
+}

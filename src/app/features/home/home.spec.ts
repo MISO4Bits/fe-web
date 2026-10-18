@@ -75,6 +75,7 @@ describe('Home', () => {
     await montar(cotizacion);
     const texto = fixture.nativeElement.textContent as string;
     expect(texto).toContain('Tienes una cotización en curso');
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
     expect(texto).toContain('Bancolombia');
     expect(
       fixture.nativeElement

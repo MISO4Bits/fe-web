@@ -65,6 +65,35 @@ describe('CotizacionResultado BITS-292', () => {
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('¿Por qué este precio?');
   });
+  it('no atribuye ajuste ni abre explicación para un perfil neutro sin factores', async () => {
+    const fixture = await montar({
+      ...cotizacion,
+      oferta: { ...cotizacion.oferta, personalizado: true, fuentesNoDisponibles: [] },
+      perfilRiesgo: { nivelRiesgo: 'MEDIO', factores: [] },
+    });
+    expect(fixture.nativeElement.textContent).not.toContain('¿Por qué este precio?');
+    expect(fixture.nativeElement.textContent).not.toContain('Tu perfil sigue pendiente');
+  });
+
+  it('muestra la prima base real del BFF en el modal', async () => {
+    const fixture = await montar({
+      ...cotizacion,
+      oferta: {
+        ...cotizacion.oferta,
+        personalizado: true,
+        primaBaseMensual: 27332,
+        fuentesNoDisponibles: [],
+      },
+      perfilRiesgo: {
+        nivelRiesgo: 'BAJO',
+        factores: [{ descripcion: 'Pagos', efecto: 'POSITIVO' }],
+      },
+    });
+    (fixture.nativeElement.querySelector('button.enlace') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')?.textContent).toContain('27.332');
+  });
+
   it('muestra los factores cuando hay perfil personalizado', async () => {
     const fixture = await montar({
       ...cotizacion,

@@ -27,6 +27,11 @@ export class CotizacionResultado implements OnInit {
 
   protected get personalizado(): boolean {
     const c = this.cotizacion();
+    return !!(c?.oferta.personalizado && c.perfilRiesgo?.factores?.length);
+  }
+
+  protected get perfilDisponible(): boolean {
+    const c = this.cotizacion();
     return !!(c?.oferta.personalizado && c.perfilRiesgo);
   }
 
@@ -39,18 +44,18 @@ export class CotizacionResultado implements OnInit {
   protected get sinAutorizacionFinanciera(): boolean {
     return (
       this.cotizacion()?.oferta.fuentesNoDisponibles?.some((f) =>
-        /OPEN[_ -]?FINANCE|AUTORIZACI[ÓO]N|CONSENTIMIENTO/i.test(f),
+        /OPEN[_ -]?FINANCE|AUTORIZACI[ÓO]N|CONSENTIMIENTO|OPEN_FINANCE_NO_OTORGADO/i.test(f),
       ) ?? false
     );
   }
 
   protected get perfilPendiente(): boolean {
-    return !this.personalizado && !this.sinAutorizacionFinanciera;
+    return !this.perfilDisponible && !this.sinAutorizacionFinanciera;
   }
   protected get estadoVista(): '04' | '04F' | '04G' | '04H' | 'SIN_AUTORIZACION' {
     if (this.sinAutorizacionFinanciera) return 'SIN_AUTORIZACION';
-    if (this.personalizado && this.datosVerificados) return '04';
-    if (this.personalizado) return '04G';
+    if (this.perfilDisponible && this.datosVerificados) return '04';
+    if (this.perfilDisponible) return '04G';
     return this.datosVerificados ? '04H' : '04F';
   }
   protected abrirExplicacion(): void {

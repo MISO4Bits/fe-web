@@ -1,0 +1,320 @@
+.resultado {
+  max-width: 1180px;
+  margin: auto;
+  padding: 26px 28px 110px;
+  min-height: calc(100vh - 175px);
+  color: #192224;
+}
+.pasos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 38px;
+  color: #66777a;
+  font-size: 12px;
+}
+.pasos span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pasos span small {
+  font-size: 12px;
+}
+.pasos .completado,
+.pasos .activo {
+  background: #006e75;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+.pasos .completado small,
+.pasos .activo small {
+  position: absolute;
+  transform: translateX(60px);
+  color: #526265;
+  white-space: nowrap;
+  font-weight: 400;
+}
+.pasos .activo small {
+  color: #192224;
+  font-weight: 700;
+}
+.pasos i {
+  height: 1px;
+  width: 80px;
+  background: #d9e4e6;
+  margin: 0 46px 0 58px;
+}
+.pasos .pendiente {
+  border: 1px solid #d8e2e4;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  justify-content: center;
+}
+.pasos .pendiente small {
+  position: absolute;
+  transform: translateX(43px);
+  white-space: nowrap;
+}
+.columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+.principal h1 {
+  font-size: 28px;
+  margin: 0 0 10px;
+}
+.precio {
+  font-size: 50px;
+  line-height: 1.1;
+  color: #006d75;
+  font-weight: 750;
+}
+.precio span {
+  font-size: 20px;
+  color: #788284;
+  font-weight: 500;
+}
+.descripcion {
+  font-size: 13px;
+  color: #68797d;
+  margin: 16px 0 22px;
+  line-height: 1.5;
+}
+.panel {
+  background: white;
+  border: 1px solid #d9e3e5;
+  border-radius: 15px;
+  padding: 18px;
+  margin: 0 0 20px;
+}
+.cobertura {
+  padding: 18px 16px;
+}
+.pill {
+  background: #dceff0;
+  border-radius: 18px;
+  padding: 5px 24px;
+  color: #006e75;
+  font-size: 10px;
+  font-weight: 700;
+}
+.cobertura h2 {
+  font-size: 18px;
+  margin: 12px 0 5px;
+}
+.cobertura p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+.suma {
+  border-top: 1px solid #dce5e7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0 5px;
+  font-size: 12px;
+  color: #7a8587;
+}
+.suma strong {
+  font-size: 16px;
+  color: #00747a;
+}
+.cobertura small {
+  color: #839092;
+  font-size: 11px;
+}
+.aviso {
+  padding: 18px;
+  border-radius: 13px;
+  margin: 14px 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.aviso strong {
+  font-size: 13px;
+}
+.aviso p {
+  margin: 6px 0 0;
+}
+.azul {
+  background: #dce8fa;
+  color: #255684;
+}
+.amarillo {
+  background: #fff2d0;
+  color: #674b0d;
+  margin-top: 30px;
+}
+.etiqueta {
+  font-size: 11px;
+  color: #718082;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin: 0 0 9px;
+}
+.casa {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.casa input {
+  accent-color: #00737b;
+  margin-top: 5px;
+}
+.casa span {
+  flex: 1;
+}
+.casa span strong {
+  font-size: 14px;
+}
+.casa small {
+  display: block;
+  font-size: 12px;
+  color: #687477;
+  margin-top: 5px;
+}
+.casa-precio {
+  color: #00737b;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.desglose {
+  border: 1px solid #d9e3e5;
+  border-radius: 14px;
+  padding: 20px 16px;
+  margin-top: 22px;
+}
+.desglose > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+.desglose .total {
+  border-top: 1px solid #dce5e7;
+  padding-top: 20px;
+  align-items: center;
+  font-size: 17px;
+}
+.desglose .total strong:last-child {
+  font-size: 24px;
+  color: #006d75;
+}
+.desglose small {
+  font-size: 11px;
+  color: #879395;
+}
+.condiciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.condiciones input {
+  accent-color: #00747b;
+}
+.condiciones a {
+  color: #00747b;
+}
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #006d75;
+  color: white;
+  border: 0;
+  border-radius: 40px;
+  padding: 14px 22px;
+  text-decoration: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+.boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.enlace {
+  display: block;
+  border: 0;
+  background: none;
+  color: #00747b;
+  text-decoration: underline;
+  margin-top: 20px;
+  padding: 0;
+  cursor: pointer;
+  font-size: 12px;
+}
+.velo {
+  position: fixed;
+  inset: 0;
+  background: #0006;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.modal {
+  width: min(585px, 100%);
+  box-sizing: border-box;
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  color: #1c2526;
+  box-shadow: 0 18px 50px #0002;
+}
+.modal .etiqueta {
+  color: #00747b;
+}
+.modal h2 {
+  font-size: 26px;
+  margin: 10px 0 18px;
+}
+.modal h3 {
+  font-size: 14px;
+  margin: 16px 0 4px;
+}
+.modal p {
+  font-size: 13px;
+  color: #596467;
+  line-height: 1.5;
+  margin: 0 0 8px;
+}
+.modal .boton {
+  margin-top: 18px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+@media (max-width: 800px) {
+  .columnas {
+    grid-template-columns: 1fr;
+  }
+  .pasos {
+    overflow: auto;
+  }
+  .pasos i {
+    width: 20px;
+    margin: 0 20px;
+  }
+  .resultado {
+    padding: 25px 18px;
+  }
+  .precio {
+    font-size: 42px;
+  }
+}

@@ -1,4 +1,10 @@
 <section class="cotizacion">
+  @if (errorCotizacion()) {
+    <p class="aviso" role="alert">{{ errorCotizacion() }}</p>
+  }
+  @if (enviando()) {
+    <p role="status">Calculando tu cotización...</p>
+  }
   @if (guardado(); as datos) {
     <div class="contenido">
       <h1>Datos de tu crédito</h1>
@@ -132,7 +138,12 @@
           coincide, pídele la actualización a tu banco: volvemos a consultar cada 24 horas.
         </p>
       </div>
-      <button class="primario boton-cotizar" type="button" (click)="guardarVerificado()">
+      <button
+        class="primario boton-cotizar"
+        type="button"
+        [disabled]="enviando()"
+        (click)="guardarVerificado()"
+      >
         Ver mi cotización
       </button>
     </div>
@@ -300,7 +311,9 @@
             </p>
           </div>
         </div>
-        <button class="primario boton-cotizar" type="submit">Ver mi cotización</button>
+        <button class="primario boton-cotizar" type="submit" [disabled]="enviando()">
+          Ver mi cotización
+        </button>
       </form>
     </div>
   }

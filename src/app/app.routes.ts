@@ -87,6 +87,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/cotizacion/nueva-cotizacion').then((m) => m.NuevaCotizacion),
       },
+      {
+        path: 'cotizaciones/actual',
+        title: 'Tu cotización · Solventa',
+        loadComponent: () =>
+          import('./features/cotizacion/cotizacion-resultado').then((m) => m.CotizacionResultado),
+      },
       pendiente('cotizaciones/:id', 'Tu cotización', '04 Cotización', 'BITS-264'),
     ],
   },

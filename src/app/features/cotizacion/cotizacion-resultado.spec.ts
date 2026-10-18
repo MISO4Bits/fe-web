@@ -52,20 +52,18 @@ describe('CotizacionResultado BITS-292', () => {
     expect(texto).toContain('tarifa estándar');
     expect(texto).toContain('datos de crédito que tú declaraste');
     expect(texto).toContain('no considera tu historial');
+    expect(texto).toContain('BBVA Colombia');
+    expect(texto).toContain('180 meses');
+    expect(texto).not.toContain('Pendiente de cálculo');
+    expect(texto).not.toContain('28.274');
   });
-  it('abre y cierra explicación del precio sin factores', async () => {
+  it('no ofrece explicación personalizada sin perfil', async () => {
     const fixture = await montar(cotizacion);
-    const componente = fixture.componentInstance as unknown as {
-      abrirExplicacion(): void;
-      cerrarExplicacion(): void;
-    };
+    const componente = fixture.componentInstance as unknown as { abrirExplicacion(): void };
     componente.abrirExplicacion();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="dialog"]')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).toContain('Sin factores de personalización');
-    componente.cerrarExplicacion();
-    fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('¿Por qué este precio?');
   });
   it('muestra los factores cuando hay perfil personalizado', async () => {
     const fixture = await montar({
@@ -123,6 +121,12 @@ describe('CotizacionResultado BITS-292', () => {
     ).toBeTrue();
   });
 
+  it('no presenta una cotización expirada como vigente', async () => {
+    const fixture = await montar({ ...cotizacion, estado: 'EXPIRADA' });
+    expect(fixture.nativeElement.textContent).toContain('Todavía no tienes cotizaciones');
+    expect(fixture.nativeElement.textContent).not.toContain('Seguro de vida deudores');
+  });
+
   it('muestra el error de carga y ofrece reintentar', async () => {
     const api = jasmine.createSpyObj<CotizacionApiService>('CotizacionApiService', ['actual']);
     api.actual.and.rejectWith(new Error('sin conexión'));
@@ -144,7 +148,14 @@ describe('CotizacionResultado BITS-292', () => {
   });
 
   it('cierra el modal mediante el botón Entendido', async () => {
-    const fixture = await montar(cotizacion);
+    const fixture = await montar({
+      ...cotizacion,
+      oferta: { ...cotizacion.oferta, personalizado: true },
+      perfilRiesgo: {
+        nivelRiesgo: 'BAJO',
+        factores: [{ descripcion: 'Historial de pagos', efecto: 'POSITIVO' }],
+      },
+    });
     const botones = Array.from(
       fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
     );

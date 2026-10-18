@@ -28,6 +28,27 @@
             Precio estimado. Lo calculamos con los datos de crédito que tú declaraste.
           </p>
         }
+        <article class="panel datos-credito" aria-label="Datos de tu crédito">
+          <h2>Datos de tu crédito</h2>
+          <dl>
+            <div>
+              <dt>Entidad acreedora</dt>
+              <dd>{{ c.datosCredito.entidadAcreedora }}</dd>
+            </div>
+            <div>
+              <dt>Valor del crédito</dt>
+              <dd>{{ moneda.format(c.datosCredito.valorCredito) }}</dd>
+            </div>
+            <div>
+              <dt>Saldo insoluto</dt>
+              <dd>{{ moneda.format(c.datosCredito.saldoInsoluto) }}</dd>
+            </div>
+            <div>
+              <dt>Plazo restante</dt>
+              <dd>{{ c.datosCredito.plazoRestanteMeses }} meses</dd>
+            </div>
+          </dl>
+        </article>
         <article class="panel cobertura">
           <span class="pill">Va siempre</span>
           <h2>Vida para tu crédito</h2>
@@ -81,38 +102,16 @@
         }
       </main>
       <aside class="lateral">
-        <p class="etiqueta">AGREGA COBERTURAS</p>
-        <label class="casa panel"
-          ><input
-            type="checkbox"
-            [checked]="incluirCasa()"
-            (change)="incluirCasa.set(!incluirCasa())"
-          /><span
-            ><strong>Tu casa</strong
-            ><small>Incendio y terremoto de la estructura, que es la garantía del crédito.</small
-            ><small>Cubrimos hasta $240.000.000</small></span
-          ><strong class="casa-precio">+ $28.274/mes</strong
-          ><span aria-hidden="true">{{ incluirCasa() ? '−' : '+' }}</span></label
-        >
         <article class="desglose">
           <div>
-            <span>Vida para tu crédito</span
-            ><strong>{{ moneda.format(c.oferta.primaMensual) }}/mes</strong>
-          </div>
-          <div>
-            <span>Tu casa</span
-            ><strong>{{ incluirCasa() ? 'Pendiente de cálculo' : '$0/mes' }}</strong>
-          </div>
-          <div>
-            <span>IVA</span><strong>{{ incluirCasa() ? 'Pendiente de cálculo' : '$0/mes' }}</strong>
+            <span>Vida para tu crédito</span>
+            <strong>{{ moneda.format(c.oferta.primaMensual) }}/mes</strong>
           </div>
           <div class="total">
-            <strong>Pagas cada mes</strong
-            ><strong>{{
-              incluirCasa() ? 'Pendiente de cálculo' : moneda.format(c.oferta.primaMensual)
-            }}</strong>
+            <strong>Pagas cada mes</strong>
+            <strong>{{ moneda.format(c.oferta.primaMensual) }}</strong>
           </div>
-          <small>Se cobra con la cuota de tu crédito. Cambia según lo que marques arriba.</small>
+          <small>Se cobra con la cuota de tu crédito.</small>
         </article>
         @if (estadoVista === '04') {
           <label class="condiciones panel"
@@ -168,9 +167,11 @@
           </div>
           <a routerLink="/cuenta/cotizaciones/nueva" class="boton">Buscar mi crédito en el banco</a>
         }
-        <button type="button" class="enlace" (click)="abrirExplicacion()">
-          ¿Por qué este precio?
-        </button>
+        @if (personalizado) {
+          <button type="button" class="enlace" (click)="abrirExplicacion()">
+            ¿Por qué este precio?
+          </button>
+        }
       </aside>
     </div>
   } @else {
@@ -180,7 +181,7 @@
   }
 </section>
 
-@if (mostrarExplicacion()) {
+@if (mostrarExplicacion() && personalizado) {
   @if (cotizacion(); as c) {
     <div class="velo">
       <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-precio">

@@ -8,6 +8,15 @@
     }}
   </p>
 
+  @if (errorCotizacion()) {
+    <div class="insurance-card" role="alert">
+      <div class="card-copy">
+        <h2>No pudimos consultar tus cotizaciones</h2>
+        <p>Comprueba tu conexión e inténtalo de nuevo.</p>
+      </div>
+      <button class="primary" type="button" (click)="cargarCotizacion()">Reintentar</button>
+    </div>
+  }
   <p class="section-label">MIS SEGUROS</p>
   @if (cotizacionActual(); as c) {
     <a
@@ -27,7 +36,7 @@
       <span class="etiqueta-cotizacion">Cotización</span>
     </a>
   }
-  @if (!cotizacionActual()) {
+  @if (!cotizacionActual() && !errorCotizacion() && !cargandoCotizacion()) {
     <section class="insurance-card" aria-label="Mis seguros">
       <div class="card-copy">
         <h2>Todavía no tienes seguros ni cotizaciones</h2>

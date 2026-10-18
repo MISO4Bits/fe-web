@@ -318,3 +318,22 @@
     font-size: 42px;
   }
 }
+
+.datos-credito dl {
+  margin: 12px 0 0;
+  display: grid;
+  gap: 10px;
+}
+.datos-credito dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.datos-credito dt {
+  color: #58676a;
+}
+.datos-credito dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}

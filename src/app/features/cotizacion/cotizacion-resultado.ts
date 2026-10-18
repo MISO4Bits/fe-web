@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.service';
 
@@ -8,21 +8,20 @@ import { CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.serv
   templateUrl: './cotizacion-resultado.html',
   styleUrl: './cotizacion-resultado.scss',
 })
-export class CotizacionResultado {
+export class CotizacionResultado implements OnInit {
   private readonly api = inject(CotizacionApiService);
   protected readonly cotizacion = signal<CotizacionRespuesta | null>(null);
   protected readonly cargando = signal(true);
   protected readonly error = signal('');
   protected readonly mostrarExplicacion = signal(false);
   protected readonly aceptaCondiciones = signal(false);
-  protected readonly incluirCasa = signal(false);
   protected readonly moneda = new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
     maximumFractionDigits: 0,
   });
 
-  constructor() {
+  ngOnInit(): void {
     void this.cargar();
   }
 
@@ -55,7 +54,7 @@ export class CotizacionResultado {
     return this.datosVerificados ? '04H' : '04F';
   }
   protected abrirExplicacion(): void {
-    this.mostrarExplicacion.set(true);
+    if (this.personalizado) this.mostrarExplicacion.set(true);
   }
   protected cerrarExplicacion(): void {
     this.mostrarExplicacion.set(false);
@@ -65,7 +64,8 @@ export class CotizacionResultado {
     this.cargando.set(true);
     this.error.set('');
     try {
-      this.cotizacion.set(await this.api.actual());
+      const actual = await this.api.actual();
+      this.cotizacion.set(actual?.estado === 'EXPIRADA' ? null : actual);
     } catch {
       this.error.set('No fue posible cargar tu cotización.');
     } finally {

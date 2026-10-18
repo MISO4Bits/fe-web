@@ -62,6 +62,48 @@ function simularCreditos(page: Page, responder: (route: Route, intento: number) 
   });
 }
 
+// Desde BITS-95, "Ver mi cotización" crea la cotización y abre /cuenta/cotizaciones/actual.
+// Se simula el BFF: el POST guarda la cotización y el GET de la activa la devuelve.
+async function simularCotizacion(page: Page) {
+  const enviadas: unknown[] = [];
+  let activa: object | null = null;
+  await page.route('**/v1/cotizaciones/actual', (route) =>
+    activa === null
+      ? route.fulfill({ status: 404, json: { code: 'NO_ENCONTRADO' } })
+      : route.fulfill({ json: activa }),
+  );
+  await page.route('**/v1/cotizaciones', (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    const cuerpo = route.request().postDataJSON();
+    enviadas.push(cuerpo);
+    activa = cotizacionDe(cuerpo.datosCredito);
+    return route.fulfill({ status: 201, json: activa });
+  });
+  return enviadas;
+}
+
+function cotizacionDe(datosCredito: { saldoInsoluto: number; plazoRestanteMeses: number }) {
+  return {
+    estado: 'VIGENTE',
+    producto: 'VIDA_HIPOTECARIO',
+    datosCredito,
+    origenDatos: 'DECLARADO',
+    oferta: {
+      primaMensual: 46746,
+      primaBaseMensual: 46746,
+      sumaAsegurada: datosCredito.saldoInsoluto,
+      coberturaMeses: datosCredito.plazoRestanteMeses,
+      moneda: 'COP',
+      personalizado: false,
+      fuentesNoDisponibles: [],
+      desglose: { coberturas: [] },
+    },
+    perfilRiesgo: null,
+    vigenciaCotizacion: { desde: '2026-10-18T14:35:00Z', hasta: '2026-11-17T14:35:00Z' },
+    creadaEn: '2026-10-18T14:35:00Z',
+  };
+}
+
 async function abrirNuevaCotizacion(page: Page) {
   await page.goto('/');
   await page.locator('#correo-login').fill('usuario@example.com');
@@ -82,13 +124,14 @@ async function buscarCredito(page: Page, banco: string) {
   await page.getByRole('button', { name: 'Buscar mi crédito' }).click();
 }
 
-test('consulta exitosa: muestra el crédito traído del banco, de solo lectura y con su origen', async ({
+test('consulta exitosa: muestra el crédito traído del banco, de solo lectura y con su origen, y cotiza con esos datos', async ({
   page,
 }) => {
   await simularSesion(page);
   await simularCreditos(page, (route) =>
     route.fulfill({ json: respuestaCreditos('DISPONIBLE', [CREDITO_BANCOLOMBIA]) }),
   );
+  const cotizaciones = await simularCotizacion(page);
   await abrirNuevaCotizacion(page);
   await buscarCredito(page, 'Bancolombia');
 
@@ -100,7 +143,18 @@ test('consulta exitosa: muestra el crédito traído del banco, de solo lectura y
   await expect(page.locator('#entidad-verificada')).toHaveAttribute('readonly', '');
 
   await page.getByRole('button', { name: 'Ver mi cotización' }).click();
-  await expect(page.getByText('Verificado con tu banco')).toBeVisible();
+  await expect(page).toHaveURL(/\/cuenta\/cotizaciones\/actual$/);
+  await expect(page.getByRole('heading', { name: 'Seguro de vida deudores' })).toBeVisible();
+  expect(cotizaciones).toEqual([
+    {
+      datosCredito: {
+        entidadAcreedora: 'Bancolombia',
+        valorCredito: 250000000,
+        saldoInsoluto: 180000000,
+        plazoRestanteMeses: 168,
+      },
+    },
+  ]);
 });
 
 test('consulta exitosa: muestra la fecha de la consulta (BITS-219 AC-2)', async ({ page }) => {
@@ -214,6 +268,7 @@ test('banco que no está en la lista: escribe la entidad y los datos, y quedan c
   page,
 }) => {
   await simularSesion(page);
+  const cotizaciones = await simularCotizacion(page);
   await abrirNuevaCotizacion(page);
   await page.locator('#banco').selectOption('__OTRO__');
 
@@ -228,9 +283,20 @@ test('banco que no está en la lista: escribe la entidad y los datos, y quedan c
   await page.locator('#plazo').fill('120');
   await page.getByRole('button', { name: 'Ver mi cotización' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Datos de tu crédito' })).toBeVisible();
-  await expect(page.getByText('Cooperativa Confiar')).toBeVisible();
-  await expect(page.getByText('Declarado por ti')).toBeVisible();
+  await expect(page).toHaveURL(/\/cuenta\/cotizaciones\/actual$/);
+  await expect(
+    page.getByText('Lo calculamos con los datos de crédito que tú declaraste', { exact: false }),
+  ).toBeVisible();
+  expect(cotizaciones).toEqual([
+    {
+      datosCredito: {
+        entidadAcreedora: 'Cooperativa Confiar',
+        valorCredito: 120000000,
+        saldoInsoluto: 95000000,
+        plazoRestanteMeses: 120,
+      },
+    },
+  ]);
 });
 
 test('valores fuera de rango: se rechazan con su mensaje y no avanza', async ({ page }) => {

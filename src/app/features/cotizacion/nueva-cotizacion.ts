@@ -263,7 +263,9 @@ export class NuevaCotizacion {
     } catch (error: unknown) {
       const detalle = error instanceof HttpErrorResponse ? JSON.stringify(error.error ?? '') : '';
       if (/75.años|75.añ|edad.*75|edad.*plazo|plazo.*edad|edad.*terminar/i.test(detalle)) {
-        this.errorCotizacion.set('El plazo del crédito supera la edad máxima de permanencia de 75 años. Revisa el plazo restante.');
+        this.errorCotizacion.set(
+          'El plazo del crédito supera la edad máxima de permanencia de 75 años. Revisa el plazo restante.',
+        );
       } else {
         this.errorCotizacion.set('No pudimos generar tu cotización. Inténtalo nuevamente.');
       }

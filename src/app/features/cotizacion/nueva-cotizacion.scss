@@ -300,15 +300,35 @@ button {
   margin: 12px 0 20px;
 }
 .acciones-consulta .secundario {
+  box-sizing: border-box;
   padding: 10px 18px;
   border: 1px solid #00747a;
   border-radius: 24px;
   color: #00747a;
   background: transparent;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 400;
+  white-space: nowrap;
   cursor: pointer;
 }
 .fecha-consulta {
   margin: 12px 0;
   color: #52666b;
   font-size: 0.875rem;
+}
+
+/* AC-5: estado de error asociado al campo correspondiente. */
+.floating-field.campo-invalido input {
+  border: 2px solid #b42318;
+}
+.floating-field.campo-invalido input:focus {
+  outline-color: #b42318;
+}
+.error-campo {
+  display: block;
+  margin-top: 6px;
+  color: #b42318;
+  font-size: 11px;
+  line-height: 1.4;
 }

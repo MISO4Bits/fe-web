@@ -73,6 +73,9 @@
     <div class="contenido">
       <h1>Tu crédito hipotecario</h1>
       <p>Elige tu banco. Buscamos los datos de tu crédito y con eso calculamos tu precio.</p>
+      <div class="acciones-consulta">
+        <button type="button" class="secundario" (click)="cambiarBanco()">Cambiar de banco</button>
+      </div>
       <div class="bloque-banco">
         <div class="seccion-label">TU BANCO</div>
         <p class="ayuda">Con el banco buscamos tu crédito y traemos los datos.</p>
@@ -138,22 +141,22 @@
       <h1>Escribe los datos de tu crédito</h1>
       <p>
         {{
-          bancoFijado()
+          motivoManual() === 'error-consulta' || motivoManual() === 'sesion-expirada'
             ? 'No pudimos obtener los datos de tu banco. Escríbelos para continuar con tu cotización.'
-            : 'Todavía no estamos conectados con tu banco. Escribe los datos y seguimos sumando entidades.'
+            : bancoFijado()
+              ? 'Puedes ingresar los datos de tu crédito manualmente para continuar.'
+              : 'Todavía no estamos conectados con tu banco. Escribe los datos y seguimos sumando entidades.'
         }}
       </p>
       @if (mensaje()) {
         <p class="aviso" role="status">{{ mensaje() }}</p>
-        @if (bancoFijado()) {
-          <div class="acciones-consulta">
-            <button type="button" class="secundario" (click)="reintentar()">Reintentar</button>
-            <button type="button" class="secundario" (click)="cambiarBanco()">
-              Cambiar de banco
-            </button>
-          </div>
-        }
       }
+      <div class="acciones-consulta">
+        @if (puedeReintentar()) {
+          <button type="button" class="secundario" (click)="reintentar()">Reintentar</button>
+        }
+        <button type="button" class="secundario" (click)="cambiarBanco()">Cambiar de banco</button>
+      </div>
       <form (ngSubmit)="guardarManual()" #formulario="ngForm" novalidate>
         <div class="bloque-banco">
           <div class="seccion-label">TU BANCO</div>
@@ -164,56 +167,96 @@
                 : 'Si tu banco no aparece, elige Otra entidad y escribe los datos.'
             }}
           </p>
-          <label class="floating-field" for="entidad-manual"
+          <label
+            class="floating-field"
+            [class.campo-invalido]="!!erroresCampo()['entidad']"
+            for="entidad-manual"
             ><span>Banco o entidad</span
             ><input
               id="entidad-manual"
               name="entidad"
               [(ngModel)]="manual.entidadAcreedora"
+              (ngModelChange)="limpiarErrorCampo('entidad')"
+              [attr.aria-invalid]="erroresCampo()['entidad'] ? true : null"
+              [attr.aria-describedby]="erroresCampo()['entidad'] ? 'error-entidad' : null"
               [readonly]="bancoFijado()"
               [placeholder]="bancoFijado() ? '' : 'Otra entidad'"
               maxlength="80"
               required
-          /></label>
+            />
+            @if (erroresCampo()['entidad']; as error) {
+              <span id="error-entidad" class="error-campo" role="alert">{{ error }}</span>
+            }
+          </label>
         </div>
         <div class="bloque-datos">
           <div class="seccion-label">DATOS DE TU CRÉDITO</div>
           <p class="ayuda">Estos datos los declaras tú. Tómalos de tu extracto más reciente.</p>
           <div class="grilla-campos">
-            <label class="floating-field" for="valor-credito"
+            <label
+              class="floating-field"
+              [class.campo-invalido]="!!erroresCampo()['valor']"
+              for="valor-credito"
               ><span>Monto total del crédito</span><span class="prefijo">$</span
               ><input
                 id="valor-credito"
                 name="valor"
                 type="number"
                 [(ngModel)]="manual.valorCredito"
+                (ngModelChange)="limpiarErrorCampo('valor')"
+                [attr.aria-invalid]="erroresCampo()['valor'] ? true : null"
+                [attr.aria-describedby]="erroresCampo()['valor'] ? 'error-valor' : null"
                 min="10000000"
                 placeholder="0"
                 required
-            /></label>
-            <label class="floating-field" for="saldo"
+              />
+              @if (erroresCampo()['valor']; as error) {
+                <span id="error-valor" class="error-campo" role="alert">{{ error }}</span>
+              }
+            </label>
+            <label
+              class="floating-field"
+              [class.campo-invalido]="!!erroresCampo()['saldo']"
+              for="saldo"
               ><span>¿Cuánto debes hoy?</span><span class="prefijo">$</span
               ><input
                 id="saldo"
                 name="saldo"
                 type="number"
                 [(ngModel)]="manual.saldoInsoluto"
+                (ngModelChange)="limpiarErrorCampo('saldo')"
+                [attr.aria-invalid]="erroresCampo()['saldo'] ? true : null"
+                [attr.aria-describedby]="erroresCampo()['saldo'] ? 'error-saldo' : null"
                 min="1"
                 placeholder="0"
                 required
-            /></label>
-            <label class="floating-field" for="plazo"
+              />
+              @if (erroresCampo()['saldo']; as error) {
+                <span id="error-saldo" class="error-campo" role="alert">{{ error }}</span>
+              }
+            </label>
+            <label
+              class="floating-field"
+              [class.campo-invalido]="!!erroresCampo()['plazo']"
+              for="plazo"
               ><span>Meses que te faltan</span
               ><input
                 id="plazo"
                 name="plazo"
                 type="number"
                 [(ngModel)]="manual.plazoMeses"
+                (ngModelChange)="limpiarErrorCampo('plazo')"
+                [attr.aria-invalid]="erroresCampo()['plazo'] ? true : null"
+                [attr.aria-describedby]="erroresCampo()['plazo'] ? 'error-plazo' : null"
                 min="12"
                 max="480"
                 placeholder="0 meses"
                 required
-            /></label>
+              />
+              @if (erroresCampo()['plazo']; as error) {
+                <span id="error-plazo" class="error-campo" role="alert">{{ error }}</span>
+              }
+            </label>
           </div>
           <div class="advertencia">
             <strong>Revisa tu extracto antes de escribir</strong>
@@ -223,13 +266,6 @@
             </p>
           </div>
         </div>
-        @if (errores().length) {
-          <ul class="errores" role="alert">
-            @for (error of errores(); track error) {
-              <li>{{ error }}</li>
-            }
-          </ul>
-        }
         <button class="primario boton-cotizar" type="submit">Ver mi cotización</button>
       </form>
     </div>

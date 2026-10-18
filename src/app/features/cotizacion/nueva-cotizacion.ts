@@ -9,6 +9,13 @@ import {
 
 type Paso = 'banco' | 'consultando' | 'datos' | 'manual';
 type Origen = 'VERIFICADO' | 'DECLARADO';
+type MotivoManual =
+  | 'otro-banco'
+  | 'sin-consentimiento'
+  | 'sin-hipotecas'
+  | 'error-consulta'
+  | 'sesion-expirada'
+  | null;
 interface DatosCotizacion {
   entidadAcreedora: string;
   valorCredito: number;
@@ -31,6 +38,8 @@ export class NuevaCotizacion {
   protected readonly bancoNoListado = '__OTRO__';
   protected readonly entidades = signal<EntidadFinanciera[]>([]);
   protected readonly mensaje = signal('');
+  protected readonly motivoManual = signal<MotivoManual>(null);
+  protected readonly puedeReintentar = computed(() => this.motivoManual() === 'error-consulta');
   protected readonly consultado = signal<CreditosHipotecariosRespuesta | null>(null);
   protected readonly creditos = signal<CreditoHipotecario[]>([]);
   protected readonly seleccionado = signal<number>(0);
@@ -43,6 +52,16 @@ export class NuevaCotizacion {
     plazoMeses: null as number | null,
   };
   protected readonly errores = signal<string[]>([]);
+  protected readonly erroresCampo = signal<Record<string, string>>({});
+
+  protected limpiarErrorCampo(campo: string): void {
+    this.erroresCampo.update((actual) => {
+      const copia = { ...actual };
+      delete copia[campo];
+      return copia;
+    });
+    this.errores.set(Object.values(this.erroresCampo()));
+  }
   protected readonly fechaConsultaFormateada = computed(() => {
     const fecha = this.consultado()?.fechaConsulta;
     if (!fecha) return null;
@@ -68,6 +87,7 @@ export class NuevaCotizacion {
     }
     this.entidad.set(nombre);
     this.mensaje.set('');
+    this.motivoManual.set(null);
     this.errores.set([]);
     this.consultado.set(null);
     this.creditos.set([]);
@@ -77,13 +97,14 @@ export class NuevaCotizacion {
     if (!this.entidad() || this.paso() === 'consultando') return;
     this.paso.set('consultando');
     this.mensaje.set('');
+    this.motivoManual.set(null);
     try {
       const autorizado = await this.api.tieneConsentimientoFinanciero();
       if (!autorizado) {
         this.mensaje.set(
           'No autorizaste la consulta de datos financieros. Ingresa los datos de tu crédito manualmente.',
         );
-        this.usarManual();
+        this.usarManual('sin-consentimiento');
         return;
       }
       const respuesta = await this.api.consultar();
@@ -105,15 +126,20 @@ export class NuevaCotizacion {
         this.paso.set('datos');
         return;
       }
+      const motivo: MotivoManual =
+        respuesta.estado === 'SIN_CONSENTIMIENTO'
+          ? 'sin-consentimiento'
+          : respuesta.estado === 'SIN_HIPOTECAS' || respuesta.estado === 'DISPONIBLE'
+            ? 'sin-hipotecas'
+            : 'error-consulta';
       this.mensaje.set(
         respuesta.estado === 'SIN_CONSENTIMIENTO'
           ? 'No hay autorización vigente para consultar datos financieros. Puedes ingresarlos manualmente.'
-          : respuesta.estado === 'SIN_HIPOTECAS'
+          : motivo === 'sin-hipotecas'
             ? 'No encontramos un crédito hipotecario para esta entidad.'
             : 'No fue posible obtener los datos de este banco. Puedes reintentar o ingresarlos manualmente.',
       );
-      this.paso.set('manual');
-      this.manual.entidadAcreedora = this.entidad();
+      this.usarManual(motivo);
     } catch (error: unknown) {
       const expired = error instanceof Error && error.message === 'SESION_EXPIRADA';
       this.mensaje.set(
@@ -121,17 +147,18 @@ export class NuevaCotizacion {
           ? 'Tu sesión ha expirado. Vuelve a iniciar sesión para consultar el banco.'
           : 'No pudimos consultar el banco en este momento. Puedes reintentar o ingresar los datos manualmente.',
       );
-      this.manual.entidadAcreedora = this.entidad();
-      this.paso.set('manual');
+      this.usarManual(expired ? 'sesion-expirada' : 'error-consulta');
     }
   }
 
-  protected usarManual(): void {
+  protected usarManual(motivo: MotivoManual = 'otro-banco'): void {
+    this.motivoManual.set(motivo);
     this.manual.entidadAcreedora = this.entidad();
     this.manual.valorCredito = null;
     this.manual.saldoInsoluto = null;
     this.manual.plazoMeses = null;
     this.errores.set([]);
+    this.erroresCampo.set({});
     this.paso.set('manual');
   }
 
@@ -142,6 +169,7 @@ export class NuevaCotizacion {
   protected volver(): void {
     this.paso.set('banco');
     this.mensaje.set('');
+    this.motivoManual.set(null);
   }
 
   protected cambiarBanco(): void {
@@ -151,10 +179,18 @@ export class NuevaCotizacion {
     this.creditos.set([]);
     this.seleccionado.set(0);
     this.errores.set([]);
+    this.erroresCampo.set({});
+    this.guardado.set(null);
+    this.manual = {
+      entidadAcreedora: '',
+      valorCredito: null,
+      saldoInsoluto: null,
+      plazoMeses: null,
+    };
   }
 
   protected reintentar(): Promise<void> {
-    return this.continuar();
+    return this.puedeReintentar() ? this.continuar() : Promise.resolve();
   }
 
   protected guardarVerificado(): void {
@@ -172,20 +208,28 @@ export class NuevaCotizacion {
 
   protected guardarManual(): void {
     const d = this.manual;
-    const errores: string[] = [];
+    const campos: Record<string, string> = {};
     if (d.entidadAcreedora.trim().length < 2 || d.entidadAcreedora.trim().length > 80)
-      errores.push('Ingresa una entidad acreedora válida (2 a 80 caracteres).');
+      campos['entidad'] = 'Ingresa una entidad acreedora válida (2 a 80 caracteres).';
     if (d.valorCredito === null || !Number.isFinite(d.valorCredito) || d.valorCredito < 10000000)
-      errores.push('El valor del crédito debe ser al menos COP 10.000.000.');
+      campos['valor'] = 'El valor del crédito debe ser al menos COP 10.000.000.';
     if (d.saldoInsoluto === null || !Number.isFinite(d.saldoInsoluto) || d.saldoInsoluto <= 0)
-      errores.push('Ingresa un saldo pendiente mayor a cero.');
+      campos['saldo'] = 'Ingresa un saldo pendiente mayor a cero.';
+    else if (
+      d.valorCredito !== null &&
+      Number.isFinite(d.valorCredito) &&
+      d.saldoInsoluto > d.valorCredito
+    )
+      campos['saldo'] = 'El saldo pendiente no puede superar el monto original del crédito.';
     if (
       d.plazoMeses === null ||
       !Number.isInteger(d.plazoMeses) ||
       d.plazoMeses < 12 ||
       d.plazoMeses > 480
     )
-      errores.push('El plazo debe estar entre 12 y 480 meses.');
+      campos['plazo'] = 'El plazo debe estar entre 12 y 480 meses.';
+    this.erroresCampo.set(campos);
+    const errores = Object.values(campos);
     this.errores.set(errores);
     if (errores.length) return;
     this.guardado.set({

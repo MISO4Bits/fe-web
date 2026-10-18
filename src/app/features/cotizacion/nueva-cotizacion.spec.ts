@@ -39,6 +39,8 @@ interface CotizacionTestAccess {
   mensaje(): string;
   paso: { (): string; set(valor: 'consultando'): void };
   errores(): string[];
+  erroresCampo(): Record<string, string>;
+  limpiarErrorCampo(campo: string): void;
   guardado(): {
     entidadAcreedora: string;
     origen: 'VERIFICADO' | 'DECLARADO';
@@ -340,5 +342,201 @@ describe('NuevaCotizacion BITS-219', () => {
     const fixture = TestBed.createComponent(NuevaCotizacion);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('se implementa en otra historia');
+  });
+  it('AC-5: rechaza un saldo superior al monto original y marca el campo', () => {
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.usarManual();
+    component.manual.entidadAcreedora = 'Otra entidad';
+    component.manual.valorCredito = 200000000;
+    component.manual.saldoInsoluto = 250000000;
+    component.manual.plazoMeses = 180;
+    component.guardarManual();
+    fixture.detectChanges();
+    expect(component.guardado()).toBeNull();
+    expect(component.erroresCampo()['saldo']).toContain('no puede superar');
+    const saldo = fixture.nativeElement.querySelector('#saldo') as HTMLInputElement;
+    expect(saldo.getAttribute('aria-invalid')).toBe('true');
+    expect(fixture.nativeElement.querySelector('#error-saldo').textContent).toContain(
+      'no puede superar',
+    );
+  });
+
+  it('AC-5: permite saldo igual al monto original', () => {
+    const component = TestBed.createComponent(NuevaCotizacion)
+      .componentInstance as unknown as CotizacionTestAccess;
+    component.usarManual();
+    component.manual.entidadAcreedora = 'Otra entidad';
+    component.manual.valorCredito = 200000000;
+    component.manual.saldoInsoluto = 200000000;
+    component.manual.plazoMeses = 180;
+    component.guardarManual();
+    expect(component.erroresCampo()['saldo']).toBeUndefined();
+    expect(component.guardado()?.origen).toBe('DECLARADO');
+  });
+
+  it('AC-5: marca errores por campo y los limpia al corregir el valor', () => {
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.usarManual();
+    component.guardarManual();
+    fixture.detectChanges();
+    expect(component.erroresCampo()['entidad']).toBeDefined();
+    expect(component.erroresCampo()['valor']).toBeDefined();
+    expect(component.erroresCampo()['saldo']).toBeDefined();
+    expect(component.erroresCampo()['plazo']).toBeDefined();
+    expect(
+      (fixture.nativeElement.querySelector('#valor-credito') as HTMLInputElement).getAttribute(
+        'aria-invalid',
+      ),
+    ).toBe('true');
+    component.limpiarErrorCampo('valor');
+    fixture.detectChanges();
+    expect(component.erroresCampo()['valor']).toBeUndefined();
+    expect(
+      (fixture.nativeElement.querySelector('#valor-credito') as HTMLInputElement).getAttribute(
+        'aria-invalid',
+      ),
+    ).toBeNull();
+  });
+
+  it('AC-5: al editar el saldo conserva los errores de los otros campos', async () => {
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.usarManual();
+    component.guardarManual();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const saldo = fixture.nativeElement.querySelector('#saldo') as HTMLInputElement;
+    saldo.value = '1000000';
+    saldo.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(component.erroresCampo()['saldo']).toBeUndefined();
+    expect(component.erroresCampo()['entidad']).toBeDefined();
+    expect(component.erroresCampo()['valor']).toBeDefined();
+    expect(component.erroresCampo()['plazo']).toBeDefined();
+    expect(component.errores().length).toBe(3);
+    expect(saldo.getAttribute('aria-invalid')).toBeNull();
+  });
+
+  it('AC-5: al editar monto y plazo limpia únicamente sus mensajes mediante la interfaz', async () => {
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.usarManual();
+    component.guardarManual();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const monto = fixture.nativeElement.querySelector('#valor-credito') as HTMLInputElement;
+    monto.value = '20000000';
+    monto.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(component.erroresCampo()['valor']).toBeUndefined();
+    expect(component.erroresCampo()['saldo']).toBeDefined();
+
+    const plazo = fixture.nativeElement.querySelector('#plazo') as HTMLInputElement;
+    plazo.value = '120';
+    plazo.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(component.erroresCampo()['plazo']).toBeUndefined();
+    expect(component.erroresCampo()['saldo']).toBeDefined();
+    expect(component.erroresCampo()['entidad']).toBeDefined();
+  });
+
+  it('permite cambiar de banco desde Mi banco no está sin llamar al BFF', () => {
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.elegirBanco('__OTRO__');
+    fixture.detectChanges();
+    const botones = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ) as HTMLButtonElement[];
+    expect(botones.some((b) => b.textContent?.trim() === 'Reintentar')).toBeFalse();
+    const cambiar = botones.find((b) => b.textContent?.trim() === 'Cambiar de banco');
+    expect(cambiar).toBeDefined();
+    cambiar?.click();
+    fixture.detectChanges();
+    expect(component.paso()).toBe('banco');
+    expect(api.consultar).not.toHaveBeenCalled();
+  });
+
+  it('permite cambiar de banco desde los datos verificados', async () => {
+    api.consultar.and.resolveTo(respuesta);
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.elegirBanco('Bancolombia');
+    await component.continuar();
+    fixture.detectChanges();
+    const botones = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ) as HTMLButtonElement[];
+    expect(botones.some((b) => b.textContent?.trim() === 'Reintentar')).toBeFalse();
+    botones.find((b) => b.textContent?.trim() === 'Cambiar de banco')?.click();
+    fixture.detectChanges();
+    expect(component.paso()).toBe('banco');
+    expect((fixture.nativeElement.querySelector('#banco') as HTMLSelectElement).value).toBe('');
+  });
+
+  it('no ofrece Reintentar si el banco no tiene créditos', async () => {
+    api.consultar.and.resolveTo({ ...respuesta, estado: 'SIN_HIPOTECAS', creditos: [] });
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.elegirBanco('Bancolombia');
+    await component.continuar();
+    fixture.detectChanges();
+    expect(component.mensaje()).toContain('No encontramos');
+    expect(fixture.nativeElement.textContent).not.toContain('Reintentar');
+    expect(fixture.nativeElement.textContent).toContain('Cambiar de banco');
+  });
+
+  it('no ofrece Reintentar si no hay consentimiento y no consulta créditos', async () => {
+    api.tieneConsentimientoFinanciero.and.resolveTo(false);
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.elegirBanco('Bancolombia');
+    await component.continuar();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Reintentar');
+    expect(fixture.nativeElement.textContent).toContain('Cambiar de banco');
+    expect(api.consultar).not.toHaveBeenCalled();
+    await component.reintentar();
+    expect(api.tieneConsentimientoFinanciero).toHaveBeenCalledTimes(1);
+  });
+
+  it('distingue un resultado disponible sin hipoteca del error técnico', async () => {
+    api.consultar.and.resolveTo({ ...respuesta, estado: 'DISPONIBLE', creditos: [] });
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    component.elegirBanco('Bancolombia');
+    await component.continuar();
+    fixture.detectChanges();
+    expect(component.mensaje()).toContain('No encontramos');
+    expect(fixture.nativeElement.textContent).not.toContain('Reintentar');
+  });
+
+  it('AC-5: selecciona Otra entidad desde el desplegable y valida el formulario con submit', () => {
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const component = fixture.componentInstance as unknown as CotizacionTestAccess;
+    fixture.detectChanges();
+
+    const banco = fixture.nativeElement.querySelector('#banco') as HTMLSelectElement;
+    banco.value = '__OTRO__';
+    banco.dispatchEvent(new Event('change', { bubbles: true }));
+    fixture.detectChanges();
+    expect(component.paso()).toBe('manual');
+
+    const formulario = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+    formulario.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(component.erroresCampo()['entidad']).toBeDefined();
+    expect(component.erroresCampo()['valor']).toBeDefined();
+    expect(component.guardado()).toBeNull();
   });
 });

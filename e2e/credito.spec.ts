@@ -51,6 +51,10 @@ async function simularSesion(page: Page, consentimientos: object[] = CONSENTIMIE
   await page.route('**/v1/cuenta/consentimientos', (route) =>
     route.fulfill({ json: consentimientos }),
   );
+  // Cliente sin cotización: el Home muestra la bienvenida. simularCotizacion la reemplaza.
+  await page.route('**/v1/cotizaciones/actual', (route) =>
+    route.fulfill({ status: 404, json: { code: 'NO_ENCONTRADO' } }),
+  );
 }
 
 function simularCreditos(page: Page, responder: (route: Route, intento: number) => Promise<void>) {

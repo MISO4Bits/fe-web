@@ -65,6 +65,35 @@ describe('CotizacionResultado BITS-292', () => {
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('¿Por qué este precio?');
   });
+  it('no atribuye ajuste ni abre explicación para un perfil neutro sin factores', async () => {
+    const fixture = await montar({
+      ...cotizacion,
+      oferta: { ...cotizacion.oferta, personalizado: true, fuentesNoDisponibles: [] },
+      perfilRiesgo: { nivelRiesgo: 'MEDIO', factores: [] },
+    });
+    expect(fixture.nativeElement.textContent).not.toContain('¿Por qué este precio?');
+    expect(fixture.nativeElement.textContent).not.toContain('Tu perfil sigue pendiente');
+  });
+
+  it('muestra la prima base real del BFF en el modal', async () => {
+    const fixture = await montar({
+      ...cotizacion,
+      oferta: {
+        ...cotizacion.oferta,
+        personalizado: true,
+        primaBaseMensual: 27332,
+        fuentesNoDisponibles: [],
+      },
+      perfilRiesgo: {
+        nivelRiesgo: 'BAJO',
+        factores: [{ descripcion: 'Pagos', efecto: 'POSITIVO' }],
+      },
+    });
+    (fixture.nativeElement.querySelector('button.enlace') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')?.textContent).toContain('27.332');
+  });
+
   it('muestra los factores cuando hay perfil personalizado', async () => {
     const fixture = await montar({
       ...cotizacion,
@@ -168,5 +197,87 @@ describe('CotizacionResultado BITS-292', () => {
     (modal.querySelector('button') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('BITS-292: clasifica el perfil neutro como disponible, pero no personalizado', async () => {
+    const fixture = await montar({
+      ...cotizacion,
+      oferta: { ...cotizacion.oferta, personalizado: true, fuentesNoDisponibles: [] },
+      perfilRiesgo: { nivelRiesgo: 'MEDIO', factores: [] },
+    });
+    const componente = fixture.componentInstance as unknown as {
+      personalizado: boolean;
+      perfilDisponible: boolean;
+      perfilPendiente: boolean;
+      estadoVista: string;
+      mostrarExplicacion(): boolean;
+      abrirExplicacion(): void;
+    };
+    expect(componente.personalizado).toBeFalse();
+    expect(componente.perfilDisponible).toBeTrue();
+    expect(componente.perfilPendiente).toBeFalse();
+    expect(componente.estadoVista).toBe('04G');
+    componente.abrirExplicacion();
+    expect(componente.mostrarExplicacion()).toBeFalse();
+  });
+
+  it('BITS-292: distingue falta de consentimiento y perfil pendiente', async () => {
+    const fixture = await montar({
+      ...cotizacion,
+      oferta: { ...cotizacion.oferta, fuentesNoDisponibles: [] },
+    });
+    const componente = fixture.componentInstance as unknown as {
+      sinAutorizacionFinanciera: boolean;
+      perfilPendiente: boolean;
+      estadoVista: string;
+    };
+    expect(componente.sinAutorizacionFinanciera).toBeFalse();
+    expect(componente.perfilPendiente).toBeTrue();
+    expect(componente.estadoVista).toBe('04F');
+  });
+
+  it('BITS-292: prioriza la falta de autorización aun cuando haya perfil', async () => {
+    const fixture = await montar({
+      ...cotizacion,
+      oferta: {
+        ...cotizacion.oferta,
+        personalizado: true,
+        fuentesNoDisponibles: ['OPEN_FINANCE_NO_OTORGADO'],
+      },
+      perfilRiesgo: {
+        nivelRiesgo: 'BAJO',
+        factores: [{ descripcion: 'Historial', efecto: 'POSITIVO' }],
+      },
+    });
+    const componente = fixture.componentInstance as unknown as {
+      sinAutorizacionFinanciera: boolean;
+      perfilPendiente: boolean;
+      estadoVista: string;
+    };
+    expect(componente.sinAutorizacionFinanciera).toBeTrue();
+    expect(componente.perfilPendiente).toBeFalse();
+    expect(componente.estadoVista).toBe('SIN_AUTORIZACION');
+  });
+
+  it('BITS-292: permite cerrar y volver a abrir la explicación del perfil', async () => {
+    const fixture = await montar({
+      ...cotizacion,
+      oferta: { ...cotizacion.oferta, personalizado: true, fuentesNoDisponibles: [] },
+      perfilRiesgo: {
+        nivelRiesgo: 'BAJO',
+        factores: [{ descripcion: 'Pagos', efecto: 'NEGATIVO' }],
+      },
+    });
+    const componente = fixture.componentInstance as unknown as {
+      personalizado: boolean;
+      mostrarExplicacion(): boolean;
+      abrirExplicacion(): void;
+      cerrarExplicacion(): void;
+    };
+    expect(componente.personalizado).toBeTrue();
+    componente.abrirExplicacion();
+    expect(componente.mostrarExplicacion()).toBeTrue();
+    componente.cerrarExplicacion();
+    expect(componente.mostrarExplicacion()).toBeFalse();
   });
 });

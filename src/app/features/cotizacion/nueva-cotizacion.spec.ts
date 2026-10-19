@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { NuevaCotizacion } from './nueva-cotizacion';
 import { CotizacionApiService } from './cotizacion-api.service';
@@ -554,5 +555,65 @@ describe('NuevaCotizacion BITS-219', () => {
     expect(component.erroresCampo()['entidad']).toBeDefined();
     expect(component.erroresCampo()['valor']).toBeDefined();
     expect(component.guardado()).toBeNull();
+  });
+
+  it('BITS-292: informa el límite de 75 años cuando el BFF rechaza el plazo', async () => {
+    cotizaciones.crear.and.rejectWith(
+      new HttpErrorResponse({
+        status: 422,
+        error: { detail: 'La edad al terminar el crédito supera los 75 años' },
+      }),
+    );
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const componente = fixture.componentInstance as unknown as {
+      usarManual(): void;
+      guardarManual(): Promise<void>;
+      manual: {
+        entidadAcreedora: string;
+        valorCredito: number | null;
+        saldoInsoluto: number | null;
+        plazoMeses: number | null;
+      };
+      errorCotizacion(): string;
+      enviando(): boolean;
+    };
+    componente.usarManual();
+    Object.assign(componente.manual, {
+      entidadAcreedora: 'Bancolombia',
+      valorCredito: 100000000,
+      saldoInsoluto: 60000000,
+      plazoMeses: 240,
+    });
+    await componente.guardarManual();
+    expect(componente.errorCotizacion()).toContain('75 años');
+    expect(componente.enviando()).toBeFalse();
+  });
+
+  it('BITS-292: mantiene el error general para un fallo no relacionado con la edad', async () => {
+    cotizaciones.crear.and.rejectWith(
+      new HttpErrorResponse({ status: 500, error: { detail: 'Error interno' } }),
+    );
+    const fixture = TestBed.createComponent(NuevaCotizacion);
+    const componente = fixture.componentInstance as unknown as {
+      usarManual(): void;
+      guardarManual(): Promise<void>;
+      manual: {
+        entidadAcreedora: string;
+        valorCredito: number | null;
+        saldoInsoluto: number | null;
+        plazoMeses: number | null;
+      };
+      errorCotizacion(): string;
+    };
+    componente.usarManual();
+    Object.assign(componente.manual, {
+      entidadAcreedora: 'Bancolombia',
+      valorCredito: 100000000,
+      saldoInsoluto: 60000000,
+      plazoMeses: 240,
+    });
+    await componente.guardarManual();
+    expect(componente.errorCotizacion()).toContain('No pudimos generar');
+    expect(componente.errorCotizacion()).not.toContain('75 años');
   });
 });

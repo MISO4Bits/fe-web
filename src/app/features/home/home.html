@@ -58,7 +58,7 @@
   </a>
 </section>
 
-@if (bienvenida()) {
+@if (bienvenida() && !cargandoCotizacion() && !errorCotizacion() && !cotizacionActual()) {
   <div class="overlay">
     <section class="welcome" role="dialog" aria-modal="true" aria-labelledby="bienvenida-titulo">
       <button class="close" type="button" aria-label="Cerrar ventana" (click)="cerrarBienvenida()">

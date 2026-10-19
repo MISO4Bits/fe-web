@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { CotizacionResultado } from './cotizacion-resultado';
 import { CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.service';
+import { CreditoHipotecarioService } from './credito-hipotecario.service';
 
 describe('CotizacionResultado BITS-292', () => {
   const cotizacion: CotizacionRespuesta = {
@@ -27,10 +28,17 @@ describe('CotizacionResultado BITS-292', () => {
     vigenciaCotizacion: { desde: '2026-10-18T10:00:00Z', hasta: '2026-10-19T10:00:00Z' },
     creadaEn: '2026-10-18T10:00:00Z',
   };
-  async function montar(actual: CotizacionRespuesta | null) {
+  async function montar(
+    actual: CotizacionRespuesta | null,
+    consentimiento: 'OTORGADO' | 'NO_OTORGADO' | 'REVOCADO' | null = 'OTORGADO',
+  ) {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        {
+          provide: CreditoHipotecarioService,
+          useValue: { estadoConsentimientoFinanciero: () => Promise.resolve(consentimiento) },
+        },
         {
           provide: CotizacionApiService,
           useValue: { actual: jasmine.createSpy().and.resolveTo(actual) },
@@ -47,7 +55,7 @@ describe('CotizacionResultado BITS-292', () => {
     expect(fixture.nativeElement.textContent).toContain('Todavía no tienes cotizaciones');
   });
   it('muestra tarifa estándar, advertencia de datos declarados y falta de autorización', async () => {
-    const fixture = await montar(cotizacion);
+    const fixture = await montar(cotizacion, 'NO_OTORGADO');
     const texto = fixture.nativeElement.textContent as string;
     expect(texto).toContain('tarifa estándar');
     expect(texto).toContain('datos de crédito que tú declaraste');
@@ -138,7 +146,7 @@ describe('CotizacionResultado BITS-292', () => {
   });
 
   it('permite volver al Home cuando falta autorización financiera', async () => {
-    const fixture = await montar(cotizacion);
+    const fixture = await montar(cotizacion, 'NO_OTORGADO');
     expect(fixture.nativeElement.textContent).toContain(
       'Para continuar necesitamos tu autorización',
     );
@@ -160,7 +168,14 @@ describe('CotizacionResultado BITS-292', () => {
     const api = jasmine.createSpyObj<CotizacionApiService>('CotizacionApiService', ['actual']);
     api.actual.and.rejectWith(new Error('sin conexión'));
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: CotizacionApiService, useValue: api }],
+      providers: [
+        provideRouter([]),
+        { provide: CotizacionApiService, useValue: api },
+        {
+          provide: CreditoHipotecarioService,
+          useValue: { estadoConsentimientoFinanciero: () => Promise.resolve('OTORGADO') },
+        },
+      ],
     });
     const fixture = TestBed.createComponent(CotizacionResultado);
     await fixture.whenStable();
@@ -237,18 +252,21 @@ describe('CotizacionResultado BITS-292', () => {
   });
 
   it('BITS-292: prioriza la falta de autorización aun cuando haya perfil', async () => {
-    const fixture = await montar({
-      ...cotizacion,
-      oferta: {
-        ...cotizacion.oferta,
-        personalizado: true,
-        fuentesNoDisponibles: ['OPEN_FINANCE_NO_OTORGADO'],
+    const fixture = await montar(
+      {
+        ...cotizacion,
+        oferta: {
+          ...cotizacion.oferta,
+          personalizado: true,
+          fuentesNoDisponibles: ['perfilamiento'],
+        },
+        perfilRiesgo: {
+          nivelRiesgo: 'BAJO',
+          factores: [{ descripcion: 'Historial', efecto: 'POSITIVO' }],
+        },
       },
-      perfilRiesgo: {
-        nivelRiesgo: 'BAJO',
-        factores: [{ descripcion: 'Historial', efecto: 'POSITIVO' }],
-      },
-    });
+      'NO_OTORGADO',
+    );
     const componente = fixture.componentInstance as unknown as {
       sinAutorizacionFinanciera: boolean;
       perfilPendiente: boolean;
@@ -257,6 +275,42 @@ describe('CotizacionResultado BITS-292', () => {
     expect(componente.sinAutorizacionFinanciera).toBeTrue();
     expect(componente.perfilPendiente).toBeFalse();
     expect(componente.estadoVista).toBe('SIN_AUTORIZACION');
+  });
+
+  it('BITS-292: T1/T6 muestra variante sin autorización cuando falta Open Finance', async () => {
+    const fixture = await montar(
+      {
+        ...cotizacion,
+        oferta: { ...cotizacion.oferta, fuentesNoDisponibles: ['perfilamiento'] },
+      },
+      'NO_OTORGADO',
+    );
+    const texto = fixture.nativeElement.textContent as string;
+    expect(texto).toContain('Esta cotización usa la tarifa estándar');
+    expect(texto).not.toContain('Estamos analizando tu perfil');
+    expect(texto).not.toContain('Tu perfil está en análisis');
+  });
+
+  it('BITS-292: no interpreta perfilamiento como falta de autorización', async () => {
+    const fixture = await montar(
+      {
+        ...cotizacion,
+        oferta: { ...cotizacion.oferta, fuentesNoDisponibles: ['perfilamiento'] },
+      },
+      'OTORGADO',
+    );
+    const componente = fixture.componentInstance as unknown as {
+      sinAutorizacionFinanciera: boolean;
+    };
+    expect(componente.sinAutorizacionFinanciera).toBeFalse();
+  });
+
+  it('BITS-292: no interpreta un consentimiento desconocido como NO_OTORGADO', async () => {
+    const fixture = await montar(cotizacion, null);
+    const componente = fixture.componentInstance as unknown as {
+      sinAutorizacionFinanciera: boolean;
+    };
+    expect(componente.sinAutorizacionFinanciera).toBeFalse();
   });
 
   it('BITS-292: permite cerrar y volver a abrir la explicación del perfil', async () => {

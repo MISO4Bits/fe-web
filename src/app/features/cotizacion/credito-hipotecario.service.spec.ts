@@ -58,6 +58,25 @@ describe('CreditoHipotecarioService BITS-219', () => {
     }
   });
 
+  it('BITS-292: lee NO_OTORGADO desde GET /v1/cuenta/consentimientos', async () => {
+    const pending = service.estadoConsentimientoFinanciero();
+    await Promise.resolve();
+    const request = http.expectOne('http://localhost:8081/v1/cuenta/consentimientos');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer token-de-prueba');
+    request.flush([
+      { scope: 'OPEN_DATA', estado: 'OTORGADO', vigente: true },
+      { scope: 'OPEN_FINANCE', estado: 'NO_OTORGADO', vigente: false },
+    ]);
+    expect(await pending).toBe('NO_OTORGADO');
+  });
+
+  it('BITS-292: no inventa un estado cuando no existe consentimiento Open Finance', async () => {
+    const pending = service.estadoConsentimientoFinanciero();
+    await Promise.resolve();
+    http.expectOne('http://localhost:8081/v1/cuenta/consentimientos').flush([]);
+    expect(await pending).toBeNull();
+  });
+
   it('consulta créditos hipotecarios en mercado CO con Bearer y conserva respuesta', async () => {
     const response: CreditosHipotecariosRespuesta = {
       estado: 'DISPONIBLE',

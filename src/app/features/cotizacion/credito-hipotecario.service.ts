@@ -36,6 +36,18 @@ export class CreditoHipotecarioService {
   private readonly session = inject(SessionService);
   private readonly baseUrl = inject(BFF_BASE_URL).replace(/\/$/, '');
 
+  /** Estado explícito de Open Finance, usado para seleccionar la variante de cotización. */
+  async estadoConsentimientoFinanciero(): Promise<ConsentimientoVista['estado'] | null> {
+    const token = await this.session.validAccessToken();
+    if (!token) throw new Error('SESION_EXPIRADA');
+    const consentimientos = await firstValueFrom(
+      this.http.get<ConsentimientoVista[]>(`${this.baseUrl}/v1/cuenta/consentimientos`, {
+        headers: new HttpHeaders({ Authorization: `Bearer ${token}` }),
+      }),
+    );
+    return consentimientos.find((c) => c.scope === 'OPEN_FINANCE')?.estado ?? null;
+  }
+
   async tieneConsentimientoFinanciero(): Promise<boolean> {
     const token = await this.session.validAccessToken();
     if (!token) throw new Error('SESION_EXPIRADA');

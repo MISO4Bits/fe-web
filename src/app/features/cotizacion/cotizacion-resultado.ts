@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.service';
+import { CreditoHipotecarioService } from './credito-hipotecario.service';
 
 @Component({
   selector: 'app-cotizacion-resultado',
@@ -10,6 +11,10 @@ import { CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.serv
 })
 export class CotizacionResultado implements OnInit {
   private readonly api = inject(CotizacionApiService);
+  private readonly creditos = inject(CreditoHipotecarioService);
+  protected readonly estadoConsentimiento = signal<'OTORGADO' | 'NO_OTORGADO' | 'REVOCADO' | null>(
+    null,
+  );
   protected readonly cotizacion = signal<CotizacionRespuesta | null>(null);
   protected readonly cargando = signal(true);
   protected readonly error = signal('');
@@ -42,11 +47,7 @@ export class CotizacionResultado implements OnInit {
   }
 
   protected get sinAutorizacionFinanciera(): boolean {
-    return (
-      this.cotizacion()?.oferta.fuentesNoDisponibles?.some((f) =>
-        /OPEN[_ -]?FINANCE|AUTORIZACI[ÓO]N|CONSENTIMIENTO|OPEN_FINANCE_NO_OTORGADO/i.test(f),
-      ) ?? false
-    );
+    return this.estadoConsentimiento() === 'NO_OTORGADO';
   }
 
   protected get perfilPendiente(): boolean {
@@ -68,9 +69,19 @@ export class CotizacionResultado implements OnInit {
   protected async cargar(): Promise<void> {
     this.cargando.set(true);
     this.error.set('');
+    this.estadoConsentimiento.set(null);
     try {
-      const actual = await this.api.actual();
+      const [cotizacion, consentimiento] = await Promise.allSettled([
+        this.api.actual(),
+        this.creditos.estadoConsentimientoFinanciero(),
+      ]);
+      if (cotizacion.status === 'rejected') throw cotizacion.reason;
+      const actual = cotizacion.value;
       this.cotizacion.set(actual?.estado === 'EXPIRADA' ? null : actual);
+      // Si falla el endpoint de consentimientos, no inferir NO_OTORGADO.
+      if (consentimiento.status === 'fulfilled') {
+        this.estadoConsentimiento.set(consentimiento.value);
+      }
     } catch {
       this.error.set('No fue posible cargar tu cotización.');
     } finally {

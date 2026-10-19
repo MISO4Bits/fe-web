@@ -4,9 +4,6 @@ import { expect, Page, Request } from '@playwright/test';
 // El BFF se simula con page.route; la forma de las respuestas sale de openapi.yaml de bff-web
 // (Cotizacion, Oferta, Desglose, CoberturaPrecio). Cada prueba arma sus propias rutas: nada se
 // comparte entre pruebas.
-//
-// Las funciones marcadas "PANTALLA" dependen de cómo quede "Tu casa" (BITS-294), que todavía no
-// está en develop. Si cambia la pantalla, se ajustan ahí y no en cada prueba.
 
 export const CONSENTIMIENTO_OPEN_FINANCE = [
   { scope: 'OPEN_FINANCE', estado: 'OTORGADO', vigente: true },
@@ -272,12 +269,12 @@ export function tarjetaCotizacionEnCurso(page: Page) {
   return page.getByRole('link', { name: 'Retomar cotización vigente' });
 }
 
-// PANTALLA: control de "Tu casa" (botón + / − en Figma W2).
+// Casilla de "Tu casa" en la cotización (BITS-294).
 export function controlTuCasa(page: Page) {
   return page.getByRole('checkbox', { name: /tu casa/i });
 }
 
-// PANTALLA: bloque "Pagas cada mes" de la columna derecha.
+// Desglose mensual de la columna derecha: vida, "Tu casa", IVA y "Pagas cada mes".
 export function resumenMensual(page: Page) {
-  return page.getByRole('region', { name: /pagas cada mes/i });
+  return page.locator('aside .desglose');
 }

@@ -50,6 +50,52 @@ describe('CotizacionResultado BITS-292', () => {
     fixture.detectChanges();
     return fixture;
   }
+  it('BITS-294: inicia con Tu casa desmarcada y suma HOGAR al seleccionarla', async () => {
+    const conHogar: CotizacionRespuesta = {
+      ...cotizacion,
+      oferta: {
+        ...cotizacion.oferta,
+        desglose: {
+          coberturas: [
+            {
+              codigo: 'VIDA',
+              obligatoria: true,
+              sumaAsegurada: 160000000,
+              primaNeta: 42000,
+              iva: 0,
+              primaTotal: 42000,
+            },
+            {
+              codigo: 'HOGAR',
+              obligatoria: false,
+              sumaAsegurada: 150000000,
+              primaNeta: 10000,
+              iva: 1900,
+              primaTotal: 11900,
+            },
+          ],
+        },
+      },
+    };
+    const fixture = await montar(conHogar);
+    const checkbox = fixture.nativeElement.querySelector('.casa input') as HTMLInputElement;
+    expect(checkbox.checked).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.desglose .total').textContent).toContain('42.000');
+    expect(fixture.nativeElement.textContent).toContain('150.000.000');
+    checkbox.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.desglose .total').textContent).toContain('53.900');
+    expect(fixture.nativeElement.textContent).toContain('1.900');
+    checkbox.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.desglose .total').textContent).toContain('42.000');
+  });
+
+  it('BITS-294: oculta Tu casa si el BFF no devuelve HOGAR', async () => {
+    const fixture = await montar(cotizacion);
+    expect(fixture.nativeElement.querySelector('.casa')).toBeNull();
+  });
+
   it('muestra el estado vacío si no hay cotización', async () => {
     const fixture = await montar(null);
     expect(fixture.nativeElement.textContent).toContain('Todavía no tienes cotizaciones');

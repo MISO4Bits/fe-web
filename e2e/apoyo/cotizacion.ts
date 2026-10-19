@@ -117,7 +117,9 @@ export function cotizacion({
 
 // Pesos como los muestra la pantalla: "$49.100" o "$ 49.100".
 export function pesos(valor: number): RegExp {
-  const cifra = valor.toLocaleString('es-CO', { maximumFractionDigits: 0 }).replace(/\./g, '\\.');
+  const cifra = valor
+    .toLocaleString('es-CO', { maximumFractionDigits: 0 })
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp(`\\$\\s?${cifra}(?!\\d)`);
 }
 

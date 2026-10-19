@@ -10,6 +10,15 @@ export interface DatosCreditoCotizacion {
   saldoInsoluto: number;
   plazoRestanteMeses: number;
 }
+export interface CoberturaPrecioCotizacion {
+  codigo: 'VIDA' | 'HOGAR';
+  obligatoria: boolean;
+  sumaAsegurada: number;
+  primaNeta: number;
+  iva: number;
+  primaTotal: number;
+}
+
 export interface CotizacionRespuesta {
   estado: 'VIGENTE' | 'EXPIRADA';
   producto: 'VIDA_HIPOTECARIO';
@@ -23,6 +32,7 @@ export interface CotizacionRespuesta {
     moneda: 'COP';
     personalizado: boolean;
     fuentesNoDisponibles?: string[];
+    desglose?: { coberturas: CoberturaPrecioCotizacion[] };
   };
   perfilRiesgo?: {
     nivelRiesgo: 'BAJO' | 'MEDIO' | 'ALTO';

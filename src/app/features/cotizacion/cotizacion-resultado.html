@@ -14,7 +14,7 @@
     <div class="columnas">
       <main class="principal">
         <h1>Seguro de vida deudores</h1>
-        <div class="precio">{{ moneda.format(c.oferta.primaMensual) }} <span>al mes</span></div>
+        <div class="precio">{{ moneda.format(primaVida) }} <span>al mes</span></div>
         @if (estadoVista === '04') {
           <p class="descripcion">
             Se suma a la cuota de tu crédito. Calculado sobre un saldo de
@@ -63,6 +63,21 @@
           </div>
           <small>Va bajando a medida que abonas a tu crédito.</small>
         </article>
+        @if (coberturaHogar; as hogar) {
+          <label class="panel casa" aria-label="Agregar cobertura Tu casa">
+            <input
+              type="checkbox"
+              [checked]="casaSeleccionada()"
+              (change)="casaSeleccionada.set(!casaSeleccionada())"
+            />
+            <span>
+              <strong>Tu casa</strong>
+              <small>Protección adicional opcional para tu vivienda.</small>
+              <small>Cubrimos hasta {{ moneda.format(hogar.sumaAsegurada) }}</small>
+            </span>
+            <strong class="casa-precio">+{{ moneda.format(hogar.primaTotal) }}/mes</strong>
+          </label>
+        }
         @if (estadoVista === '04') {
           <div class="aviso azul">
             Después te mostramos el documento para firmar y lo subes aquí mismo. No pagas nada aquí:
@@ -105,11 +120,23 @@
         <article class="desglose">
           <div>
             <span>Vida para tu crédito</span>
-            <strong>{{ moneda.format(c.oferta.primaMensual) }}/mes</strong>
+            <strong>{{ moneda.format(primaVida) }}/mes</strong>
           </div>
+          @if (casaSeleccionada()) {
+            @if (coberturaHogar; as hogar) {
+            <div>
+              <span>Tu casa (prima neta)</span>
+              <strong>{{ moneda.format(hogar.primaNeta) }}/mes</strong>
+            </div>
+            <div>
+              <span>IVA de Tu casa</span>
+              <strong>{{ moneda.format(hogar.iva) }}/mes</strong>
+            </div>
+            }
+          }
           <div class="total">
             <strong>Pagas cada mes</strong>
-            <strong>{{ moneda.format(c.oferta.primaMensual) }}</strong>
+            <strong>{{ moneda.format(totalMensual) }}</strong>
           </div>
           <small>Se cobra con la cuota de tu crédito.</small>
         </article>

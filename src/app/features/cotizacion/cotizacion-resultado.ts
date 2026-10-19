@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.service';
+import { CoberturaPrecioCotizacion, CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.service';
 import { CreditoHipotecarioService } from './credito-hipotecario.service';
 
 @Component({
@@ -20,6 +20,7 @@ export class CotizacionResultado implements OnInit {
   protected readonly error = signal('');
   protected readonly mostrarExplicacion = signal(false);
   protected readonly aceptaCondiciones = signal(false);
+  protected readonly casaSeleccionada = signal(false);
   protected readonly moneda = new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
@@ -28,6 +29,22 @@ export class CotizacionResultado implements OnInit {
 
   ngOnInit(): void {
     void this.cargar();
+  }
+
+  protected get coberturaVida(): CoberturaPrecioCotizacion | undefined {
+    return this.cotizacion()?.oferta.desglose?.coberturas.find((c) => c.codigo === 'VIDA');
+  }
+
+  protected get coberturaHogar(): CoberturaPrecioCotizacion | undefined {
+    return this.cotizacion()?.oferta.desglose?.coberturas.find((c) => c.codigo === 'HOGAR');
+  }
+
+  protected get primaVida(): number {
+    return this.coberturaVida?.primaTotal ?? this.cotizacion()?.oferta.primaMensual ?? 0;
+  }
+
+  protected get totalMensual(): number {
+    return this.primaVida + (this.casaSeleccionada() ? (this.coberturaHogar?.primaTotal ?? 0) : 0);
   }
 
   protected get personalizado(): boolean {
@@ -70,6 +87,7 @@ export class CotizacionResultado implements OnInit {
     this.cargando.set(true);
     this.error.set('');
     this.estadoConsentimiento.set(null);
+    this.casaSeleccionada.set(false);
     try {
       const [cotizacion, consentimiento] = await Promise.allSettled([
         this.api.actual(),

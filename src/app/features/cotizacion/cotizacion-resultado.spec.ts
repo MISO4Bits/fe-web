@@ -57,8 +57,22 @@ describe('CotizacionResultado BITS-292', () => {
         ...cotizacion.oferta,
         desglose: {
           coberturas: [
-            { codigo: 'VIDA', obligatoria: true, sumaAsegurada: 160000000, primaNeta: 42000, iva: 0, primaTotal: 42000 },
-            { codigo: 'HOGAR', obligatoria: false, sumaAsegurada: 150000000, primaNeta: 10000, iva: 1900, primaTotal: 11900 },
+            {
+              codigo: 'VIDA',
+              obligatoria: true,
+              sumaAsegurada: 160000000,
+              primaNeta: 42000,
+              iva: 0,
+              primaTotal: 42000,
+            },
+            {
+              codigo: 'HOGAR',
+              obligatoria: false,
+              sumaAsegurada: 150000000,
+              primaNeta: 10000,
+              iva: 1900,
+              primaTotal: 11900,
+            },
           ],
         },
       },

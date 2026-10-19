@@ -124,14 +124,14 @@
           </div>
           @if (casaSeleccionada()) {
             @if (coberturaHogar; as hogar) {
-            <div>
-              <span>Tu casa (prima neta)</span>
-              <strong>{{ moneda.format(hogar.primaNeta) }}/mes</strong>
-            </div>
-            <div>
-              <span>IVA de Tu casa</span>
-              <strong>{{ moneda.format(hogar.iva) }}/mes</strong>
-            </div>
+              <div>
+                <span>Tu casa (prima neta)</span>
+                <strong>{{ moneda.format(hogar.primaNeta) }}/mes</strong>
+              </div>
+              <div>
+                <span>IVA de Tu casa</span>
+                <strong>{{ moneda.format(hogar.iva) }}/mes</strong>
+              </div>
             }
           }
           <div class="total">

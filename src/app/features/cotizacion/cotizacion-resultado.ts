@@ -1,6 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CoberturaPrecioCotizacion, CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.service';
+import {
+  CoberturaPrecioCotizacion,
+  CotizacionApiService,
+  CotizacionRespuesta,
+} from './cotizacion-api.service';
 import { CreditoHipotecarioService } from './credito-hipotecario.service';
 
 @Component({

@@ -116,7 +116,7 @@ test('con perfil neutro, cobra la tarifa estándar sin ofrecer la explicación d
   await expect(botonPorQueEstePrecio(page)).toHaveCount(0);
 });
 
-test('sin autorización financiera, usa la tarifa estándar sin hablar del perfil (AC-4)', async ({
+test('sin autorización financiera, permite aceptar condiciones con tarifa estándar (BITS-333)', async ({
   page,
 }) => {
   await simularSesion(page, SIN_CONSENTIMIENTO_OPEN_FINANCE);
@@ -127,11 +127,32 @@ test('sin autorización financiera, usa la tarifa estándar sin hablar del perfi
 
   await expect(page.locator('.precio')).toContainText(pesos(54600));
   await expect(page.getByText('Esta cotización usa la tarifa estándar')).toBeVisible();
-  await expect(page.getByText('Para continuar necesitamos tu autorización')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Ir a mis seguros' })).toBeVisible();
+  await expect(page.getByText('Para continuar necesitamos tu autorización')).toHaveCount(0);
   await expect(page.getByText(/analizando tu perfil/i)).toHaveCount(0);
   await expect(page.getByText(/perfil está en análisis/i)).toHaveCount(0);
   await expect(botonPorQueEstePrecio(page)).toHaveCount(0);
+
+  const continuar = page.getByRole('button', { name: 'Aceptar y continuar', exact: true });
+  const checkbox = page.getByRole('checkbox', {
+    name: 'He leído y acepto las condiciones del seguro',
+  });
+  const url = page.url();
+  await continuar.click();
+  await expect(page.getByRole('alert')).toHaveText('Acepta las condiciones para continuar.');
+  await expect(page).toHaveURL(url);
+
+  await page.getByRole('button', { name: 'Leer las condiciones' }).click();
+  const modal = page.getByRole('dialog', { name: 'Lo que estás aceptando' });
+  await expect(modal).toBeVisible();
+  await expect(checkbox).not.toBeChecked();
+  await modal.getByRole('button', { name: 'Descargar el documento' }).click();
+  await expect(modal).toBeVisible();
+  await modal.getByRole('button', { name: 'Aceptar y continuar', exact: true }).click();
+  await expect(modal).not.toBeVisible();
+  await expect(checkbox).toBeChecked();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await continuar.click();
+  await expect(page).toHaveURL(url);
 });
 
 test('sin perfil calculado, usa la tarifa estándar y no la presenta como personalizada (AC-4)', async ({

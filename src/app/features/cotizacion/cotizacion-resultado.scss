@@ -227,6 +227,31 @@
 .condiciones a {
   color: #00747b;
 }
+.leer-condiciones {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #00747b;
+  font: inherit;
+  cursor: pointer;
+}
+.modal-condiciones {
+  border: 0;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+.modal-condiciones::backdrop {
+  background: #19222470;
+}
+.condiciones-error {
+  border-color: #b42318;
+  background: #fff0ee;
+}
+.error-condiciones {
+  color: #b42318;
+  font-size: 12px;
+  margin: -12px 0 16px;
+}
 .boton {
   display: inline-flex;
   align-items: center;

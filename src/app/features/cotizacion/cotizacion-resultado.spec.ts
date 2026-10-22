@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { CotizacionResultado } from './cotizacion-resultado';
 import { CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.service';
 import { CreditoHipotecarioService } from './credito-hipotecario.service';
@@ -162,7 +162,7 @@ describe('CotizacionResultado BITS-292', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Historial de pagos');
   });
-  it('muestra la cotización preaprobada cuando hay perfil y datos verificados', async () => {
+  it('conserva el aviso de datos declarados sin exigir buscar el crédito', async () => {
     const fixture = await montar({
       ...cotizacion,
       origenDatos: 'DECLARADO',
@@ -173,11 +173,11 @@ describe('CotizacionResultado BITS-292', () => {
       },
     });
     // Con origen DECLARADO, el contrato no permite afirmar que el crédito fue verificado.
-    expect(fixture.nativeElement.textContent).toContain('Falta confirmar los datos de tu crédito');
-    expect(fixture.nativeElement.textContent).toContain('Buscar mi crédito en el banco');
+    expect(fixture.nativeElement.textContent).toContain('Los datos de tu crédito son declarados');
+    expect(fixture.nativeElement.textContent).not.toContain('Buscar mi crédito en el banco');
   });
 
-  it('muestra espera de perfil cuando los datos están verificados pero no hay perfil', async () => {
+  it('ofrece aceptar sin perfil cuando el BFF confirma el origen bancario', async () => {
     // El contrato tipa origenDatos solo como DECLARADO; se simula la respuesta
     // futura de datos bancarios sin cambiar el código productivo.
     const verificada = {
@@ -186,22 +186,66 @@ describe('CotizacionResultado BITS-292', () => {
       oferta: { ...cotizacion.oferta, fuentesNoDisponibles: [] },
     };
     const fixture = await montar(verificada);
-    expect(fixture.nativeElement.textContent).toContain('Tu cotización queda en espera');
-    expect(fixture.nativeElement.textContent).toContain('Ir a mis seguros');
+    expect(fixture.nativeElement.textContent).not.toContain('Tu cotización queda en espera');
+    expect(fixture.nativeElement.querySelector('.continuar')).not.toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Buscar mi crédito en el banco');
   });
 
-  it('permite volver al Home cuando falta autorización financiera', async () => {
+  it('permite aceptar cuando falta autorización financiera', async () => {
     const fixture = await montar(cotizacion, 'NO_OTORGADO');
-    expect(fixture.nativeElement.textContent).toContain(
+    expect(fixture.nativeElement.textContent).not.toContain(
       'Para continuar necesitamos tu autorización',
     );
-    const enlaces = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];
-    expect(
-      enlaces.some(
-        (a) => a.getAttribute('href') === '/cuenta' && a.textContent?.includes('Ir a mis seguros'),
-      ),
-    ).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.condiciones input')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.continuar').disabled).toBeFalse();
+  });
+
+  for (const consentimiento of ['OTORGADO', 'NO_OTORGADO', 'REVOCADO', null] as const) {
+    it(`valida condiciones y continúa sin perfil con consentimiento ${consentimiento}`, async () => {
+      const fixture = await montar(cotizacion, consentimiento);
+      const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      const boton = fixture.nativeElement.querySelector('.continuar') as HTMLButtonElement;
+      expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();
+      boton.click();
+      fixture.detectChanges();
+      expect(navegar).not.toHaveBeenCalled();
+      expect(fixture.nativeElement.querySelector('#error-condiciones').textContent).toContain(
+        'Acepta las condiciones para continuar',
+      );
+      const checkbox = fixture.nativeElement.querySelector(
+        '.condiciones input',
+      ) as HTMLInputElement;
+      expect(checkbox.getAttribute('aria-invalid')).toBe('true');
+      checkbox.click();
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();
+      boton.click();
+      fixture.detectChanges();
+      expect(navegar).not.toHaveBeenCalled();
+      expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();
+    });
+  }
+
+  it('abre las condiciones sin marcar el check y lo marca al aceptar desde la modal', async () => {
+    const fixture = await montar(cotizacion);
+    const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    const checkbox = fixture.nativeElement.querySelector('.condiciones input') as HTMLInputElement;
+    const dialogo = fixture.nativeElement.querySelector('.modal-condiciones') as HTMLDialogElement;
+    const abrir = fixture.nativeElement.querySelector('.leer-condiciones') as HTMLButtonElement;
+    expect(dialogo.open).toBeFalse();
+    abrir.click();
+    fixture.detectChanges();
+    expect(dialogo.open).toBeTrue();
+    expect(checkbox.checked).toBeFalse();
+    (dialogo.querySelector('.descargar-documento') as HTMLButtonElement).click();
+    expect(dialogo.open).toBeTrue();
+    (dialogo.querySelector('.boton') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(dialogo.open).toBeFalse();
+    expect(checkbox.checked).toBeTrue();
+    expect(navegar).not.toHaveBeenCalled();
+    abrir.click();
+    expect(dialogo.open).toBeTrue();
   });
 
   it('no presenta una cotización expirada como vigente', async () => {

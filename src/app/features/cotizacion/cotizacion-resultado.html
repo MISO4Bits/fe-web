@@ -85,17 +85,15 @@
           </div>
         } @else if (estadoVista === '04H') {
           <div class="aviso azul">
-            <strong>Estamos analizando tu perfil</strong>
-            <p>
-              Cuando termine te avisamos y tu precio queda preaprobado. No tienes que hacer nada.
-            </p>
+            <strong>Tu cotización no incluye un perfil personalizado</strong>
+            <p>Puedes aceptar las condiciones y continuar sin esperar un perfil de riesgo.</p>
           </div>
         } @else if (estadoVista === '04G') {
           <div class="aviso azul">
-            <strong>Falta confirmar los datos de tu crédito</strong>
+            <strong>Los datos de tu crédito son declarados</strong>
             <p>
-              Ahora usamos lo que tú declaraste. Si los traemos desde tu banco, el precio queda
-              preaprobado y no cambia después.
+              Calculamos esta cotización con los datos que tú declaraste. Puedes aceptar las
+              condiciones y continuar.
             </p>
           </div>
         } @else if (estadoVista === 'SIN_AUTORIZACION') {
@@ -110,8 +108,8 @@
           <div class="aviso azul">
             <strong>Esta cotización es estimada</strong>
             <p>
-              Estamos analizando tu perfil. Para que el precio quede preaprobado también necesitamos
-              los datos de tu crédito desde tu banco.
+              Calculamos el precio con los datos de crédito que tú declaraste, sin un perfil de
+              riesgo personalizado. Puedes aceptar las condiciones y continuar.
             </p>
           </div>
         }
@@ -140,60 +138,36 @@
           </div>
           <small>Se cobra con la cuota de tu crédito.</small>
         </article>
-        @if (estadoVista === '04') {
-          <label class="condiciones panel"
-            ><input
-              type="checkbox"
-              [checked]="aceptaCondiciones()"
-              (change)="aceptaCondiciones.set(!aceptaCondiciones())"
-            /><span
-              >He leído y acepto las condiciones del seguro<br /><a href="#condiciones"
-                >Leer las condiciones</a
-              ></span
-            ></label
-          ><button
-            type="button"
-            class="boton"
-            [disabled]="!aceptaCondiciones()"
-            title="La firma corresponde a otra historia"
-          >
-            Continuar
-          </button>
-        } @else if (estadoVista === '04H') {
-          <div class="aviso amarillo">
-            <strong>Tu cotización queda en espera</strong>
-            <p>
-              Te avisamos apenas tengamos el resultado. Mientras tanto no puedes subir documentos ni
-              pagar.
-            </p>
-          </div>
-          <a routerLink="/cuenta" class="boton">Ir a mis seguros</a>
-        } @else if (estadoVista === 'SIN_AUTORIZACION') {
-          <div class="aviso amarillo">
-            <strong>Para continuar necesitamos tu autorización</strong>
-            <p>
-              Autoriza la consulta de tus datos financieros y trae tu crédito desde tu banco.
-              Mientras tanto no puedes subir documentos ni firmar.
-            </p>
-          </div>
-          <a routerLink="/cuenta" class="boton">Ir a mis seguros</a>
-        } @else {
-          <div class="aviso amarillo">
-            <strong>{{
-              estadoVista === '04G'
-                ? 'Para continuar necesitamos los datos de tu banco'
-                : 'Trae tu crédito desde tu banco'
-            }}</strong>
-            <p>
-              {{
-                estadoVista === '04G'
-                  ? 'Busca tu crédito en tu banco y confirmamos monto, saldo y plazo. Mientras tanto no puedes subir documentos ni pagar.'
-                  : 'Tu perfil está en análisis y te avisamos cuando termine. Mientras tanto no puedes subir documentos ni pagar.'
-              }}
-            </p>
-          </div>
-          <a routerLink="/cuenta/cotizaciones/nueva" class="boton">Buscar mi crédito en el banco</a>
+        <div
+          class="condiciones panel"
+          [class.condiciones-error]="intentoContinuar() && !aceptaCondiciones()"
+        >
+          <input
+            id="acepta-condiciones"
+            type="checkbox"
+            [checked]="aceptaCondiciones()"
+            [attr.aria-invalid]="intentoContinuar() && !aceptaCondiciones() ? 'true' : null"
+            [attr.aria-describedby]="
+              intentoContinuar() && !aceptaCondiciones() ? 'error-condiciones' : null
+            "
+            (change)="aceptaCondiciones.set(!aceptaCondiciones())"
+          />
+          <span>
+            <label for="acepta-condiciones">He leído y acepto las condiciones del seguro</label
+            ><br />
+            <button type="button" class="leer-condiciones" (click)="abrirCondiciones()">
+              Leer las condiciones
+            </button>
+          </span>
+        </div>
+        @if (intentoContinuar() && !aceptaCondiciones()) {
+          <p id="error-condiciones" class="error-condiciones" role="alert">
+            Acepta las condiciones para continuar.
+          </p>
         }
+        <button type="button" class="boton continuar" (click)="continuar()">
+          Aceptar y continuar
+        </button>
         @if (personalizado) {
           <button type="button" class="enlace" (click)="abrirExplicacion()">
             ¿Por qué este precio?
@@ -207,6 +181,24 @@
     <a class="boton" routerLink="/cuenta/cotizaciones/nueva">Cotizar mi seguro</a>
   }
 </section>
+
+<dialog #dialogoCondiciones class="modal modal-condiciones" aria-labelledby="titulo-condiciones">
+  <p class="etiqueta">CONDICIONES DEL SEGURO</p>
+  <h2 id="titulo-condiciones">Lo que estás aceptando</h2>
+  <h3>1 · Te cubre 12 meses</h3>
+  <p>Se renueva cada año. Te avisamos 30 días antes con el precio nuevo.</p>
+  <h3>2 · Se renueva automáticamente</h3>
+  <p>
+    Mientras dure tu crédito no puedes quedar sin cobertura. Si cambias de aseguradora, la nueva
+    póliza entra el mismo día.
+  </p>
+  <h3>3 · Quién recibe el pago</h3>
+  <p>Si faltas, pagamos directo al banco el saldo de tu crédito.</p>
+  <h3>4 · Lo que no cubre</h3>
+  <p>Lo declarado como falso al contratar y lo ocurrido antes de la fecha de inicio.</p>
+  <button type="button" class="boton" (click)="aceptarDesdeModal()">Aceptar y continuar</button>
+  <button type="button" class="enlace descargar-documento">Descargar el documento</button>
+</dialog>
 
 @if (mostrarExplicacion() && personalizado) {
   @if (cotizacion(); as c) {

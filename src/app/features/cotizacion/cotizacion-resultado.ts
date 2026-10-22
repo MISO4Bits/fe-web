@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   CoberturaPrecioCotizacion,
@@ -15,6 +15,8 @@ import { CreditoHipotecarioService } from './credito-hipotecario.service';
 })
 export class CotizacionResultado implements OnInit {
   private readonly api = inject(CotizacionApiService);
+  private readonly dialogoCondiciones =
+    viewChild.required<ElementRef<HTMLDialogElement>>('dialogoCondiciones');
   private readonly creditos = inject(CreditoHipotecarioService);
   protected readonly estadoConsentimiento = signal<'OTORGADO' | 'NO_OTORGADO' | 'REVOCADO' | null>(
     null,
@@ -24,6 +26,7 @@ export class CotizacionResultado implements OnInit {
   protected readonly error = signal('');
   protected readonly mostrarExplicacion = signal(false);
   protected readonly aceptaCondiciones = signal(false);
+  protected readonly intentoContinuar = signal(false);
   protected readonly casaSeleccionada = signal(false);
   protected readonly moneda = new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -62,9 +65,9 @@ export class CotizacionResultado implements OnInit {
   }
 
   protected get datosVerificados(): boolean {
-    // El contrato de CotizacionOut aún no expone origen OPEN_FINANCE.
-    // Nunca atribuir procedencia bancaria a un dato sin confirmación del BFF.
-    return this.cotizacion()?.origenDatos !== 'DECLARADO';
+    // Solo una confirmación explícita del BFF permite atribuir origen bancario.
+    // El contrato actual aún limita origenDatos a DECLARADO.
+    return (this.cotizacion()?.origenDatos as string | undefined) === 'OPEN_FINANCE';
   }
 
   protected get sinAutorizacionFinanciera(): boolean {
@@ -87,9 +90,24 @@ export class CotizacionResultado implements OnInit {
     this.mostrarExplicacion.set(false);
   }
 
+  protected continuar(): void {
+    this.intentoContinuar.set(true);
+  }
+
+  protected abrirCondiciones(): void {
+    this.dialogoCondiciones().nativeElement.showModal();
+  }
+
+  protected aceptarDesdeModal(): void {
+    this.aceptaCondiciones.set(true);
+    this.dialogoCondiciones().nativeElement.close();
+  }
+
   protected async cargar(): Promise<void> {
     this.cargando.set(true);
     this.error.set('');
+    this.aceptaCondiciones.set(false);
+    this.intentoContinuar.set(false);
     this.estadoConsentimiento.set(null);
     this.casaSeleccionada.set(false);
     try {

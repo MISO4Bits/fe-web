@@ -168,6 +168,9 @@
         <button type="button" class="boton continuar" (click)="continuar()">
           Aceptar y continuar
         </button>
+        <button type="button" class="enlace declinar" (click)="abrirDeclinar()">
+          Declinar estas condiciones
+        </button>
         @if (personalizado) {
           <button type="button" class="enlace" (click)="abrirExplicacion()">
             ¿Por qué este precio?
@@ -198,6 +201,34 @@
   <p>Lo declarado como falso al contratar y lo ocurrido antes de la fecha de inicio.</p>
   <button type="button" class="boton" (click)="aceptarDesdeModal()">Aceptar y continuar</button>
   <button type="button" class="enlace descargar-documento">Descargar el documento</button>
+</dialog>
+
+<dialog
+  #dialogoDeclinar
+  class="modal modal-condiciones modal-declinar"
+  aria-labelledby="titulo-declinar"
+  aria-describedby="descripcion-declinar"
+  [attr.aria-busy]="eliminando()"
+  (cancel)="cancelarDeclinar($event)"
+>
+  <p class="etiqueta">TU COTIZACIÓN</p>
+  <h2 id="titulo-declinar">¿Quieres declinar estas condiciones?</h2>
+  <p id="descripcion-declinar">
+    Al declinar rechazas esta cotización y la eliminamos por completo.<br />
+    Vuelves al inicio y puedes cotizar de nuevo cuando quieras.
+  </p>
+  @if (errorDeclinar()) {
+    <p class="error-declinar" role="alert">{{ errorDeclinar() }}</p>
+  }
+  @if (eliminando()) {
+    <p role="status">Eliminando tu cotización...</p>
+  }
+  <button type="button" class="boton" [disabled]="eliminando()" (click)="confirmarDeclinar()">
+    Declinar estas condiciones
+  </button>
+  <button type="button" class="enlace" [disabled]="eliminando()" (click)="cerrarDeclinar()">
+    Volver
+  </button>
 </dialog>
 
 @if (mostrarExplicacion() && personalizado) {

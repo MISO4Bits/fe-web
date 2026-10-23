@@ -47,4 +47,16 @@ describe('CotizacionApiService BITS-292', () => {
     req.flush(null);
     await expectAsync(promesa).toBeResolvedTo(null);
   });
+
+  it('BITS-337: elimina la cotización propia con Bearer y sin cuerpo', async () => {
+    const promesa = api.eliminarActual();
+    await Promise.resolve();
+    await Promise.resolve();
+    const req = http.expectOne('http://localhost:8081/v1/cotizaciones/actual');
+    expect(req.request.method).toBe('DELETE');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer token-prueba');
+    expect(req.request.body).toBeNull();
+    req.flush(null, { status: 204, statusText: 'No Content' });
+    await expectAsync(promesa).toBeResolved();
+  });
 });

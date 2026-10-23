@@ -71,4 +71,12 @@ export class CotizacionApiService {
       }),
     );
   }
+
+  async eliminarActual(): Promise<void> {
+    await firstValueFrom(
+      this.http.delete<void>(`${this.baseUrl}/v1/cotizaciones/actual`, {
+        headers: await this.headers(),
+      }),
+    );
+  }
 }

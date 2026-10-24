@@ -22,6 +22,15 @@ describe('EvidenciasApiService', () => {
   });
   afterEach(() => http.verify());
 
+  it('no envía archivos ni consulta evidencias cuando la sesión expiró', async () => {
+    spyOn(TestBed.inject(SessionService), 'validAccessToken').and.resolveTo(null);
+    await expectAsync(api.consultar()).toBeRejectedWithError('SESION_EXPIRADA');
+    await expectAsync(api.subir('selfie', new File(['foto'], 'selfie.jpg'))).toBeRejectedWithError(
+      'SESION_EXPIRADA',
+    );
+    http.expectNone('/api/v1/cuenta/evidencias-identidad');
+  });
+
   it('consulta el estado de las evidencias autenticadas', async () => {
     const pendiente = api.consultar();
     await Promise.resolve();

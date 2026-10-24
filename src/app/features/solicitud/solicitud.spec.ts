@@ -11,6 +11,9 @@ import { CotizacionApiService, CotizacionRespuesta } from '../cotizacion/cotizac
 interface Controles {
   subir(tipo: TipoEvidencia, archivo: File): Promise<void>;
   abrirCamara(): Promise<void>;
+  capturar(): Promise<void>;
+  elegir(tipo: TipoEvidencia, event: Event): void;
+  soltar(tipo: TipoEvidencia, event: DragEvent): void;
   cedulaLista: Signal<boolean>;
   todoListo: Signal<boolean>;
 }
@@ -265,6 +268,116 @@ describe('Solicitud BITS-275', () => {
       fixture.nativeElement.querySelector('input[aria-label="Subir foto de tu selfie"]').disabled,
     ).toBeFalse();
   });
+
+  it('captura la selfie con cámara, la envía y libera el dispositivo', async () => {
+    api.consultar.and.resolveTo([evidencia('cedula_frente'), evidencia('cedula_reverso')]);
+    const stream = new MediaStream();
+    const stop = jasmine.createSpy('stop');
+    spyOn(stream, 'getTracks').and.returnValue([{ stop } as unknown as MediaStreamTrack]);
+    const permiso = spyOn(navigator.mediaDevices, 'getUserMedia').and.resolveTo(stream);
+    const fixture = await montar();
+    const controles = fixture.componentInstance as unknown as Controles;
+    const video = fixture.nativeElement.querySelector('video') as HTMLVideoElement;
+    spyOn(video, 'play').and.resolveTo();
+    Object.defineProperty(video, 'videoWidth', { value: 320 });
+    Object.defineProperty(video, 'videoHeight', { value: 240 });
+    spyOn(CanvasRenderingContext2D.prototype, 'drawImage').and.stub();
+    await controles.abrirCamara();
+    fixture.detectChanges();
+    expect(video.srcObject).toBe(stream);
+    expect(video.hidden).toBeFalse();
+    await controles.abrirCamara();
+    expect(permiso).toHaveBeenCalledTimes(1);
+    await controles.capturar();
+    fixture.detectChanges();
+    expect(imagen.preparar).toHaveBeenCalledWith(
+      jasmine.objectContaining({ name: 'selfie.jpg', type: 'image/jpeg' }),
+    );
+    expect(api.subir).toHaveBeenCalledWith('selfie', archivo);
+    expect(video.srcObject).toBeNull();
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelector('.miniatura-selfie')).not.toBeNull();
+    expect(controles.todoListo()).toBeTrue();
+  });
+
+  it('no captura sin cámara lista y no pide permiso antes de cargar ambas caras', async () => {
+    const permiso = spyOn(navigator.mediaDevices, 'getUserMedia');
+    const fixture = await montar();
+    const controles = fixture.componentInstance as unknown as Controles;
+    await controles.abrirCamara();
+    await controles.capturar();
+    expect(permiso).not.toHaveBeenCalled();
+    expect(api.subir).not.toHaveBeenCalled();
+  });
+
+  it('maneja carga por selector y arrastre, y rechaza múltiples archivos', async () => {
+    const fixture = await montar();
+    const controles = fixture.componentInstance as unknown as Controles;
+    const input = fixture.nativeElement.querySelector('.caras input') as HTMLInputElement;
+    const archivos = new DataTransfer();
+    archivos.items.add(archivo);
+    input.files = archivos.files;
+    input.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(input.value).toBe('');
+    expect(api.subir).toHaveBeenCalledWith('cedula_frente', archivo);
+    const arrastradas = new DataTransfer();
+    arrastradas.items.add(archivo);
+    const drop = new DragEvent('drop', { dataTransfer: arrastradas, cancelable: true });
+    controles.soltar('cedula_reverso', drop);
+    await fixture.whenStable();
+    expect(drop.defaultPrevented).toBeTrue();
+    expect(api.subir).toHaveBeenCalledWith('cedula_reverso', archivo);
+    arrastradas.items.add(new File(['otra'], 'otra.png', { type: 'image/png' }));
+    controles.soltar('cedula_reverso', new DragEvent('drop', { dataTransfer: arrastradas }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Selecciona una sola foto');
+    expect(api.subir).toHaveBeenCalledTimes(2);
+  });
+
+  for (const [status, mensaje] of [
+    [401, 'Tu sesión expiró'],
+    [413, 'demasiado grande'],
+    [415, 'otra imagen JPG o PNG'],
+    [422, 'otra imagen JPG o PNG'],
+  ] as const) {
+    it(`explica el error HTTP ${status} sin repetir la subida`, async () => {
+      api.subir.and.rejectWith(new HttpErrorResponse({ status }));
+      const fixture = await montar();
+      await (fixture.componentInstance as unknown as Controles).subir('cedula_frente', archivo);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(mensaje);
+      expect(api.subir).toHaveBeenCalledTimes(1);
+      expect(fixture.nativeElement.querySelector('.enviar').disabled).toBeTrue();
+    });
+  }
+
+  it('permite recuperar una consulta de evidencias que falló', async () => {
+    api.consultar.and.rejectWith(new HttpErrorResponse({ status: 503 }));
+    const fixture = await montar();
+    expect(fixture.nativeElement.textContent).toContain('No pudimos consultar tu solicitud');
+    api.consultar.and.resolveTo([
+      evidencia('cedula_frente'),
+      evidencia('cedula_reverso'),
+      evidencia('selfie'),
+    ]);
+    (fixture.nativeElement.querySelector('.boton') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.enviar').disabled).toBeFalse();
+    expect(api.consultar).toHaveBeenCalledTimes(2);
+  });
+
+  for (const actual of [null, { ...cotizacion, estado: 'EXPIRADA' as const }]) {
+    it(`impide usar una cotización ${actual ? 'expirada' : 'inexistente'}`, async () => {
+      cotizaciones.actual.and.resolveTo(actual);
+      const fixture = await montar();
+      expect(fixture.nativeElement.textContent).toContain('Vuelve a tu cotización');
+      expect(api.consultar).not.toHaveBeenCalled();
+    });
+  }
 
   it('detiene una cámara cuyo permiso se resuelve después de abandonar la pantalla', async () => {
     api.consultar.and.resolveTo([evidencia('cedula_frente'), evidencia('cedula_reverso')]);

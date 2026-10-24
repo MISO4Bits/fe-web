@@ -125,6 +125,7 @@ export class Solicitud implements OnInit, OnDestroy {
   }
 
   protected elegir(tipo: TipoEvidencia, event: Event): void {
+    if (tipo === 'selfie') return;
     const input = event.target as HTMLInputElement;
     const foto = input.files?.[0];
     input.value = '';
@@ -133,6 +134,7 @@ export class Solicitud implements OnInit, OnDestroy {
 
   protected soltar(tipo: TipoEvidencia, event: DragEvent): void {
     event.preventDefault();
+    if (tipo === 'selfie') return;
     if (event.dataTransfer?.files.length !== 1) {
       this.actualizar(tipo, { error: 'Selecciona una sola foto JPG o PNG.' });
       return;
@@ -140,7 +142,7 @@ export class Solicitud implements OnInit, OnDestroy {
     void this.subir(tipo, event.dataTransfer.files[0]);
   }
 
-  protected async subir(tipo: TipoEvidencia, archivo: File): Promise<void> {
+  private async subir(tipo: TipoEvidencia, archivo: File): Promise<void> {
     if (this.fotos()[tipo].ocupada || (tipo === 'selfie' && !this.cedulaLista())) return;
     if (tipo !== 'selfie') this.cerrarCamara();
     this.actualizar(tipo, { ocupada: true, error: '' });
@@ -233,7 +235,7 @@ export class Solicitud implements OnInit, OnDestroy {
       this.cerrarCamara();
       if (!this.destruido)
         this.errorCamara.set(
-          'No pudimos activar la cámara. Permite su uso en el navegador o sube una foto JPG o PNG.',
+          'No pudimos activar la cámara. Revisa que tu equipo tenga una cámara disponible y permite su uso en el navegador para tomar la selfie.',
         );
     } finally {
       if (!this.destruido) this.pidiendoCamara.set(false);

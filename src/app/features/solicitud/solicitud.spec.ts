@@ -253,7 +253,7 @@ describe('Solicitud BITS-275', () => {
     expect(revocar).toHaveBeenCalledWith('blob:segunda');
   });
 
-  it('ofrece subir archivo cuando se deniega la cámara', async () => {
+  it('pide habilitar la cámara sin ofrecer archivos cuando se deniega el permiso', async () => {
     api.consultar.and.resolveTo([evidencia('cedula_frente'), evidencia('cedula_reverso')]);
     spyOn(navigator.mediaDevices, 'getUserMedia').and.rejectWith(
       new DOMException('Denied', 'NotAllowedError'),
@@ -262,11 +262,34 @@ describe('Solicitud BITS-275', () => {
     await (fixture.componentInstance as unknown as Controles).abrirCamara();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain(
-      'Permite su uso en el navegador o sube una foto',
+      'permite su uso en el navegador para tomar la selfie',
     );
-    expect(
-      fixture.nativeElement.querySelector('input[aria-label="Subir foto de tu selfie"]').disabled,
-    ).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.selfie input[type="file"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.selfie .boton').disabled).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.enviar').disabled).toBeTrue();
+  });
+
+  it('no permite seleccionar ni arrastrar un archivo para la selfie', async () => {
+    api.consultar.and.resolveTo([evidencia('cedula_frente'), evidencia('cedula_reverso')]);
+    const fixture = await montar();
+    const controles = fixture.componentInstance as unknown as Controles;
+    const archivos = new DataTransfer();
+    archivos.items.add(archivo);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.files = archivos.files;
+    const cambio = new Event('change');
+    input.addEventListener('change', (event) => controles.elegir('selfie', event));
+    input.dispatchEvent(cambio);
+    const drop = new DragEvent('drop', { dataTransfer: archivos, cancelable: true, bubbles: true });
+    fixture.nativeElement.querySelector('.selfie').dispatchEvent(drop);
+    controles.soltar('selfie', new DragEvent('drop', { dataTransfer: archivos, cancelable: true }));
+    await fixture.whenStable();
+    expect(drop.defaultPrevented).toBeTrue();
+    expect(imagen.preparar).not.toHaveBeenCalled();
+    expect(api.subir).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.selfie input[type="file"]')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.caras input[type="file"]').length).toBe(2);
   });
 
   it('captura la selfie con cámara, la envía y libera el dispositivo', async () => {

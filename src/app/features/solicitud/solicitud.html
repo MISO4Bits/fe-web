@@ -81,7 +81,7 @@
           [attr.aria-busy]="selfie.ocupada"
           aria-label="Tu selfie"
           (dragover)="$event.preventDefault()"
-          (drop)="soltar('selfie', $event)"
+          (drop)="$event.preventDefault()"
         >
           <div class="retrato">
             <video
@@ -115,7 +115,7 @@
             } @else if (selfie.estado !== 'PENDIENTE' || selfie.ocupada) {
               <p class="estado" aria-live="polite">{{ texto(selfie) }}</p>
             } @else {
-              <p class="detalle">Activa tu cámara o sube una foto para confirmar que eres tú.</p>
+              <p class="detalle">Activa tu cámara para tomar la selfie y confirmar que eres tú.</p>
             }
             <p class="detalle">
               Mira de frente a la cámara, con buena luz y sin gafas, gorra ni tapabocas.
@@ -151,23 +151,6 @@
                   }}
                 </button>
               }
-              <input
-                #archivoSelfie
-                class="archivo"
-                type="file"
-                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                [disabled]="!cedulaLista() || selfie.ocupada"
-                (change)="elegir('selfie', $event)"
-                aria-label="Subir foto de tu selfie"
-              />
-              <button
-                class="texto-boton"
-                type="button"
-                [disabled]="!cedulaLista() || selfie.ocupada"
-                (click)="cerrarCamara(); archivoSelfie.click()"
-              >
-                Subir una foto
-              </button>
             </div>
           </div>
         </section>

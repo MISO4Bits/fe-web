@@ -8,6 +8,8 @@ import {
 } from './cotizacion-api.service';
 import { CreditoHipotecarioService } from './credito-hipotecario.service';
 import { BienvenidaService } from '../home/bienvenida.service';
+import { Location } from '@angular/common';
+import { seleccionVigente } from '../solicitud/seleccion-cotizacion';
 
 @Component({
   selector: 'app-cotizacion-resultado',
@@ -19,6 +21,7 @@ export class CotizacionResultado implements OnInit {
   private readonly api = inject(CotizacionApiService);
   private readonly bienvenidaUsuario = inject(BienvenidaService);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly dialogoDeclinar =
     viewChild.required<ElementRef<HTMLDialogElement>>('dialogoDeclinar');
   protected readonly eliminando = signal(false);
@@ -100,6 +103,15 @@ export class CotizacionResultado implements OnInit {
 
   protected continuar(): void {
     this.intentoContinuar.set(true);
+    const actual = this.cotizacion();
+    if (!this.aceptaCondiciones() || actual?.estado !== 'VIGENTE') return;
+    void this.router.navigate(['/cuenta/solicitud'], {
+      state: {
+        cotizacionCreadaEn: actual.creadaEn,
+        hogarSeleccionado: this.casaSeleccionada(),
+        condicionesAceptadas: true,
+      },
+    });
   }
 
   protected abrirCondiciones(): void {
@@ -164,6 +176,11 @@ export class CotizacionResultado implements OnInit {
       const actual = cotizacion.value;
       if (actual) this.bienvenidaUsuario.recordar();
       this.cotizacion.set(actual?.estado === 'EXPIRADA' ? null : actual);
+      const seleccion = actual && seleccionVigente(this.location.getState(), actual);
+      if (seleccion) {
+        this.aceptaCondiciones.set(true);
+        this.casaSeleccionada.set(seleccion.hogarSeleccionado && !!this.coberturaHogar);
+      }
       // Si falla el endpoint de consentimientos, no inferir NO_OTORGADO.
       if (consentimiento.status === 'fulfilled') {
         this.estadoConsentimiento.set(consentimiento.value);

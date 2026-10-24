@@ -1,0 +1,249 @@
+<section class="solicitud">
+  <nav class="pasos" aria-label="Progreso de solicitud">
+    <span><b>✓</b> Tus datos</span><i></i><span><b>✓</b> Tu correo</span><i></i>
+    <span><b>✓</b> Tu cotización</span><i></i><span aria-current="step"><b>4</b> Solicitud</span>
+  </nav>
+  @if (cargando()) {
+    <p role="status">Consultando tu solicitud...</p>
+  } @else if (error()) {
+    <p role="alert">{{ error() }}</p>
+    <button type="button" class="boton" (click)="cargar()">Reintentar</button>
+    <a class="enlace" routerLink="/cuenta/cotizaciones/actual">Volver a mi cotización</a>
+  } @else if (cotizacion()) {
+    <div class="columnas">
+      <div>
+        <h1>Tu solicitud de cambio de seguro</h1>
+        <p class="introduccion">
+          Carga tu cédula y tómate una selfie. Con eso confirmamos que eres tú.
+        </p>
+        <h2 class="etiqueta">TU CÉDULA</h2>
+        <div class="caras">
+          @for (cara of caras; track cara.tipo) {
+            @let foto = fotos()[cara.tipo];
+            <section
+              class="foto"
+              [class.rechazada]="foto.estado === 'REINTENTAR'"
+              [attr.aria-busy]="foto.ocupada"
+              [attr.aria-label]="cara.titulo"
+              (dragover)="$event.preventDefault()"
+              (drop)="soltar(cara.tipo, $event)"
+            >
+              <h3>{{ cara.titulo }}</h3>
+              @if (foto.vistaPrevia) {
+                <img
+                  class="miniatura-cedula"
+                  [src]="foto.vistaPrevia"
+                  [alt]="'Vista previa: ' + cara.titulo"
+                />
+              }
+              @if (foto.estado === 'PENDIENTE' && !foto.ocupada) {
+                <p>Arrastra aquí la foto</p>
+                <p class="detalle">o búscala en tu computador</p>
+              } @else {
+                <p class="estado" aria-live="polite">{{ texto(foto) }}</p>
+              }
+              @if (foto.nombre) {
+                <p class="nombre">{{ foto.nombre }}</p>
+              }
+              @if (foto.error) {
+                <p class="error" role="alert">{{ foto.error }}</p>
+              }
+              <input
+                #archivo
+                class="archivo"
+                type="file"
+                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                [disabled]="foto.ocupada"
+                (change)="elegir(cara.tipo, $event)"
+                [attr.aria-label]="'Cargar ' + cara.titulo"
+              />
+              <button
+                type="button"
+                class="texto-boton"
+                [disabled]="foto.ocupada"
+                (click)="archivo.click()"
+              >
+                {{ accion(foto) }}
+              </button>
+              <small>JPG o PNG</small>
+              @if (foto.ocupada) {
+                <progress aria-label="Revisando foto"></progress>
+              }
+            </section>
+          }
+        </div>
+        <h2 class="etiqueta">TU SELFIE</h2>
+        @let selfie = fotos().selfie;
+        <section
+          class="foto selfie"
+          [class.inactiva]="!cedulaLista()"
+          [class.rechazada]="selfie.estado === 'REINTENTAR'"
+          [attr.aria-busy]="selfie.ocupada"
+          aria-label="Tu selfie"
+          (dragover)="$event.preventDefault()"
+          (drop)="soltar('selfie', $event)"
+        >
+          <div class="retrato">
+            <video
+              #video
+              [hidden]="!camaraActiva()"
+              autoplay
+              muted
+              playsinline
+              aria-label="Vista previa de tu cámara"
+            ></video>
+            @if (!camaraActiva()) {
+              @if (selfie.vistaPrevia) {
+                <img
+                  class="miniatura-selfie"
+                  [src]="selfie.vistaPrevia"
+                  alt="Vista previa de tu selfie"
+                />
+              } @else {
+                <svg viewBox="0 0 140 160" aria-hidden="true">
+                  <ellipse cx="70" cy="80" rx="48" ry="68" />
+                  <circle cx="70" cy="68" r="15" />
+                  <path d="M46 110c2-25 46-25 48 0" />
+                </svg>
+              }
+            }
+          </div>
+          <div class="selfie-contenido">
+            <h3>Tu selfie</h3>
+            @if (!cedulaLista()) {
+              <p class="detalle">Primero carga las dos caras de tu cédula.</p>
+            } @else if (selfie.estado !== 'PENDIENTE' || selfie.ocupada) {
+              <p class="estado" aria-live="polite">{{ texto(selfie) }}</p>
+            } @else {
+              <p class="detalle">Activa tu cámara o sube una foto para confirmar que eres tú.</p>
+            }
+            <p class="detalle">
+              Mira de frente a la cámara, con buena luz y sin gafas, gorra ni tapabocas.
+            </p>
+            @if (selfie.nombre) {
+              <p class="nombre">{{ selfie.nombre }}</p>
+            }
+            @if (selfie.error) {
+              <p class="error" role="alert">{{ selfie.error }}</p>
+            }
+            @if (errorCamara()) {
+              <p class="error" role="alert">{{ errorCamara() }}</p>
+            }
+            <div class="acciones-selfie">
+              @if (camaraActiva()) {
+                <button class="boton" type="button" (click)="capturar()">Capturar foto</button>
+                <button class="texto-boton" type="button" (click)="cerrarCamara()">
+                  Cancelar cámara
+                </button>
+              } @else {
+                <button
+                  class="boton"
+                  type="button"
+                  [disabled]="!cedulaLista() || selfie.ocupada || pidiendoCamara()"
+                  (click)="abrirCamara()"
+                >
+                  {{
+                    pidiendoCamara()
+                      ? 'Activando cámara...'
+                      : selfie.estado === 'ACEPTADA'
+                        ? 'Tomarla otra vez'
+                        : 'Tomar la selfie'
+                  }}
+                </button>
+              }
+              <input
+                #archivoSelfie
+                class="archivo"
+                type="file"
+                accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                [disabled]="!cedulaLista() || selfie.ocupada"
+                (change)="elegir('selfie', $event)"
+                aria-label="Subir foto de tu selfie"
+              />
+              <button
+                class="texto-boton"
+                type="button"
+                [disabled]="!cedulaLista() || selfie.ocupada"
+                (click)="cerrarCamara(); archivoSelfie.click()"
+              >
+                Subir una foto
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+      <aside>
+        <h2 class="etiqueta">LO QUE VAS A CONTRATAR</h2>
+        <section class="panel resumen" aria-label="Resumen de tu cotización">
+          <h3>{{ hogar ? 'Vida para tu crédito y tu casa' : 'Vida para tu crédito' }}</h3>
+          <dl>
+            <div>
+              <dt>Vida para tu crédito</dt>
+              <dd>{{ moneda.format(vida) }}</dd>
+            </div>
+            @if (hogar; as cobertura) {
+              <div>
+                <dt>Tu casa</dt>
+                <dd>{{ moneda.format(cobertura.primaNeta) }}</dd>
+              </div>
+              <div>
+                <dt>IVA de tu casa</dt>
+                <dd>{{ moneda.format(cobertura.iva) }}</dd>
+              </div>
+            }
+            <div class="total">
+              <dt>Pagas cada mes</dt>
+              <dd>{{ moneda.format(total) }}</dd>
+            </div>
+          </dl>
+          <p class="detalle">
+            Se cobra con la cuota de tu crédito. Es la cotización que aceptaste.
+          </p>
+        </section>
+        <section class="panel requisitos" aria-label="Lo que revisamos para tu solicitud">
+          <h3>Lo que revisamos para tu solicitud</h3>
+          <ul>
+            @for (requisito of requisitos; track requisito.tipo) {
+              @let foto = fotos()[requisito.tipo];
+              <li>
+                <span class="indicador" aria-hidden="true">{{
+                  foto.ocupada
+                    ? '◷'
+                    : foto.estado === 'ACEPTADA'
+                      ? '✓'
+                      : foto.estado === 'REVISION_MANUAL'
+                        ? '♙'
+                        : foto.estado === 'REINTENTAR'
+                          ? '!'
+                          : '○'
+                }}</span>
+                <span
+                  >{{ requisito.titulo
+                  }}<small [class.error]="foto.estado === 'REINTENTAR'">{{
+                    texto(foto)
+                  }}</small></span
+                >
+              </li>
+            }
+            <li>
+              <span class="indicador" aria-hidden="true">✓</span
+              ><span
+                >Datos de tu crédito<small>{{ datosCredito }}</small></span
+              >
+            </li>
+          </ul>
+        </section>
+        <p class="detalle autorizacion">
+          Al enviarla, autorizas a Solventa a pedirle a
+          {{ cotizacion()?.datosCredito?.entidadAcreedora }} el cambio del seguro de tu crédito.
+        </p>
+        <button class="boton enviar" type="button" [disabled]="!todoListo()">
+          Enviar solicitud
+        </button>
+        <a class="enlace" routerLink="/cuenta/cotizaciones/actual" [state]="seleccion() || {}"
+          >Volver a mi cotización</a
+        >
+      </aside>
+    </div>
+  }
+</section>

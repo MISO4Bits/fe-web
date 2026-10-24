@@ -303,7 +303,13 @@ describe('CotizacionResultado BITS-292', () => {
       expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();
       boton.click();
       fixture.detectChanges();
-      expect(navegar).not.toHaveBeenCalled();
+      expect(navegar).toHaveBeenCalledOnceWith(['/cuenta/solicitud'], {
+        state: {
+          cotizacionCreadaEn: cotizacion.creadaEn,
+          hogarSeleccionado: false,
+          condicionesAceptadas: true,
+        },
+      });
       expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();
     });
   }

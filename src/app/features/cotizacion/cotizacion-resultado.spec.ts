@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Location } from '@angular/common';
 import { Router, provideRouter } from '@angular/router';
 import { CotizacionResultado } from './cotizacion-resultado';
 import { CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.service';
@@ -38,10 +39,12 @@ describe('CotizacionResultado BITS-292', () => {
   async function montar(
     actual: CotizacionRespuesta | null,
     consentimiento: 'OTORGADO' | 'NO_OTORGADO' | 'REVOCADO' | null = 'OTORGADO',
+    estado: unknown = {},
   ) {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        { provide: Location, useValue: { getState: () => estado } },
         {
           provide: CreditoHipotecarioService,
           useValue: { estadoConsentimientoFinanciero: () => Promise.resolve(consentimiento) },
@@ -104,6 +107,39 @@ describe('CotizacionResultado BITS-292', () => {
   it('BITS-294: oculta Tu casa si el BFF no devuelve HOGAR', async () => {
     const fixture = await montar(cotizacion);
     expect(fixture.nativeElement.querySelector('.casa')).toBeNull();
+  });
+
+  it('restaura la aceptación y Tu casa al volver desde la solicitud', async () => {
+    const actual: CotizacionRespuesta = {
+      ...cotizacion,
+      oferta: {
+        ...cotizacion.oferta,
+        desglose: {
+          coberturas: [
+            {
+              codigo: 'HOGAR',
+              obligatoria: false,
+              sumaAsegurada: 100000000,
+              primaNeta: 10000,
+              iva: 1900,
+              primaTotal: 11900,
+            },
+          ],
+        },
+      },
+    };
+    const fixture = await montar(actual, 'OTORGADO', {
+      cotizacionCreadaEn: actual.creadaEn,
+      hogarSeleccionado: true,
+      condicionesAceptadas: true,
+    });
+    expect(
+      (fixture.nativeElement.querySelector('.condiciones input') as HTMLInputElement).checked,
+    ).toBeTrue();
+    expect(
+      (fixture.nativeElement.querySelector('.casa input') as HTMLInputElement).checked,
+    ).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.desglose .total').textContent).toContain('53.900');
   });
 
   it('BITS-337: Volver cierra sin eliminar ni cambiar la aceptación', async () => {
@@ -303,7 +339,13 @@ describe('CotizacionResultado BITS-292', () => {
       expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();
       boton.click();
       fixture.detectChanges();
-      expect(navegar).not.toHaveBeenCalled();
+      expect(navegar).toHaveBeenCalledOnceWith(['/cuenta/solicitud'], {
+        state: {
+          cotizacionCreadaEn: cotizacion.creadaEn,
+          hogarSeleccionado: false,
+          condicionesAceptadas: true,
+        },
+      });
       expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();
     });
   }

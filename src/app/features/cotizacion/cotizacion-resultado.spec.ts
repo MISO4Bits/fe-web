@@ -1,10 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Location } from '@angular/common';
 import { Router, provideRouter } from '@angular/router';
 import { CotizacionResultado } from './cotizacion-resultado';
 import { CotizacionApiService, CotizacionRespuesta } from './cotizacion-api.service';
 import { CreditoHipotecarioService } from './credito-hipotecario.service';
+import { BienvenidaService } from '../home/bienvenida.service';
 
 describe('CotizacionResultado BITS-292', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: BienvenidaService, useValue: { recordar: () => undefined } }],
+    });
+  });
   const cotizacion: CotizacionRespuesta = {
     estado: 'VIGENTE',
     producto: 'VIDA_HIPOTECARIO',
@@ -31,17 +39,22 @@ describe('CotizacionResultado BITS-292', () => {
   async function montar(
     actual: CotizacionRespuesta | null,
     consentimiento: 'OTORGADO' | 'NO_OTORGADO' | 'REVOCADO' | null = 'OTORGADO',
+    estado: unknown = {},
   ) {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        { provide: Location, useValue: { getState: () => estado } },
         {
           provide: CreditoHipotecarioService,
           useValue: { estadoConsentimientoFinanciero: () => Promise.resolve(consentimiento) },
         },
         {
           provide: CotizacionApiService,
-          useValue: { actual: jasmine.createSpy().and.resolveTo(actual) },
+          useValue: {
+            actual: jasmine.createSpy().and.resolveTo(actual),
+            eliminarActual: jasmine.createSpy().and.resolveTo(undefined),
+          },
         },
       ],
     });
@@ -96,6 +109,108 @@ describe('CotizacionResultado BITS-292', () => {
     expect(fixture.nativeElement.querySelector('.casa')).toBeNull();
   });
 
+  it('restaura la aceptación y Tu casa al volver desde la solicitud', async () => {
+    const actual: CotizacionRespuesta = {
+      ...cotizacion,
+      oferta: {
+        ...cotizacion.oferta,
+        desglose: {
+          coberturas: [
+            {
+              codigo: 'HOGAR',
+              obligatoria: false,
+              sumaAsegurada: 100000000,
+              primaNeta: 10000,
+              iva: 1900,
+              primaTotal: 11900,
+            },
+          ],
+        },
+      },
+    };
+    const fixture = await montar(actual, 'OTORGADO', {
+      cotizacionCreadaEn: actual.creadaEn,
+      hogarSeleccionado: true,
+      condicionesAceptadas: true,
+    });
+    expect(
+      (fixture.nativeElement.querySelector('.condiciones input') as HTMLInputElement).checked,
+    ).toBeTrue();
+    expect(
+      (fixture.nativeElement.querySelector('.casa input') as HTMLInputElement).checked,
+    ).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.desglose .total').textContent).toContain('53.900');
+  });
+
+  it('BITS-337: Volver cierra sin eliminar ni cambiar la aceptación', async () => {
+    const fixture = await montar(cotizacion);
+    const checkbox = fixture.nativeElement.querySelector('.condiciones input') as HTMLInputElement;
+    checkbox.click();
+    (fixture.nativeElement.querySelector('.declinar') as HTMLButtonElement).click();
+    const modal = fixture.nativeElement.querySelector('.modal-declinar') as HTMLDialogElement;
+    expect(modal.open).toBeTrue();
+    (modal.querySelector('.enlace') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(modal.open).toBeFalse();
+    expect(checkbox.checked).toBeTrue();
+    expect(TestBed.inject(CotizacionApiService).eliminarActual).not.toHaveBeenCalled();
+  });
+
+  for (const estado of [204, 404]) {
+    it(`BITS-337: vuelve al Home sin cotización después de ${estado}`, async () => {
+      const fixture = await montar(cotizacion, 'NO_OTORGADO');
+      const api = TestBed.inject(CotizacionApiService);
+      if (estado === 404) {
+        (api.eliminarActual as jasmine.Spy).and.rejectWith(new HttpErrorResponse({ status: 404 }));
+      }
+      const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      (fixture.nativeElement.querySelector('.declinar') as HTMLButtonElement).click();
+      const modal = fixture.nativeElement.querySelector('.modal-declinar') as HTMLDialogElement;
+      (modal.querySelector('.boton') as HTMLButtonElement).click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(api.eliminarActual).toHaveBeenCalledTimes(1);
+      expect(modal.open).toBeFalse();
+      expect(navegar).toHaveBeenCalledOnceWith(['/cuenta']);
+      expect(fixture.nativeElement.querySelector('.declinar')).toBeNull();
+    });
+  }
+
+  it('BITS-337: bloquea duplicados y Escape durante la eliminación, permite reintentar', async () => {
+    const fixture = await montar(cotizacion);
+    const api = TestBed.inject(CotizacionApiService);
+    const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    let rechazar!: (reason: unknown) => void;
+    (api.eliminarActual as jasmine.Spy).and.returnValue(
+      new Promise<void>((_resolve, reject) => {
+        rechazar = reject;
+      }),
+    );
+    (fixture.nativeElement.querySelector('.declinar') as HTMLButtonElement).click();
+    const modal = fixture.nativeElement.querySelector('.modal-declinar') as HTMLDialogElement;
+    const confirmar = modal.querySelector('.boton') as HTMLButtonElement;
+    confirmar.click();
+    confirmar.click();
+    fixture.detectChanges();
+    expect(api.eliminarActual).toHaveBeenCalledTimes(1);
+    expect(confirmar.disabled).toBeTrue();
+    expect((modal.querySelector('.enlace') as HTMLButtonElement).disabled).toBeTrue();
+    const escape = new Event('cancel', { cancelable: true });
+    modal.dispatchEvent(escape);
+    expect(escape.defaultPrevented).toBeTrue();
+    rechazar(new HttpErrorResponse({ status: 503 }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(modal.open).toBeTrue();
+    expect(modal.querySelector('[role="alert"]')?.textContent).toContain('Inténtalo de nuevo');
+    expect(confirmar.disabled).toBeFalse();
+    expect(navegar).not.toHaveBeenCalled();
+    (api.eliminarActual as jasmine.Spy).and.resolveTo(undefined);
+    confirmar.click();
+    await fixture.whenStable();
+    expect(navegar).toHaveBeenCalledOnceWith(['/cuenta']);
+  });
+
   it('muestra el estado vacío si no hay cotización', async () => {
     const fixture = await montar(null);
     expect(fixture.nativeElement.textContent).toContain('Todavía no tienes cotizaciones');
@@ -143,7 +258,10 @@ describe('CotizacionResultado BITS-292', () => {
         factores: [{ descripcion: 'Pagos', efecto: 'POSITIVO' }],
       },
     });
-    (fixture.nativeElement.querySelector('button.enlace') as HTMLButtonElement).click();
+    const explicacion = Array.from(
+      fixture.nativeElement.querySelectorAll('button.enlace') as NodeListOf<HTMLButtonElement>,
+    ).find((button) => button.textContent?.includes('¿Por qué este precio?'));
+    explicacion!.click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="dialog"]')?.textContent).toContain('27.332');
   });
@@ -221,7 +339,13 @@ describe('CotizacionResultado BITS-292', () => {
       expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();
       boton.click();
       fixture.detectChanges();
-      expect(navegar).not.toHaveBeenCalled();
+      expect(navegar).toHaveBeenCalledOnceWith(['/cuenta/solicitud'], {
+        state: {
+          cotizacionCreadaEn: cotizacion.creadaEn,
+          hogarSeleccionado: false,
+          condicionesAceptadas: true,
+        },
+      });
       expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();
     });
   }

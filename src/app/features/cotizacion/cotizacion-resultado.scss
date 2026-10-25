@@ -243,6 +243,20 @@
 .modal-condiciones::backdrop {
   background: #19222470;
 }
+<<<<<<< HEAD
+=======
+.modal-declinar h2 {
+  font-size: 24px;
+}
+.modal-declinar .error-declinar {
+  color: #b42318;
+  margin-top: 16px;
+}
+.modal-declinar .enlace:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+>>>>>>> develop
 .condiciones-error {
   border-color: #b42318;
   background: #fff0ee;

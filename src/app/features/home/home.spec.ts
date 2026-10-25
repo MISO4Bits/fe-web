@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { Home } from './home';
 import { CotizacionApiService, CotizacionRespuesta } from '../cotizacion/cotizacion-api.service';
+import { Sesion } from '../../nucleo/sesion/sesion';
 
 describe('Home', () => {
   let fixture: ComponentFixture<Home>;
@@ -39,11 +40,32 @@ describe('Home', () => {
   }
 
   beforeEach(async () => {
+    localStorage.removeItem('solventa.bienvenida-cotizacion:home-test@example.com');
     api = jasmine.createSpyObj<CotizacionApiService>('CotizacionApiService', ['actual']);
     await TestBed.configureTestingModule({
       imports: [Home],
-      providers: [provideRouter([]), { provide: CotizacionApiService, useValue: api }],
+      providers: [
+        provideRouter([]),
+        { provide: CotizacionApiService, useValue: api },
+        { provide: Sesion, useValue: { actual: () => ({ correo: 'home-test@example.com' }) } },
+      ],
     }).compileComponents();
+  });
+  afterEach(() => localStorage.removeItem('solventa.bienvenida-cotizacion:home-test@example.com'));
+
+  it('no repite la bienvenida al volver al Home vacío', async () => {
+    await montar(null);
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).not.toBeNull();
+    fixture.destroy();
+    await montar(null);
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('no muestra bienvenida después de haber tenido una cotización', async () => {
+    await montar(cotizacion);
+    fixture.destroy();
+    await montar(null);
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it('muestra bienvenida y Home vacío cuando el BFF no devuelve cotizaciones', async () => {

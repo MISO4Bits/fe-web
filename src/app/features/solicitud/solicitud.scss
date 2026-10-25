@@ -1,0 +1,341 @@
+:host {
+  display: block;
+  color: #192224;
+}
+.solicitud {
+  max-width: 1180px;
+  margin: auto;
+  padding: 28px 28px 60px;
+}
+.pasos {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+  color: #526265;
+  margin-bottom: 42px;
+}
+.pasos span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.pasos b {
+  background: #006e75;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+}
+.pasos i {
+  width: 28px;
+  height: 1px;
+  background: #dce5e7;
+}
+.pasos [aria-current] {
+  font-weight: 700;
+  color: #192224;
+}
+.columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+.introduccion {
+  font-size: 15px;
+  color: #526265;
+  line-height: 1.5;
+  margin: 0 0 36px;
+}
+.etiqueta {
+  font-size: 10px;
+  font-weight: 600;
+  color: #68797d;
+  margin: 0 0 12px;
+  letter-spacing: 0.04em;
+}
+.caras {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+.foto {
+  position: relative;
+  border: 1px dashed #278695;
+  border-radius: 12px;
+  padding: 22px 14px;
+  text-align: center;
+  min-width: 0;
+}
+h3 {
+  font-size: 14px;
+  margin: 0 0 12px;
+  font-weight: 600;
+}
+p {
+  font-size: 14px;
+  margin: 7px 0;
+  line-height: 1.45;
+}
+.detalle,
+small,
+.nombre {
+  font-size: 12px;
+  color: #788284;
+}
+.nombre {
+  overflow-wrap: anywhere;
+}
+.miniatura-cedula {
+  display: block;
+  width: 100%;
+  height: 125px;
+  object-fit: contain;
+  border-radius: 6px;
+  margin: 0 auto 12px;
+  background: #e8eff0;
+}
+.miniatura-selfie {
+  width: 100%;
+  height: 160px;
+  object-fit: contain;
+}
+.estado {
+  color: #00747b;
+}
+.foto small {
+  display: block;
+  margin-top: 10px;
+}
+.texto-boton,
+.enlace {
+  background: none;
+  color: #00747b;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.texto-boton {
+  margin-top: 5px;
+}
+.archivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+.foto:focus-within {
+  outline: 2px solid #00747b;
+  outline-offset: 3px;
+}
+.rechazada {
+  background: #fff0ee;
+  border-color: #b42318;
+}
+.error,
+.rechazada .estado {
+  color: #b42318;
+}
+progress {
+  position: absolute;
+  bottom: 0;
+  left: 5%;
+  width: 90%;
+  height: 5px;
+  accent-color: #00747b;
+}
+.selfie {
+  display: flex;
+  text-align: left;
+  gap: 18px;
+  padding: 14px;
+}
+.inactiva {
+  border-color: #cbd5d7;
+}
+.retrato {
+  width: 160px;
+  flex-shrink: 0;
+  min-height: 150px;
+  background: #e8eff0;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.retrato svg {
+  width: 120px;
+  height: 150px;
+  fill: none;
+  stroke: #849698;
+  stroke-width: 2;
+}
+.inactiva svg {
+  stroke: #c6d1d3;
+}
+video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+video[hidden] {
+  display: none;
+}
+.selfie-contenido {
+  min-width: 0;
+}
+.acciones-selfie {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+}
+.boton {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px 22px;
+  border: 0;
+  border-radius: 32px;
+  background: #006e75;
+  color: white;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.boton:disabled {
+  background: #dce2e3;
+  color: #788284;
+  opacity: 1;
+}
+.panel {
+  border: 1px solid #d9e3e5;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 22px;
+}
+.resumen {
+  background: white;
+}
+dl {
+  margin: 18px 0 0;
+}
+dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  margin: 12px 0;
+}
+dd {
+  margin: 0;
+  font-weight: 600;
+}
+.total {
+  border-top: 1px solid #dce5e7;
+  padding-top: 18px;
+  margin-top: 18px;
+  align-items: center;
+  font-weight: 600;
+}
+.total dd {
+  color: #00747b;
+  font-size: 23px;
+}
+.requisitos ul {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+}
+.requisitos li {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  font-size: 13px;
+  margin: 16px 0 0;
+}
+.requisitos small {
+  display: block;
+  margin-top: 3px;
+  color: #00747b;
+}
+.indicador {
+  color: #00747b;
+  width: 18px;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+.autorizacion {
+  font-size: 11px;
+  margin-bottom: 14px;
+}
+.enlace {
+  display: block;
+  margin-top: 24px;
+  text-decoration: none;
+  width: fit-content;
+}
+@media (max-width: 850px) {
+  .columnas {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .solicitud {
+    padding: 24px 18px 40px;
+  }
+  .pasos {
+    gap: 7px;
+    overflow-x: auto;
+  }
+  .pasos i {
+    width: 12px;
+    flex-shrink: 0;
+  }
+  h1 {
+    font-size: 25px;
+  }
+}
+@media (max-width: 450px) {
+  .pasos {
+    justify-content: space-between;
+  }
+  .pasos span {
+    flex-direction: column;
+    gap: 5px;
+    font-size: 10px;
+  }
+  .pasos i {
+    width: 8px;
+  }
+  .caras {
+    gap: 10px;
+  }
+  .foto {
+    padding: 18px 10px;
+  }
+  .selfie {
+    flex-direction: column;
+  }
+  .retrato {
+    width: 100%;
+    height: 160px;
+  }
+}

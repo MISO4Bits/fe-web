@@ -1,11 +1,15 @@
 import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   CoberturaPrecioCotizacion,
   CotizacionApiService,
   CotizacionRespuesta,
 } from './cotizacion-api.service';
 import { CreditoHipotecarioService } from './credito-hipotecario.service';
+import { BienvenidaService } from '../home/bienvenida.service';
+import { Location } from '@angular/common';
+import { seleccionVigente } from '../solicitud/seleccion-cotizacion';
 
 @Component({
   selector: 'app-cotizacion-resultado',
@@ -15,6 +19,13 @@ import { CreditoHipotecarioService } from './credito-hipotecario.service';
 })
 export class CotizacionResultado implements OnInit {
   private readonly api = inject(CotizacionApiService);
+  private readonly bienvenidaUsuario = inject(BienvenidaService);
+  private readonly router = inject(Router);
+  private readonly location = inject(Location);
+  private readonly dialogoDeclinar =
+    viewChild.required<ElementRef<HTMLDialogElement>>('dialogoDeclinar');
+  protected readonly eliminando = signal(false);
+  protected readonly errorDeclinar = signal('');
   private readonly dialogoCondiciones =
     viewChild.required<ElementRef<HTMLDialogElement>>('dialogoCondiciones');
   private readonly creditos = inject(CreditoHipotecarioService);
@@ -92,6 +103,15 @@ export class CotizacionResultado implements OnInit {
 
   protected continuar(): void {
     this.intentoContinuar.set(true);
+    const actual = this.cotizacion();
+    if (!this.aceptaCondiciones() || actual?.estado !== 'VIGENTE') return;
+    void this.router.navigate(['/cuenta/solicitud'], {
+      state: {
+        cotizacionCreadaEn: actual.creadaEn,
+        hogarSeleccionado: this.casaSeleccionada(),
+        condicionesAceptadas: true,
+      },
+    });
   }
 
   protected abrirCondiciones(): void {
@@ -101,6 +121,43 @@ export class CotizacionResultado implements OnInit {
   protected aceptarDesdeModal(): void {
     this.aceptaCondiciones.set(true);
     this.dialogoCondiciones().nativeElement.close();
+  }
+
+  protected abrirDeclinar(): void {
+    this.errorDeclinar.set('');
+    this.dialogoDeclinar().nativeElement.showModal();
+  }
+
+  protected cerrarDeclinar(): void {
+    if (!this.eliminando()) this.dialogoDeclinar().nativeElement.close();
+  }
+
+  protected cancelarDeclinar(event: Event): void {
+    if (this.eliminando()) event.preventDefault();
+  }
+
+  protected async confirmarDeclinar(): Promise<void> {
+    if (this.eliminando() || !this.cotizacion()) return;
+    this.eliminando.set(true);
+    this.errorDeclinar.set('');
+    try {
+      await this.api.eliminarActual();
+    } catch (error: unknown) {
+      // Si ya no existe (por ejemplo, otra pestaña la eliminó), volver al inicio.
+      if (!(error instanceof HttpErrorResponse && error.status === 404)) {
+        this.errorDeclinar.set(
+          error instanceof HttpErrorResponse && error.status === 401
+            ? 'Tu sesión expiró. Inicia sesión de nuevo para declinar la cotización.'
+            : 'No pudimos eliminar tu cotización. Inténtalo de nuevo.',
+        );
+        this.eliminando.set(false);
+        return;
+      }
+    }
+    this.dialogoDeclinar().nativeElement.close();
+    this.cotizacion.set(null);
+    await this.router.navigate(['/cuenta']);
+    this.eliminando.set(false);
   }
 
   protected async cargar(): Promise<void> {
@@ -117,7 +174,13 @@ export class CotizacionResultado implements OnInit {
       ]);
       if (cotizacion.status === 'rejected') throw cotizacion.reason;
       const actual = cotizacion.value;
+      if (actual) this.bienvenidaUsuario.recordar();
       this.cotizacion.set(actual?.estado === 'EXPIRADA' ? null : actual);
+      const seleccion = actual && seleccionVigente(this.location.getState(), actual);
+      if (seleccion) {
+        this.aceptaCondiciones.set(true);
+        this.casaSeleccionada.set(seleccion.hogarSeleccionado && !!this.coberturaHogar);
+      }
       // Si falla el endpoint de consentimientos, no inferir NO_OTORGADO.
       if (consentimiento.status === 'fulfilled') {
         this.estadoConsentimiento.set(consentimiento.value);

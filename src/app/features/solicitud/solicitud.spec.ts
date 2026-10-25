@@ -121,6 +121,13 @@ describe('Solicitud BITS-275', () => {
     expect(fixture.nativeElement.querySelector('.total').textContent).toContain('51.900');
   });
 
+  it('muestra la confirmación del banco cuando origenDatos es CONFIRMADO', async () => {
+    cotizaciones.actual.and.resolveTo({ ...cotizacion, origenDatos: 'CONFIRMADO' });
+    const fixture = await montar();
+    expect(fixture.nativeElement.textContent).toContain('Confirmados por BBVA');
+    expect(fixture.nativeElement.textContent).not.toContain('Declarado por el solicitante');
+  });
+
   it('restaura revisión manual y aceptada, habilita selfie y después envío sin enviar solicitud', async () => {
     api.consultar.and.resolveTo([
       evidencia('cedula_frente'),

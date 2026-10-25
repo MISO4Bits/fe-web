@@ -23,7 +23,7 @@ export interface CotizacionRespuesta {
   estado: 'VIGENTE' | 'EXPIRADA';
   producto: 'VIDA_HIPOTECARIO';
   datosCredito: DatosCreditoCotizacion;
-  origenDatos: 'DECLARADO';
+  origenDatos: 'CONFIRMADO' | 'DECLARADO';
   oferta: {
     primaMensual: number;
     primaBaseMensual: number;

@@ -296,11 +296,9 @@ describe('CotizacionResultado BITS-292', () => {
   });
 
   it('ofrece aceptar sin perfil cuando el BFF confirma el origen bancario', async () => {
-    // El contrato tipa origenDatos solo como DECLARADO; se simula la respuesta
-    // futura de datos bancarios sin cambiar el código productivo.
-    const verificada = {
+    const verificada: CotizacionRespuesta = {
       ...cotizacion,
-      origenDatos: 'OPEN_FINANCE' as unknown as CotizacionRespuesta['origenDatos'],
+      origenDatos: 'CONFIRMADO',
       oferta: { ...cotizacion.oferta, fuentesNoDisponibles: [] },
     };
     const fixture = await montar(verificada);
@@ -308,6 +306,34 @@ describe('CotizacionResultado BITS-292', () => {
     expect(fixture.nativeElement.querySelector('.continuar')).not.toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Buscar mi crédito en el banco');
   });
+
+  for (const conPerfil of [true, false]) {
+    for (const origenDatos of ['CONFIRMADO', 'DECLARADO'] as const) {
+      it(`AC-3: muestra el origen ${origenDatos} ${conPerfil ? 'con' : 'sin'} perfil`, async () => {
+        const fixture = await montar({
+          ...cotizacion,
+          origenDatos,
+          oferta: { ...cotizacion.oferta, personalizado: conPerfil },
+          perfilRiesgo: conPerfil
+            ? { nivelRiesgo: 'BAJO', factores: [{ descripcion: 'Historial', efecto: 'POSITIVO' }] }
+            : null,
+        });
+        const texto = fixture.nativeElement.textContent as string;
+        const descripcion = fixture.nativeElement.querySelector('.descripcion')
+          .textContent as string;
+        if (origenDatos === 'CONFIRMADO') {
+          expect(texto).not.toContain('que tú declaraste');
+          expect(texto).not.toContain('datos de tu crédito son declarados');
+          expect(descripcion).toContain(conPerfil ? 'BBVA Colombia' : 'vienen de tu banco');
+        } else {
+          expect(descripcion).toContain('que tú declaraste');
+          expect(texto).not.toContain('vienen de tu banco');
+        }
+        expect(fixture.nativeElement.querySelector('.continuar').disabled).toBeFalse();
+        expect(texto.includes('¿Por qué este precio?')).toBe(conPerfil);
+      });
+    }
+  }
 
   it('permite aceptar cuando falta autorización financiera', async () => {
     const fixture = await montar(cotizacion, 'NO_OTORGADO');

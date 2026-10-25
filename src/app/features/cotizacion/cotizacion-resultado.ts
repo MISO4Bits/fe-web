@@ -76,9 +76,7 @@ export class CotizacionResultado implements OnInit {
   }
 
   protected get datosVerificados(): boolean {
-    // Solo una confirmación explícita del BFF permite atribuir origen bancario.
-    // El contrato actual aún limita origenDatos a DECLARADO.
-    return (this.cotizacion()?.origenDatos as string | undefined) === 'OPEN_FINANCE';
+    return this.cotizacion()?.origenDatos === 'CONFIRMADO';
   }
 
   protected get sinAutorizacionFinanciera(): boolean {

@@ -285,7 +285,7 @@ export class Solicitud implements OnInit, OnDestroy {
   }
   protected get datosCredito(): string {
     const c = this.cotizacion();
-    return (c?.origenDatos as string) === 'OPEN_FINANCE'
+    return c?.origenDatos === 'CONFIRMADO'
       ? `Confirmados por ${c?.datosCredito.entidadAcreedora}`
       : 'Declarado por el solicitante';
   }

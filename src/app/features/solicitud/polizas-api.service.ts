@@ -20,6 +20,9 @@ export interface PolizaSolicitud {
   numero?: string | null;
   estado: 'EMITIDA' | 'PENDIENTE' | 'RECHAZADA' | 'VENCIDA';
   solicitudVigenteHasta?: string | null;
+  emitidaEn?: string | null;
+  vigencia?: { desde: string; hasta: string } | null;
+  rechazo?: { motivos: { codigo: string; mensaje: string }[]; rechazadaEn: string } | null;
   pendientes: {
     codigo: string;
     tipo: 'USUARIO' | 'AGENTE';
@@ -33,12 +36,30 @@ export class PolizasApiService {
   private readonly sesion = inject(SessionService);
   private readonly url = `${inject(BFF_BASE_URL).replace(/\/$/, '')}/v1/cuenta/polizas`;
 
-  async solicitar(solicitud: SolicitarPoliza): Promise<PolizaSolicitud> {
+  private async headers(): Promise<HttpHeaders> {
     const token = await this.sesion.validAccessToken();
     if (!token) throw new Error('SESION_EXPIRADA');
+    return new HttpHeaders({ Authorization: `Bearer ${token}` });
+  }
+
+  async listar(): Promise<PolizaSolicitud[]> {
+    return firstValueFrom(
+      this.http.get<PolizaSolicitud[]>(this.url, { headers: await this.headers() }),
+    );
+  }
+
+  async consultar(id: string): Promise<PolizaSolicitud> {
+    return firstValueFrom(
+      this.http.get<PolizaSolicitud>(`${this.url}/${encodeURIComponent(id)}`, {
+        headers: await this.headers(),
+      }),
+    );
+  }
+
+  async solicitar(solicitud: SolicitarPoliza): Promise<PolizaSolicitud> {
     return firstValueFrom(
       this.http.post<PolizaSolicitud>(this.url, solicitud, {
-        headers: new HttpHeaders({ Authorization: `Bearer ${token}` }),
+        headers: await this.headers(),
       }),
     );
   }

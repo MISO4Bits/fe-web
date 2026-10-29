@@ -1,0 +1,125 @@
+<section class="estado-solicitud">
+  <nav class="pasos" aria-label="Progreso de solicitud">
+    <span><b>✓</b> Tus datos</span><i></i><span><b>✓</b> Tu correo</span><i></i>
+    <span><b>✓</b> Tu cotización</span><i></i><span aria-current="step"><b>✓</b> Solicitud</span>
+  </nav>
+  @if (cargando()) {
+    <p role="status">Consultando tu solicitud...</p>
+  } @else if (error()) {
+    <section class="panel">
+      <p role="alert">{{ error() }}</p>
+      <button class="boton" type="button" (click)="cargar()">Reintentar</button>
+      <a class="enlace" routerLink="/cuenta">Ir a mis seguros</a>
+    </section>
+  } @else if (poliza(); as p) {
+    <article class="panel" aria-labelledby="titulo-estado">
+      <div class="icono" [class.rechazo]="p.estado === 'RECHAZADA'" aria-hidden="true">
+        @if (p.estado === 'RECHAZADA') {
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m9 9 6 6m0-6-6 6" />
+          </svg>
+        } @else {
+          <svg viewBox="0 0 24 24">
+            <path d="M4 3h16v9c0 5-8 9-8 9s-8-4-8-9z" />
+            <path d="m8 11 3 3 5-6" />
+          </svg>
+        }
+      </div>
+      @switch (p.estado) {
+        @case ('PENDIENTE') {
+          <h1 id="titulo-estado">Revisamos tu solicitud</h1>
+          <p class="introduccion">
+            Ya la enviaste. Cuando la aprobemos, tu seguro queda activo y te enviamos la póliza a tu
+            correo.
+          </p>
+        }
+        @case ('RECHAZADA') {
+          <h1 id="titulo-estado">No aprobamos tu solicitud</h1>
+          <div class="introduccion motivos">
+            @for (motivo of p.rechazo?.motivos; track $index) {
+              <p>Motivo: {{ motivo.mensaje }}</p>
+            }
+          </div>
+        }
+        @case ('EMITIDA') {
+          <h1 id="titulo-estado">Solicitud aprobada</h1>
+          <p class="introduccion">Tu seguro quedó activo. Te enviamos la póliza a tu correo.</p>
+        }
+        @case ('VENCIDA') {
+          <h1 id="titulo-estado">Tu solicitud venció</h1>
+          <p class="introduccion">Puedes consultar tus seguros desde tu cuenta.</p>
+        }
+      }
+      @if (p.estado !== 'VENCIDA') {
+        <h2 class="etiqueta">{{ p.estado === 'RECHAZADA' ? 'QUÉ PASÓ' : 'QUÉ SIGUE' }}</h2>
+        <ol class="siguientes">
+          <li>
+            <strong>Revisamos tu solicitud</strong>
+            @if (p.estado === 'PENDIENTE') {
+              <ul class="pendientes">
+                @for (pendiente of p.pendientes; track $index) {
+                  <li>
+                    <span class="tipo-pendiente" aria-hidden="true">
+                      @if (pendiente.codigo === 'CORREO_SIN_CONFIRMAR') {
+                        <svg viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 5l9 8 9-8" /></svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24">
+                          <circle cx="12" cy="8" r="5" />
+                          <path d="M3 22c0-11 18-11 18 0" />
+                        </svg>
+                      }</span
+                    >{{ pendiente.mensaje }}
+                  </li>
+                }
+              </ul>
+            } @else if (p.estado === 'EMITIDA') {
+              <p>Aprobada{{ p.emitidaEn ? ': ' + fecha(p.emitidaEn) : '' }}.</p>
+            } @else {
+              <p>
+                No aprobada{{ p.rechazo?.rechazadaEn ? ': ' + fecha(p.rechazo!.rechazadaEn) : '' }}.
+              </p>
+              @for (motivo of p.rechazo?.motivos; track $index) {
+                <p>{{ motivo.mensaje }}</p>
+              }
+            }
+          </li>
+          @if (p.estado !== 'RECHAZADA') {
+            <li>
+              <strong>Activamos tu seguro</strong>
+              @if (p.estado === 'EMITIDA') {
+                <p>
+                  Activo{{ p.vigencia?.desde ? ' desde ' + fecha(p.vigencia!.desde) : '' }}. Te
+                  enviamos la póliza a tu correo.
+                </p>
+              } @else {
+                <p>Te enviamos la póliza a tu correo y lo ves en tu inicio.</p>
+              }
+            </li>
+            <li>
+              <strong>Ves cómo queda tu cuota</strong>
+              <p>No pagas nada aquí. El seguro se cobra cada mes con la cuota de tu crédito.</p>
+            </li>
+            <li>
+              <strong>Le avisamos a tu banco</strong>
+              <p>Nosotros hacemos el trámite del cambio. Tú no tienes que ir a ninguna parte.</p>
+            </li>
+          }
+        </ol>
+      }
+      @if (p.estado === 'EMITIDA') {
+        <button class="boton detalles" type="button">Ver los detalles</button>
+      }
+      <a class="enlace" [class.boton]="p.estado === 'RECHAZADA'" routerLink="/cuenta"
+        >Ir a mis seguros</a
+      >
+      <p class="nota">
+        {{
+          p.estado === 'EMITIDA'
+            ? 'Mientras tu banco hace el cambio, tu seguro anterior sigue activo. No quedas sin cobertura ni un día.'
+            : 'Mientras tanto tu seguro anterior sigue activo. No quedas sin cobertura ni un día.'
+        }}
+      </p>
+    </article>
+  }
+</section>

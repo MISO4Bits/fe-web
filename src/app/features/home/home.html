@@ -1,10 +1,20 @@
 <section class="home">
-  <h1>{{ cotizacionActual() ? 'Tienes una cotización en curso' : 'Todavía no tienes seguros' }}</h1>
+  <h1>
+    {{
+      polizas().length
+        ? 'Mis seguros'
+        : cotizacionActual()
+          ? 'Tienes una cotización en curso'
+          : 'Todavía no tienes seguros'
+    }}
+  </h1>
   <p class="intro">
     {{
-      cotizacionActual()
-        ? 'Aquí vas a ver tus seguros. Tu cotización sigue abierta, puedes retomarla cuando quieras.'
-        : 'Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.'
+      polizas().length
+        ? 'Consulta el estado de tus solicitudes y seguros.'
+        : cotizacionActual()
+          ? 'Aquí vas a ver tus seguros. Tu cotización sigue abierta, puedes retomarla cuando quieras.'
+          : 'Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.'
     }}
   </p>
 
@@ -18,6 +28,28 @@
     </div>
   }
   <p class="section-label">MIS SEGUROS</p>
+  @if (cargandoPolizas()) {
+    <p role="status">Consultando tus seguros...</p>
+  }
+  @if (errorPolizas()) {
+    <div class="insurance-card" role="alert">
+      <p>No pudimos consultar tus seguros.</p>
+      <button class="primary" type="button" (click)="cargarPolizas()">Reintentar seguros</button>
+    </div>
+  }
+  @for (poliza of polizas(); track poliza.polizaId) {
+    <a
+      class="insurance-card quote-card poliza-card"
+      [routerLink]="['/cuenta/solicitudes', poliza.polizaId]"
+    >
+      <div class="card-copy">
+        <h2>Vida deudores · {{ estadosPoliza[poliza.estado] }}</h2>
+        <p>{{ poliza.numero || poliza.polizaId }}</p>
+        <p>Consultar solicitud</p>
+      </div>
+      <span class="etiqueta-cotizacion">{{ estadosPoliza[poliza.estado] }}</span>
+    </a>
+  }
   @if (cotizacionActual(); as c) {
     <a
       class="insurance-card quote-card"
@@ -36,7 +68,14 @@
       <span class="etiqueta-cotizacion">Cotización</span>
     </a>
   }
-  @if (!cotizacionActual() && !errorCotizacion() && !cargandoCotizacion()) {
+  @if (
+    !polizas().length &&
+    !cargandoPolizas() &&
+    !errorPolizas() &&
+    !cotizacionActual() &&
+    !errorCotizacion() &&
+    !cargandoCotizacion()
+  ) {
     <section class="insurance-card" aria-label="Mis seguros">
       <div class="card-copy">
         <h2>Todavía no tienes seguros ni cotizaciones</h2>
@@ -58,7 +97,15 @@
   </a>
 </section>
 
-@if (bienvenida() && !cargandoCotizacion() && !errorCotizacion() && !cotizacionActual()) {
+@if (
+  bienvenida() &&
+  !cargandoCotizacion() &&
+  !errorCotizacion() &&
+  !cotizacionActual() &&
+  !cargandoPolizas() &&
+  !errorPolizas() &&
+  !polizas().length
+) {
   <div class="overlay">
     <section class="welcome" role="dialog" aria-modal="true" aria-labelledby="bienvenida-titulo">
       <button class="close" type="button" aria-label="Cerrar ventana" (click)="cerrarBienvenida()">

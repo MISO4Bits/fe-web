@@ -98,6 +98,12 @@ export const routes: Routes = [
         title: 'Tu solicitud · Solventa',
         loadComponent: () => import('./features/solicitud/solicitud').then((m) => m.Solicitud),
       },
+      {
+        path: 'solicitudes/:id',
+        title: 'Estado de tu solicitud · Solventa',
+        loadComponent: () =>
+          import('./features/solicitud/solicitud-estado').then((m) => m.SolicitudEstado),
+      },
       pendiente('cotizaciones/:id', 'Tu cotización', '04 Cotización', 'BITS-264'),
     ],
   },

@@ -2,14 +2,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { Home } from './home';
-import { PolizasApiService } from '../solicitud/polizas-api.service';
 import { CotizacionApiService, CotizacionRespuesta } from '../cotizacion/cotizacion-api.service';
 import { Sesion } from '../../nucleo/sesion/sesion';
 
 describe('Home', () => {
   let fixture: ComponentFixture<Home>;
   let api: jasmine.SpyObj<CotizacionApiService>;
-  let polizas: jasmine.SpyObj<PolizasApiService>;
   const cotizacion: CotizacionRespuesta = {
     estado: 'VIGENTE',
     producto: 'VIDA_HIPOTECARIO',
@@ -44,54 +42,16 @@ describe('Home', () => {
   beforeEach(async () => {
     localStorage.removeItem('solventa.bienvenida-cotizacion:home-test@example.com');
     api = jasmine.createSpyObj<CotizacionApiService>('CotizacionApiService', ['actual']);
-    polizas = jasmine.createSpyObj('PolizasApiService', ['listar']);
-    polizas.listar.and.resolveTo([]);
     await TestBed.configureTestingModule({
       imports: [Home],
       providers: [
         provideRouter([]),
-        { provide: PolizasApiService, useValue: polizas },
         { provide: CotizacionApiService, useValue: api },
         { provide: Sesion, useValue: { actual: () => ({ correo: 'home-test@example.com' }) } },
       ],
     }).compileComponents();
   });
   afterEach(() => localStorage.removeItem('solventa.bienvenida-cotizacion:home-test@example.com'));
-
-  it('ofrece consultar los seguros por ID y no muestra bienvenida ni estado vacío', async () => {
-    polizas.listar.and.resolveTo([
-      { polizaId: 'p1', estado: 'PENDIENTE', pendientes: [] },
-      { polizaId: 'p2', numero: 'SOL-2', estado: 'EMITIDA', pendientes: [] },
-      { polizaId: 'p3', estado: 'RECHAZADA', pendientes: [] },
-    ]);
-    await montar(null);
-    const cards = fixture.nativeElement.querySelectorAll('.poliza-card');
-    expect(cards.length).toBe(3);
-    expect(cards[0].getAttribute('href')).toBe('/cuenta/solicitudes/p1');
-    expect(cards[0].textContent).toContain('En revisión');
-    expect(cards[1].textContent).toContain('Aprobada');
-    expect(cards[2].textContent).toContain('No aprobada');
-    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain(
-      'Todavía no tienes seguros ni cotizaciones',
-    );
-  });
-
-  it('permite reintentar una lista de seguros fallida sin ocultar la cotización', async () => {
-    polizas.listar.and.rejectWith(new Error('sin conexión'));
-    await montar(cotizacion);
-    expect(fixture.nativeElement.textContent).toContain('No pudimos consultar tus seguros');
-    expect(fixture.nativeElement.querySelector('.quote-card')).not.toBeNull();
-    polizas.listar.and.resolveTo([{ polizaId: 'p1', estado: 'PENDIENTE', pendientes: [] }]);
-    const boton = Array.from(
-      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
-    ).find((b) => b.textContent?.includes('Reintentar seguros'))!;
-    boton.click();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.poliza-card')).not.toBeNull();
-    expect(polizas.listar).toHaveBeenCalledTimes(2);
-  });
 
   it('no repite la bienvenida al volver al Home vacío', async () => {
     await montar(null);

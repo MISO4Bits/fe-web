@@ -42,12 +42,6 @@ export class PolizasApiService {
     return new HttpHeaders({ Authorization: `Bearer ${token}` });
   }
 
-  async listar(): Promise<PolizaSolicitud[]> {
-    return firstValueFrom(
-      this.http.get<PolizaSolicitud[]>(this.url, { headers: await this.headers() }),
-    );
-  }
-
   async consultar(id: string): Promise<PolizaSolicitud> {
     return firstValueFrom(
       this.http.get<PolizaSolicitud>(`${this.url}/${encodeURIComponent(id)}`, {

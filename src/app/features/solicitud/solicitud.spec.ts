@@ -4,11 +4,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { Signal } from '@angular/core';
 import { Solicitud } from './solicitud';
+import { DocumentoAceptado, PolizasApiService, PolizaSolicitud } from './polizas-api.service';
 import { Evidencia, EvidenciasApiService, TipoEvidencia } from './evidencias-api.service';
 import { PrepararImagenService } from './preparar-imagen.service';
 import { CotizacionApiService, CotizacionRespuesta } from '../cotizacion/cotizacion-api.service';
 
 interface Controles {
+  enviar(): Promise<void>;
   subir(tipo: TipoEvidencia, archivo: File): Promise<void>;
   abrirCamara(): Promise<void>;
   capturar(): Promise<void>;
@@ -68,13 +70,17 @@ describe('Solicitud BITS-275', () => {
   let api: jasmine.SpyObj<EvidenciasApiService>;
   let imagen: jasmine.SpyObj<PrepararImagenService>;
   let cotizaciones: jasmine.SpyObj<CotizacionApiService>;
+  let polizas: jasmine.SpyObj<PolizasApiService>;
   let seleccion: {
     cotizacionCreadaEn: string;
     hogarSeleccionado: boolean;
     condicionesAceptadas: boolean;
+    documentosAceptados?: DocumentoAceptado[];
   };
 
   beforeEach(() => {
+    polizas = jasmine.createSpyObj('PolizasApiService', ['solicitar']);
+    polizas.solicitar.and.resolveTo({ polizaId: 'p1', estado: 'EMITIDA', pendientes: [] });
     api = jasmine.createSpyObj('EvidenciasApiService', ['consultar', 'subir']);
     api.consultar.and.resolveTo([]);
     api.subir.and.callFake(async (tipo) => evidencia(tipo));
@@ -86,10 +92,12 @@ describe('Solicitud BITS-275', () => {
       cotizacionCreadaEn: cotizacion.creadaEn,
       hogarSeleccionado: false,
       condicionesAceptadas: true,
+      documentosAceptados: [{ tipo: 'poliza', version: 'V1' }],
     };
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
+        { provide: PolizasApiService, useValue: polizas },
         { provide: Location, useValue: { getState: () => seleccion } },
         { provide: EvidenciasApiService, useValue: api },
         { provide: PrepararImagenService, useValue: imagen },
@@ -105,6 +113,125 @@ describe('Solicitud BITS-275', () => {
     fixture.detectChanges();
     return fixture;
   }
+
+  for (const hogar of [false, true]) {
+    it(`envía la selección ${hogar ? 'VIDA y HOGAR' : 'VIDA'} y permanece en la pantalla`, async () => {
+      seleccion.hogarSeleccionado = hogar;
+      api.consultar.and.resolveTo([
+        evidencia('cedula_frente'),
+        evidencia('cedula_reverso'),
+        evidencia('selfie', 'REVISION_MANUAL'),
+      ]);
+      const fixture = await montar();
+      fixture.nativeElement.querySelector('.enviar').click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(polizas.solicitar).toHaveBeenCalledOnceWith({
+        coberturas: hogar ? ['VIDA', 'HOGAR'] : ['VIDA'],
+        cotizacionCreadaEn: cotizacion.creadaEn,
+        documentosAceptados: [{ tipo: 'poliza', version: 'V1' }],
+      });
+      expect(fixture.nativeElement.querySelector('h1').textContent).toContain(
+        'Tu solicitud de cambio de seguro',
+      );
+      expect(fixture.nativeElement.querySelectorAll('.caras .foto').length).toBe(2);
+      expect(fixture.nativeElement.querySelector('.enviar').disabled).toBeTrue();
+      expect(fixture.nativeElement.querySelector('.enviar').textContent).toContain(
+        'Solicitud enviada',
+      );
+      await (fixture.componentInstance as unknown as Controles).enviar();
+      expect(polizas.solicitar).toHaveBeenCalledTimes(1);
+    });
+  }
+
+  it('no envía mientras falten evidencias', async () => {
+    const fixture = await montar();
+    await (fixture.componentInstance as unknown as Controles).enviar();
+    expect(polizas.solicitar).not.toHaveBeenCalled();
+  });
+
+  it('bloquea solicitudes simultáneas y conserva la respuesta pendiente sin reemplazar la pantalla', async () => {
+    api.consultar.and.resolveTo([
+      evidencia('cedula_frente'),
+      evidencia('cedula_reverso'),
+      evidencia('selfie'),
+    ]);
+    let resolver!: (respuesta: PolizaSolicitud) => void;
+    polizas.solicitar.and.returnValue(
+      new Promise((resolve) => {
+        resolver = resolve;
+      }),
+    );
+    const fixture = await montar();
+    const controles = fixture.componentInstance as unknown as Controles;
+    const envio = controles.enviar();
+    await controles.enviar();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.enviar').disabled).toBeTrue();
+    expect(polizas.solicitar).toHaveBeenCalledTimes(1);
+    resolver({
+      polizaId: 'p1',
+      estado: 'PENDIENTE',
+      pendientes: [{ codigo: 'EVIDENCIA_EN_REVISION', tipo: 'AGENTE', mensaje: 'Revisión manual' }],
+    });
+    await envio;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.requisitos')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.enviar').disabled).toBeTrue();
+  });
+
+  it('conserva fotos y selección si falla el registro y permite reintentar', async () => {
+    api.consultar.and.resolveTo([
+      evidencia('cedula_frente'),
+      evidencia('cedula_reverso'),
+      evidencia('selfie'),
+    ]);
+    polizas.solicitar.and.rejectWith(new HttpErrorResponse({ status: 503 }));
+    const fixture = await montar();
+    const controles = fixture.componentInstance as unknown as Controles;
+    await controles.enviar();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Tus fotos siguen cargadas');
+    expect(controles.todoListo()).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.enviar').disabled).toBeFalse();
+    polizas.solicitar.and.resolveTo({ polizaId: 'p1', estado: 'EMITIDA', pendientes: [] });
+    await controles.enviar();
+    expect(polizas.solicitar).toHaveBeenCalledTimes(2);
+    expect(polizas.solicitar.calls.argsFor(0)).toEqual(polizas.solicitar.calls.argsFor(1));
+    expect(api.consultar).toHaveBeenCalledTimes(1);
+    expect(api.subir).not.toHaveBeenCalled();
+  });
+
+  it('bloquea reenvíos y pide revisar la cotización ante HTTP 409', async () => {
+    api.consultar.and.resolveTo([
+      evidencia('cedula_frente'),
+      evidencia('cedula_reverso'),
+      evidencia('selfie'),
+    ]);
+    polizas.solicitar.and.rejectWith(new HttpErrorResponse({ status: 409 }));
+    const fixture = await montar();
+    const controles = fixture.componentInstance as unknown as Controles;
+    await controles.enviar();
+    await controles.enviar();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Tu cotización venció o cambió');
+    expect(fixture.nativeElement.querySelector('.enviar').disabled).toBeTrue();
+    expect(polizas.solicitar).toHaveBeenCalledTimes(1);
+  });
+
+  it('no registra una solicitud sin la versión de las condiciones aceptadas', async () => {
+    seleccion.documentosAceptados = undefined;
+    api.consultar.and.resolveTo([
+      evidencia('cedula_frente'),
+      evidencia('cedula_reverso'),
+      evidencia('selfie'),
+    ]);
+    const fixture = await montar();
+    await (fixture.componentInstance as unknown as Controles).enviar();
+    fixture.detectChanges();
+    expect(polizas.solicitar).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('acepta las condiciones');
+  });
 
   it('empieza sin fotos, con selfie y envío deshabilitados y crédito declarado', async () => {
     const fixture = await montar();

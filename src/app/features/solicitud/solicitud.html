@@ -11,7 +11,7 @@
     <a class="enlace" routerLink="/cuenta/cotizaciones/actual">Volver a mi cotización</a>
   } @else if (cotizacion()) {
     <div class="columnas">
-      <div>
+      <div [attr.inert]="enviando() || resultado() ? '' : null">
         <h1>Tu solicitud de cambio de seguro</h1>
         <p class="introduccion">
           Carga tu cédula y tómate una selfie. Con eso confirmamos que eres tú.
@@ -220,10 +220,29 @@
           Al enviarla, autorizas a Solventa a pedirle a
           {{ cotizacion()?.datosCredito?.entidadAcreedora }} el cambio del seguro de tu crédito.
         </p>
-        <button class="boton enviar" type="button" [disabled]="!todoListo()">
-          Enviar solicitud
+        @if (errorEnvio()) {
+          <p class="error" role="alert">{{ errorEnvio() }}</p>
+        }
+        <button
+          class="boton enviar"
+          type="button"
+          [disabled]="!todoListo() || enviando() || conflicto() || !!resultado()"
+          [attr.aria-busy]="enviando()"
+          (click)="enviar()"
+        >
+          {{
+            resultado()
+              ? 'Solicitud enviada'
+              : enviando()
+                ? 'Enviando solicitud...'
+                : 'Enviar solicitud'
+          }}
         </button>
-        <a class="enlace" routerLink="/cuenta/cotizaciones/actual" [state]="seleccion() || {}"
+        <a
+          class="enlace"
+          [attr.inert]="enviando() ? '' : null"
+          routerLink="/cuenta/cotizaciones/actual"
+          [state]="conflicto() ? {} : seleccion() || {}"
           >Volver a mi cotización</a
         >
       </aside>

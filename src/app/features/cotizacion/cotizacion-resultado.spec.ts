@@ -370,6 +370,7 @@ describe('CotizacionResultado BITS-292', () => {
           cotizacionCreadaEn: cotizacion.creadaEn,
           hogarSeleccionado: false,
           condicionesAceptadas: true,
+          documentosAceptados: [{ tipo: 'poliza', version: 'V1' }],
         },
       });
       expect(fixture.nativeElement.querySelector('#error-condiciones')).toBeNull();

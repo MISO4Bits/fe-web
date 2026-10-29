@@ -20,6 +20,7 @@ import {
 } from './evidencias-api.service';
 import { PrepararImagenService } from './preparar-imagen.service';
 import { SeleccionCotizacion, seleccionVigente } from './seleccion-cotizacion';
+import { PolizasApiService, PolizaSolicitud } from './polizas-api.service';
 
 interface Foto extends Evidencia {
   ocupada: boolean;
@@ -47,6 +48,7 @@ const lista = (foto: Foto): boolean =>
 })
 export class Solicitud implements OnInit, OnDestroy {
   private readonly api = inject(EvidenciasApiService);
+  private readonly polizas = inject(PolizasApiService);
   private readonly cotizaciones = inject(CotizacionApiService);
   private readonly preparar = inject(PrepararImagenService);
   private readonly location = inject(Location);
@@ -55,6 +57,10 @@ export class Solicitud implements OnInit, OnDestroy {
   private destruido = false;
   protected readonly cargando = signal(true);
   protected readonly error = signal('');
+  protected readonly enviando = signal(false);
+  protected readonly errorEnvio = signal('');
+  protected readonly conflicto = signal(false);
+  protected readonly resultado = signal<PolizaSolicitud | null>(null);
   protected readonly cotizacion = signal<CotizacionRespuesta | null>(null);
   protected readonly seleccion = signal<SeleccionCotizacion | null>(null);
   protected readonly fotos = signal<Record<TipoEvidencia, Foto>>({
@@ -124,6 +130,59 @@ export class Solicitud implements OnInit, OnDestroy {
     this.fotos.update((fotos) => ({ ...fotos, [tipo]: { ...fotos[tipo], ...cambios } }));
   }
 
+  protected async enviar(): Promise<void> {
+    const seleccion = this.seleccion();
+    if (
+      !this.todoListo() ||
+      this.cargando() ||
+      this.error() ||
+      this.enviando() ||
+      this.resultado() ||
+      this.conflicto() ||
+      !seleccion
+    )
+      return;
+    const documentos = seleccion.documentosAceptados;
+    if (
+      !documentos?.length ||
+      documentos.some(
+        (d) => d.tipo !== 'poliza' || !/^V[1-9][0-9]*$/.test(d.version) || d.version.length > 20,
+      )
+    ) {
+      this.conflicto.set(true);
+      this.errorEnvio.set('Vuelve a tu cotización y acepta las condiciones para continuar.');
+      return;
+    }
+    this.enviando.set(true);
+    this.errorEnvio.set('');
+    this.cerrarCamara();
+    try {
+      const resultado = await this.polizas.solicitar({
+        coberturas: seleccion.hogarSeleccionado ? ['VIDA', 'HOGAR'] : ['VIDA'],
+        cotizacionCreadaEn: seleccion.cotizacionCreadaEn,
+        documentosAceptados: documentos.map((d) => ({ tipo: d.tipo, version: d.version })),
+      });
+      if (!this.destruido) this.resultado.set(resultado);
+    } catch (error: unknown) {
+      if (this.destruido) return;
+      if (error instanceof HttpErrorResponse && error.status === 409) {
+        this.conflicto.set(true);
+        this.errorEnvio.set(
+          'Tu cotización venció o cambió. Vuelve a tu cotización y acepta las condiciones actualizadas.',
+        );
+      } else {
+        this.errorEnvio.set(
+          (error instanceof HttpErrorResponse && error.status === 401) ||
+            (error instanceof Error && error.message === 'SESION_EXPIRADA')
+            ? 'Tu sesión expiró. Inicia sesión de nuevo para enviar la solicitud.'
+            : 'No pudimos registrar tu solicitud. Tus fotos siguen cargadas. Inténtalo de nuevo.',
+        );
+      }
+    } finally {
+      if (!this.destruido) this.enviando.set(false);
+    }
+  }
+
   protected elegir(tipo: TipoEvidencia, event: Event): void {
     if (tipo === 'selfie') return;
     const input = event.target as HTMLInputElement;
@@ -143,7 +202,13 @@ export class Solicitud implements OnInit, OnDestroy {
   }
 
   private async subir(tipo: TipoEvidencia, archivo: File): Promise<void> {
-    if (this.fotos()[tipo].ocupada || (tipo === 'selfie' && !this.cedulaLista())) return;
+    if (
+      this.enviando() ||
+      this.resultado() ||
+      this.fotos()[tipo].ocupada ||
+      (tipo === 'selfie' && !this.cedulaLista())
+    )
+      return;
     if (tipo !== 'selfie') this.cerrarCamara();
     this.actualizar(tipo, { ocupada: true, error: '' });
     let enviada = false;
@@ -207,6 +272,8 @@ export class Solicitud implements OnInit, OnDestroy {
 
   protected async abrirCamara(): Promise<void> {
     if (
+      this.enviando() ||
+      this.resultado() ||
       !this.cedulaLista() ||
       this.fotos().selfie.ocupada ||
       this.pidiendoCamara() ||
@@ -221,7 +288,7 @@ export class Solicitud implements OnInit, OnDestroy {
         video: { facingMode: 'user' },
         audio: false,
       });
-      if (this.destruido || !this.cedulaLista()) {
+      if (this.destruido || this.enviando() || this.resultado() || !this.cedulaLista()) {
         stream.getTracks().forEach((track) => track.stop());
         return;
       }

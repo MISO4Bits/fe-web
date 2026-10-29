@@ -1,9 +1,14 @@
 import { CotizacionRespuesta } from '../cotizacion/cotizacion-api.service';
+import { DocumentoAceptado } from './polizas-api.service';
+
+// Versión de las condiciones actuales, indicada en la evidencia de BITS-101.
+export const VERSION_CONDICIONES_POLIZA = 'V1';
 
 export interface SeleccionCotizacion {
   cotizacionCreadaEn: string;
   hogarSeleccionado: boolean;
   condicionesAceptadas: boolean;
+  documentosAceptados?: DocumentoAceptado[];
 }
 
 export function seleccionVigente(

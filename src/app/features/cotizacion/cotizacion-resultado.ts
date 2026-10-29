@@ -9,7 +9,7 @@ import {
 import { CreditoHipotecarioService } from './credito-hipotecario.service';
 import { BienvenidaService } from '../home/bienvenida.service';
 import { Location } from '@angular/common';
-import { seleccionVigente } from '../solicitud/seleccion-cotizacion';
+import { seleccionVigente, VERSION_CONDICIONES_POLIZA } from '../solicitud/seleccion-cotizacion';
 
 @Component({
   selector: 'app-cotizacion-resultado',
@@ -108,6 +108,7 @@ export class CotizacionResultado implements OnInit {
         cotizacionCreadaEn: actual.creadaEn,
         hogarSeleccionado: this.casaSeleccionada(),
         condicionesAceptadas: true,
+        documentosAceptados: [{ tipo: 'poliza', version: VERSION_CONDICIONES_POLIZA }],
       },
     });
   }

@@ -71,6 +71,10 @@
   margin-top: 32px;
 }
 .quick-card {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -80,6 +84,97 @@
   padding: 12px 18px;
   text-decoration: none;
   color: #161d1d;
+}
+.quick-card:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.poliza-card {
+  padding-top: 26px;
+  padding-right: 24px;
+}
+.insignia-revision {
+  position: absolute;
+  right: 22px;
+  top: 21px;
+  background: #192020;
+  color: white;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.pendientes-home {
+  list-style: none;
+  padding: 24px 0 0;
+  margin: 0;
+  width: 48%;
+  font-size: 13px;
+  color: #58676a;
+}
+.pendientes-home li {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 8px 0;
+  line-height: 1.5;
+}
+.pendientes-home svg {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: #718083;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.seguros-label {
+  margin-top: 30px;
+}
+.seguros-pendientes {
+  color: #718083;
+  font-size: 14px;
+}
+.confirmacion {
+  width: min(480px, calc(100% - 40px));
+  box-sizing: border-box;
+  padding: 28px;
+  color: #192224;
+  background: white;
+  border: 0;
+  border-radius: 12px;
+  box-shadow: 0 14px 30px #0003;
+}
+.confirmacion::backdrop {
+  background: #19222477;
+}
+.confirmacion h2 {
+  font-size: 20px;
+  margin: 0 0 9px;
+}
+.confirmacion > p:not(.eyebrow) {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 24px;
+  color: #58676a;
+}
+.volver {
+  display: block;
+  margin-top: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #006971;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.quick-card:focus-visible,
+.poliza-card:focus-visible,
+.confirmacion button:focus-visible {
+  outline: 3px solid #006971;
+  outline-offset: 4px;
 }
 .plus {
   color: #006971;
@@ -187,6 +282,13 @@
   margin: 21px 0 18px;
 }
 @media (max-width: 650px) {
+  .pendientes-home {
+    width: 100%;
+    padding: 0;
+  }
+  .poliza-card {
+    padding-top: 40px;
+  }
   .home {
     padding: 36px 18px 65px;
   }

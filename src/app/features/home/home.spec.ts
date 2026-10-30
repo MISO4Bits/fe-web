@@ -1,13 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { Home } from './home';
+import { PolizasApiService, ResumenPolizaSolicitud } from '../solicitud/polizas-api.service';
 import { CotizacionApiService, CotizacionRespuesta } from '../cotizacion/cotizacion-api.service';
 import { Sesion } from '../../nucleo/sesion/sesion';
 
 describe('Home', () => {
   let fixture: ComponentFixture<Home>;
   let api: jasmine.SpyObj<CotizacionApiService>;
+  let polizas: jasmine.SpyObj<PolizasApiService>;
   const cotizacion: CotizacionRespuesta = {
     estado: 'VIGENTE',
     producto: 'VIDA_HIPOTECARIO',
@@ -42,16 +44,124 @@ describe('Home', () => {
   beforeEach(async () => {
     localStorage.removeItem('solventa.bienvenida-cotizacion:home-test@example.com');
     api = jasmine.createSpyObj<CotizacionApiService>('CotizacionApiService', ['actual']);
+    polizas = jasmine.createSpyObj('PolizasApiService', ['listar']);
+    polizas.listar.and.resolveTo([]);
     await TestBed.configureTestingModule({
       imports: [Home],
       providers: [
         provideRouter([]),
+        { provide: PolizasApiService, useValue: polizas },
         { provide: CotizacionApiService, useValue: api },
         { provide: Sesion, useValue: { actual: () => ({ correo: 'home-test@example.com' }) } },
       ],
     }).compileComponents();
   });
   afterEach(() => localStorage.removeItem('solventa.bienvenida-cotizacion:home-test@example.com'));
+
+  function solicitud(): ResumenPolizaSolicitud {
+    return {
+      polizaId: 'p1',
+      estado: 'PENDIENTE',
+      datosCredito: {
+        ...cotizacion.datosCredito,
+        entidadAcreedora: 'Banco de la solicitud',
+        saldoInsoluto: 120000000,
+      },
+      primaTotalMensual: 60000,
+      pendientes: [
+        {
+          codigo: 'CORREO_SIN_CONFIRMAR',
+          tipo: 'USUARIO',
+          mensaje: 'Revisa el enlace en tu correo',
+        },
+        {
+          codigo: 'CREDITO_NO_VERIFICADO',
+          tipo: 'AGENTE',
+          mensaje: 'Los datos de tu crédito deben ser verificados por un agente',
+        },
+      ],
+    };
+  }
+
+  it('03C: muestra la solicitud pendiente y sus importes en lugar de la cotización', async () => {
+    polizas.listar.and.resolveTo([solicitud()]);
+    await montar(cotizacion);
+    expect(fixture.nativeElement.querySelector('h1').textContent).toContain(
+      'Tu solicitud está en revisión',
+    );
+    const card = fixture.nativeElement.querySelector('.poliza-card');
+    expect(card.getAttribute('href')).toBe('/cuenta/solicitudes/p1');
+    expect(card.textContent).toContain('Banco de la solicitud');
+    expect(card.textContent).toContain('120.000.000');
+    expect(card.textContent).toContain('60.000');
+    expect(card.textContent).toContain('En revisión');
+    expect(card.querySelectorAll('.pendientes-home li').length).toBe(2);
+    expect(card.textContent).not.toContain('Un agente está revisando tus documentos');
+    expect(
+      fixture.nativeElement.querySelector('[aria-label="Retomar cotización vigente"]'),
+    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('.overlay')).toBeNull();
+  });
+
+  it('03C: muestra la solicitud incluso sin cotización activa', async () => {
+    polizas.listar.and.resolveTo([solicitud()]);
+    await montar(null);
+    expect(fixture.nativeElement.querySelector('.poliza-card')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.overlay')).toBeNull();
+  });
+
+  it('03D: Volver conserva la solicitud y no navega', async () => {
+    const pendiente = solicitud();
+    polizas.listar.and.resolveTo([pendiente]);
+    await montar(cotizacion);
+    const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    fixture.nativeElement.querySelector('.quick-card').click();
+    const dialog = fixture.nativeElement.querySelector('dialog') as HTMLDialogElement;
+    expect(dialog.open).toBeTrue();
+    expect(dialog.textContent).toContain('¿Quieres hacer una nueva cotización?');
+    dialog.querySelector<HTMLButtonElement>('.volver')!.click();
+    expect(dialog.open).toBeFalse();
+    expect(navegar).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.poliza-card')).not.toBeNull();
+    expect(pendiente.estado).toBe('PENDIENTE');
+    expect(polizas.listar).toHaveBeenCalledTimes(1);
+  });
+
+  it('03D: solo al confirmar continúa a nueva cotización sin modificar la solicitud', async () => {
+    const pendiente = solicitud();
+    polizas.listar.and.resolveTo([pendiente]);
+    await montar(cotizacion);
+    const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    fixture.nativeElement.querySelector('.quick-card').click();
+    fixture.nativeElement.querySelector('dialog .primary').click();
+    expect(navegar).toHaveBeenCalledOnceWith(['/cuenta/cotizaciones/nueva']);
+    expect(pendiente.estado).toBe('PENDIENTE');
+    expect(polizas.listar).toHaveBeenCalledTimes(1);
+  });
+
+  it('sin solicitud pendiente abre nueva cotización directamente', async () => {
+    await montar(cotizacion);
+    const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    fixture.nativeElement.querySelector('.quick-card').click();
+    expect(navegar).toHaveBeenCalledOnceWith(['/cuenta/cotizaciones/nueva']);
+    expect((fixture.nativeElement.querySelector('dialog') as HTMLDialogElement).open).toBeFalse();
+  });
+
+  it('si falla el listado permite reintentar y no deja omitir la confirmación', async () => {
+    polizas.listar.and.rejectWith(new Error('sin conexión'));
+    await montar(cotizacion);
+    expect(fixture.nativeElement.querySelector('.quick-card').disabled).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('No pudimos consultar tus solicitudes');
+    polizas.listar.and.resolveTo([solicitud()]);
+    const reintentar = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
+    ).find((b) => b.textContent?.includes('Reintentar solicitudes'))!;
+    reintentar.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.poliza-card')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.quick-card').disabled).toBeFalse();
+  });
 
   it('no repite la bienvenida al volver al Home vacío', async () => {
     await montar(null);
@@ -90,7 +200,8 @@ describe('Home', () => {
     const links = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];
     expect(
       links.filter((link) => link.getAttribute('href') === '/cuenta/cotizaciones/nueva').length,
-    ).toBe(3);
+    ).toBe(2);
+    expect(fixture.nativeElement.querySelector('button.quick-card')).not.toBeNull();
   });
 
   it('muestra la cotización vigente y permite retomarla', async () => {

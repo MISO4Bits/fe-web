@@ -1,0 +1,208 @@
+:host {
+  display: block;
+  color: #192224;
+}
+.estado-solicitud {
+  max-width: 1180px;
+  margin: auto;
+  padding: 28px 28px 24px;
+}
+.pasos {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #526265;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.pasos span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.pasos b {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #006e75;
+  color: white;
+}
+.pasos i {
+  width: 28px;
+  height: 1px;
+  background: #dce5e7;
+}
+.panel {
+  max-width: 850px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 34px 38px 30px;
+  background: white;
+  border: 1px solid #dce5e7;
+  border-radius: 12px;
+}
+.icono {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: #d7edef;
+  color: #718184;
+  margin-bottom: 18px;
+}
+.icono.rechazo {
+  background: #ffd8d5;
+  color: #d90000;
+}
+svg {
+  width: 25px;
+  height: 25px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+h1 {
+  font-size: 30px;
+  line-height: 1.25;
+  margin: 0 0 8px;
+}
+p {
+  margin: 0;
+  line-height: 1.55;
+}
+.introduccion {
+  color: #465255;
+  font-size: 16px;
+}
+.etiqueta {
+  color: #718184;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 44px 0 16px;
+}
+.siguientes {
+  counter-reset: paso;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+  font-size: 14px;
+}
+.siguientes > li {
+  counter-increment: paso;
+  position: relative;
+  padding-left: 35px;
+  margin-top: 16px;
+}
+.siguientes > li::before {
+  content: counter(paso);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: #d7edef;
+  color: #00717a;
+  font-size: 12px;
+  font-weight: 600;
+}
+.siguientes strong {
+  font-weight: 600;
+}
+.siguientes p {
+  color: #465255;
+  margin-top: 3px;
+}
+.pendientes {
+  list-style: none;
+  padding: 0;
+  margin: 5px 0 0;
+  color: #465255;
+}
+.pendientes li {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  line-height: 1.6;
+  margin-top: 5px;
+}
+.tipo-pendiente {
+  color: #718184;
+  font-size: 19px;
+}
+.tipo-pendiente svg {
+  width: 19px;
+  height: 19px;
+  vertical-align: middle;
+}
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 23px;
+  border: 0;
+  border-radius: 30px;
+  background: #006e75;
+  color: white;
+  font: inherit;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.enlace {
+  display: block;
+  width: fit-content;
+  color: #006e75;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 20px;
+}
+.enlace.boton {
+  color: white;
+  font-weight: 400;
+}
+.nota {
+  color: #718184;
+  font-size: 12px;
+  margin-top: 18px;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #006e75;
+  outline-offset: 4px;
+}
+@media (max-width: 640px) {
+  .estado-solicitud {
+    padding: 22px 16px;
+  }
+  .pasos {
+    gap: 5px;
+    font-size: 9px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .pasos span {
+    gap: 4px;
+  }
+  .pasos i {
+    width: 8px;
+  }
+  .panel {
+    padding: 25px 20px;
+  }
+  h1 {
+    font-size: 26px;
+  }
+  .introduccion {
+    font-size: 14px;
+  }
+}

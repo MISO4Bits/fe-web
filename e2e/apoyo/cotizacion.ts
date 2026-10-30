@@ -124,6 +124,12 @@ export async function simularSesion(
   page: Page,
   consentimientos: object[] = CONSENTIMIENTO_OPEN_FINANCE,
 ) {
+  await page.route('**/v1/cuenta/polizas', (route) =>
+    route.request().method() === 'GET' ? route.fulfill({ json: [] }) : route.fallback(),
+  );
+  await page.route('**/v1/cuenta/polizas', (route) =>
+    route.request().method() === 'GET' ? route.fulfill({ json: [] }) : route.fallback(),
+  );
   await page.route('**/v1/sesiones', (route) =>
     route.fulfill({
       json: {

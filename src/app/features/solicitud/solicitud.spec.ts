@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { Signal } from '@angular/core';
 import { Solicitud } from './solicitud';
 import { DocumentoAceptado, PolizasApiService, PolizaSolicitud } from './polizas-api.service';
@@ -104,6 +104,7 @@ describe('Solicitud BITS-275', () => {
         { provide: CotizacionApiService, useValue: cotizaciones },
       ],
     });
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
   });
   async function montar() {
     const fixture = TestBed.createComponent(Solicitud);
@@ -115,7 +116,7 @@ describe('Solicitud BITS-275', () => {
   }
 
   for (const hogar of [false, true]) {
-    it(`envía la selección ${hogar ? 'VIDA y HOGAR' : 'VIDA'} y permanece en la pantalla`, async () => {
+    it(`envía la selección ${hogar ? 'VIDA y HOGAR' : 'VIDA'} y abre el estado de la solicitud`, async () => {
       seleccion.hogarSeleccionado = hogar;
       api.consultar.and.resolveTo([
         evidencia('cedula_frente'),
@@ -131,6 +132,10 @@ describe('Solicitud BITS-275', () => {
         cotizacionCreadaEn: cotizacion.creadaEn,
         documentosAceptados: [{ tipo: 'poliza', version: 'V1' }],
       });
+      expect(TestBed.inject(Router).navigate).toHaveBeenCalledOnceWith([
+        '/cuenta/solicitudes',
+        'p1',
+      ]);
       expect(fixture.nativeElement.querySelector('h1').textContent).toContain(
         'Tu solicitud de cambio de seguro',
       );

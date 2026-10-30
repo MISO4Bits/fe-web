@@ -28,9 +28,33 @@ describe('PolizasApiService', () => {
   });
   afterEach(() => http.verify());
 
+  it('consulta el listado de pólizas autenticado para el Inicio', async () => {
+    const pendiente = api.listar();
+    await Promise.resolve();
+    await Promise.resolve();
+    const req = http.expectOne('/api/v1/cuenta/polizas');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer token');
+    req.flush([]);
+    await expectAsync(pendiente).toBeResolvedTo([]);
+  });
+
+  it('consulta una solicitud por identificador con autenticación', async () => {
+    const detalle = api.consultar('p/1');
+    await Promise.resolve();
+    await Promise.resolve();
+    const consultar = http.expectOne('/api/v1/cuenta/polizas/p%2F1');
+    expect(consultar.request.method).toBe('GET');
+    expect(consultar.request.headers.get('Authorization')).toBe('Bearer token');
+    const respuesta = { polizaId: 'p/1', estado: 'PENDIENTE' as const, pendientes: [] };
+    consultar.flush(respuesta);
+    await expectAsync(detalle).toBeResolvedTo(respuesta);
+  });
+
   for (const status of [200, 201]) {
     it(`acepta HTTP ${status} y envía únicamente el contrato autenticado`, async () => {
       const pendiente = api.solicitar(solicitud);
+      await Promise.resolve();
       await Promise.resolve();
       const req = http.expectOne('/api/v1/cuenta/polizas');
       expect(req.request.method).toBe('POST');

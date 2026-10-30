@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Location } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CotizacionApiService, CotizacionRespuesta } from '../cotizacion/cotizacion-api.service';
 import {
   Evidencia,
@@ -49,6 +49,7 @@ const lista = (foto: Foto): boolean =>
 export class Solicitud implements OnInit, OnDestroy {
   private readonly api = inject(EvidenciasApiService);
   private readonly polizas = inject(PolizasApiService);
+  private readonly router = inject(Router);
   private readonly cotizaciones = inject(CotizacionApiService);
   private readonly preparar = inject(PrepararImagenService);
   private readonly location = inject(Location);
@@ -162,7 +163,10 @@ export class Solicitud implements OnInit, OnDestroy {
         cotizacionCreadaEn: seleccion.cotizacionCreadaEn,
         documentosAceptados: documentos.map((d) => ({ tipo: d.tipo, version: d.version })),
       });
-      if (!this.destruido) this.resultado.set(resultado);
+      if (!this.destruido) {
+        this.resultado.set(resultado);
+        void this.router.navigate(['/cuenta/solicitudes', resultado.polizaId]);
+      }
     } catch (error: unknown) {
       if (this.destruido) return;
       if (error instanceof HttpErrorResponse && error.status === 409) {

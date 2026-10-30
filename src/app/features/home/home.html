@@ -1,14 +1,24 @@
 <section class="home">
-  <h1>{{ cotizacionActual() ? 'Tienes una cotización en curso' : 'Todavía no tienes seguros' }}</h1>
+  <h1>
+    {{
+      solicitudPendiente()
+        ? 'Tu solicitud está en revisión'
+        : cotizacionActual()
+          ? 'Tienes una cotización en curso'
+          : 'Todavía no tienes seguros'
+    }}
+  </h1>
   <p class="intro">
     {{
-      cotizacionActual()
-        ? 'Aquí vas a ver tus seguros. Tu cotización sigue abierta, puedes retomarla cuando quieras.'
-        : 'Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.'
+      solicitudPendiente()
+        ? 'Aquí vas a ver tus seguros. Te avisamos por correo cuando tu póliza quede emitida.'
+        : cotizacionActual()
+          ? 'Aquí vas a ver tus seguros. Tu cotización sigue abierta, puedes retomarla cuando quieras.'
+          : 'Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.'
     }}
   </p>
 
-  @if (errorCotizacion()) {
+  @if (errorCotizacion() && !solicitudPendiente()) {
     <div class="insurance-card" role="alert">
       <div class="card-copy">
         <h2>No pudimos consultar tus cotizaciones</h2>
@@ -17,48 +27,116 @@
       <button class="primary" type="button" (click)="cargarCotizacion()">Reintentar</button>
     </div>
   }
-  <p class="section-label">MIS SEGUROS</p>
-  @if (cotizacionActual(); as c) {
+  @if (cargandoSolicitudes()) {
+    <p role="status">Consultando tu solicitud...</p>
+  }
+  @if (errorSolicitudes()) {
+    <div class="insurance-card" role="alert">
+      <p>No pudimos consultar tus solicitudes. Inténtalo de nuevo.</p>
+      <button class="primary" type="button" (click)="cargarSolicitudes()">
+        Reintentar solicitudes
+      </button>
+    </div>
+  }
+  @if (solicitudPendiente(); as p) {
+    <p class="section-label">TU COTIZACIÓN</p>
     <a
-      class="insurance-card quote-card"
-      routerLink="/cuenta/cotizaciones/actual"
-      aria-label="Retomar cotización vigente"
+      class="insurance-card quote-card poliza-card"
+      [routerLink]="['/cuenta/solicitudes', p.polizaId]"
+      aria-label="Ver solicitud en revisión"
     >
       <div class="card-copy">
         <span class="escudo" aria-hidden="true">♢</span>
         <h2>Vida deudores</h2>
         <p>
-          Crédito con {{ c.datosCredito.entidadAcreedora }} · saldo
-          {{ moneda.format(c.datosCredito.saldoInsoluto) }}
+          Crédito con {{ p.datosCredito.entidadAcreedora }} · saldo
+          {{ moneda.format(p.datosCredito.saldoInsoluto) }}
         </p>
-        <strong class="prima-home">{{ moneda.format(c.oferta.primaMensual) }} al mes</strong>
+        <strong class="prima-home">{{ moneda.format(p.primaTotalMensual) }} al mes</strong>
       </div>
-      <span class="etiqueta-cotizacion">Cotización</span>
+      <span class="insignia-revision">En revisión</span>
+      <ul class="pendientes-home">
+        @for (pendiente of p.pendientes; track $index) {
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              @if (pendiente.codigo === 'CORREO_SIN_CONFIRMAR') {
+                <path d="M3 5h18v14H3zM3 5l9 8 9-8" />
+              } @else {
+                <circle cx="12" cy="8" r="5" />
+                <path d="M3 22c0-11 18-11 18 0" />
+              }</svg
+            ><span>{{ pendiente.mensaje }}</span>
+          </li>
+        }
+      </ul>
     </a>
-  }
-  @if (!cotizacionActual() && !errorCotizacion() && !cargandoCotizacion()) {
-    <section class="insurance-card" aria-label="Mis seguros">
-      <div class="card-copy">
-        <h2>Todavía no tienes seguros ni cotizaciones</h2>
-        <p>
-          Cotiza el seguro de tu crédito hipotecario. Buscamos los datos de tu crédito en tu banco y
-          te damos un precio preparado.
-        </p>
-      </div>
-      <a class="primary" [routerLink]="rutas.nuevaCotizacion">Cotizar mi seguro</a>
-    </section>
+    <p class="section-label seguros-label">MIS SEGUROS</p>
+    <p class="seguros-pendientes">
+      Todavía no tienes seguros. Aparecen aquí cuando aprobemos tu solicitud.
+    </p>
+  } @else {
+    <p class="section-label">MIS SEGUROS</p>
+    @if (cotizacionActual(); as c) {
+      <a
+        class="insurance-card quote-card"
+        routerLink="/cuenta/cotizaciones/actual"
+        aria-label="Retomar cotización vigente"
+      >
+        <div class="card-copy">
+          <span class="escudo" aria-hidden="true">♢</span>
+          <h2>Vida deudores</h2>
+          <p>
+            Crédito con {{ c.datosCredito.entidadAcreedora }} · saldo
+            {{ moneda.format(c.datosCredito.saldoInsoluto) }}
+          </p>
+          <strong class="prima-home">{{ moneda.format(c.oferta.primaMensual) }} al mes</strong>
+        </div>
+        <span class="etiqueta-cotizacion">Cotización</span>
+      </a>
+    }
+    @if (
+      !cotizacionActual() &&
+      !errorCotizacion() &&
+      !cargandoCotizacion() &&
+      !cargandoSolicitudes() &&
+      !errorSolicitudes()
+    ) {
+      <section class="insurance-card" aria-label="Mis seguros">
+        <div class="card-copy">
+          <h2>Todavía no tienes seguros ni cotizaciones</h2>
+          <p>
+            Cotiza el seguro de tu crédito hipotecario. Buscamos los datos de tu crédito en tu banco
+            y te damos un precio preparado.
+          </p>
+        </div>
+        <a class="primary" [routerLink]="rutas.nuevaCotizacion">Cotizar mi seguro</a>
+      </section>
+    }
   }
   <p class="section-label quick-label">ACCESOS RÁPIDOS</p>
-  <a class="quick-card" [routerLink]="rutas.nuevaCotizacion">
+  <button
+    type="button"
+    class="quick-card"
+    [disabled]="cargandoSolicitudes() || errorSolicitudes()"
+    (click)="nuevaCotizacion()"
+  >
     <span class="plus" aria-hidden="true">＋</span>
     <span class="quick-copy"
       ><strong>Nueva cotización</strong><small>Otro crédito o inmueble</small></span
     >
     <span class="arrow" aria-hidden="true">→</span>
-  </a>
+  </button>
 </section>
 
-@if (bienvenida() && !cargandoCotizacion() && !errorCotizacion() && !cotizacionActual()) {
+@if (
+  bienvenida() &&
+  !cargandoCotizacion() &&
+  !errorCotizacion() &&
+  !cotizacionActual() &&
+  !cargandoSolicitudes() &&
+  !errorSolicitudes() &&
+  !solicitudPendiente()
+) {
   <div class="overlay">
     <section class="welcome" role="dialog" aria-modal="true" aria-labelledby="bienvenida-titulo">
       <button class="close" type="button" aria-label="Cerrar ventana" (click)="cerrarBienvenida()">
@@ -90,3 +168,19 @@
     </section>
   </div>
 }
+
+<dialog
+  #confirmacion
+  class="confirmacion"
+  aria-labelledby="confirmacion-titulo"
+  aria-describedby="confirmacion-descripcion"
+>
+  <p class="eyebrow">TU SOLICITUD</p>
+  <h2 id="confirmacion-titulo">¿Quieres hacer una nueva cotización?</h2>
+  <p id="confirmacion-descripcion">
+    Si cotizas de nuevo, borramos tu solicitud en revisión y tendrás que enviarla otra vez con la
+    nueva cotización.
+  </p>
+  <button class="primary" type="button" (click)="cotizarDeNuevo()">Cotizar de nuevo</button>
+  <button class="volver" type="button" (click)="cerrarConfirmacion()">Volver</button>
+</dialog>

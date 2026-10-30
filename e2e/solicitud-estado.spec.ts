@@ -1,22 +1,11 @@
-import { expect, test } from '@playwright/test';
+import { expect, Page, test } from '@playwright/test';
 import { cotizacion, entrar, simularCotizacionActiva, simularSesion } from './apoyo/cotizacion';
 import { PolizaSolicitud } from '../src/app/features/solicitud/polizas-api.service';
 
-test('BITS-97: al enviar una solicitud abre el resultado del backend', async ({ page }) => {
+async function enviarSolicitud(page: Page, poliza: PolizaSolicitud) {
   await simularSesion(page);
   const actual = cotizacion();
   await simularCotizacionActiva(page, actual);
-  const poliza: PolizaSolicitud = {
-    polizaId: 'nueva',
-    estado: 'PENDIENTE',
-    pendientes: [
-      {
-        codigo: 'CREDITO_NO_VERIFICADO',
-        tipo: 'AGENTE',
-        mensaje: 'Los datos de tu crédito deben ser verificados por un agente',
-      },
-    ],
-  };
   await page.route('**/v1/cuenta/evidencias-identidad', (route) =>
     route.fulfill({
       json: ['cedula_frente', 'cedula_reverso', 'selfie'].map((tipo) => ({
@@ -35,7 +24,9 @@ test('BITS-97: al enviar una solicitud abre el resultado del backend', async ({ 
     });
     return route.fulfill({ status: 201, json: poliza });
   });
-  await page.route('**/v1/cuenta/polizas/nueva', (route) => route.fulfill({ json: poliza }));
+  await page.route(`**/v1/cuenta/polizas/${poliza.polizaId}`, (route) =>
+    route.fulfill({ json: poliza }),
+  );
   await entrar(page);
   await page.getByRole('link', { name: 'Retomar cotización vigente' }).click();
   await page
@@ -43,6 +34,21 @@ test('BITS-97: al enviar una solicitud abre el resultado del backend', async ({ 
     .check();
   await page.getByRole('button', { name: 'Aceptar y continuar', exact: true }).click();
   await page.getByRole('button', { name: 'Enviar solicitud', exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/cuenta/solicitudes/${poliza.polizaId}$`));
+}
+
+test('BITS-97: al enviar una solicitud abre el resultado del backend', async ({ page }) => {
+  await enviarSolicitud(page, {
+    polizaId: 'nueva',
+    estado: 'PENDIENTE',
+    pendientes: [
+      {
+        codigo: 'CREDITO_NO_VERIFICADO',
+        tipo: 'AGENTE',
+        mensaje: 'Los datos de tu crédito deben ser verificados por un agente',
+      },
+    ],
+  });
   await expect(page).toHaveURL(/\/cuenta\/solicitudes\/nueva$/);
   await expect(
     page.getByRole('heading', { name: 'Revisamos tu solicitud', exact: true }),
@@ -51,8 +57,7 @@ test('BITS-97: al enviar una solicitud abre el resultado del backend', async ({ 
 });
 
 for (const estado of ['PENDIENTE', 'RECHAZADA', 'EMITIDA'] as const) {
-  test(`BITS-97: abre ${estado} desde Mis seguros y muestra los datos reales`, async ({ page }) => {
-    await simularSesion(page);
+  test(`BITS-97: al enviar muestra ${estado} con los datos reales`, async ({ page }) => {
     const poliza: PolizaSolicitud = {
       polizaId: 'p1',
       estado,
@@ -91,10 +96,7 @@ for (const estado of ['PENDIENTE', 'RECHAZADA', 'EMITIDA'] as const) {
             }
           : null,
     };
-    await page.route('**/v1/cuenta/polizas', (route) => route.fulfill({ json: [poliza] }));
-    await page.route('**/v1/cuenta/polizas/p1', (route) => route.fulfill({ json: poliza }));
-    await entrar(page);
-    await page.locator('.poliza-card').click();
+    await enviarSolicitud(page, poliza);
     await expect(page).toHaveURL(/\/cuenta\/solicitudes\/p1$/);
     const titulo =
       estado === 'PENDIENTE'
@@ -130,7 +132,7 @@ for (const estado of ['PENDIENTE', 'RECHAZADA', 'EMITIDA'] as const) {
     if (estado === 'PENDIENTE') {
       poliza.estado = 'EMITIDA';
       poliza.pendientes = [];
-      await page.locator('.poliza-card').click();
+      await page.goBack();
       await expect(
         page.getByRole('heading', { name: 'Solicitud aprobada', exact: true }),
       ).toBeVisible();

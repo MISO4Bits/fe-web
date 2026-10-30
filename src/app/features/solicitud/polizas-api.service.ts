@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { BFF_BASE_URL } from '../../core/config/api.config';
 import { SessionService } from '../../core/services/session.service';
+import { DatosCreditoCotizacion } from '../cotizacion/cotizacion-api.service';
 
 export interface DocumentoAceptado {
   tipo: 'poliza';
@@ -30,6 +31,11 @@ export interface PolizaSolicitud {
   }[];
 }
 
+export interface ResumenPolizaSolicitud extends PolizaSolicitud {
+  datosCredito: DatosCreditoCotizacion;
+  primaTotalMensual: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PolizasApiService {
   private readonly http = inject(HttpClient);
@@ -47,6 +53,12 @@ export class PolizasApiService {
       this.http.get<PolizaSolicitud>(`${this.url}/${encodeURIComponent(id)}`, {
         headers: await this.headers(),
       }),
+    );
+  }
+
+  async listar(): Promise<ResumenPolizaSolicitud[]> {
+    return firstValueFrom(
+      this.http.get<ResumenPolizaSolicitud[]>(this.url, { headers: await this.headers() }),
     );
   }
 

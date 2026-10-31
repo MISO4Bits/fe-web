@@ -110,6 +110,88 @@ describe('Home', () => {
     expect(fixture.nativeElement.querySelector('.overlay')).toBeNull();
   });
 
+  function rechazada(): ResumenPolizaSolicitud {
+    return {
+      ...solicitud(),
+      estado: 'RECHAZADA',
+      rechazo: {
+        motivos: [
+          {
+            codigo: 'CREDITO_NO_VERIFICADO',
+            mensaje: 'No pudimos verificar los datos de tu crédito con la entidad acreedora.',
+          },
+        ],
+        rechazadaEn: '2026-10-31T10:20:00Z',
+      },
+    };
+  }
+
+  it('AC-4: muestra la rechazada con su motivo y acceso al detalle en lugar de la cotización', async () => {
+    polizas.listar.and.resolveTo([rechazada()]);
+    await montar(cotizacion);
+    expect(fixture.nativeElement.querySelector('h1').textContent).toContain(
+      'Tu solicitud no fue aprobada',
+    );
+    const card = fixture.nativeElement.querySelector('.solicitud-rechazada');
+    expect(card.getAttribute('href')).toBe('/cuenta/solicitudes/p1');
+    expect(card.textContent).toContain('No aprobada');
+    expect(card.textContent).toContain('No pudimos verificar los datos de tu crédito');
+    expect(card.textContent).toContain('Ver motivo y solicitud');
+    expect(card.querySelector('.pendientes-home')).toBeNull();
+    expect(card.textContent).not.toContain('Revisa el enlace en tu correo');
+    expect(fixture.nativeElement.textContent).not.toContain('Tienes una cotización en curso');
+    expect(
+      fixture.nativeElement.querySelector('[aria-label="Retomar cotización vigente"]'),
+    ).toBeNull();
+  });
+
+  it('no muestra la bienvenida ni espera una aprobación futura si solo existe una rechazada', async () => {
+    polizas.listar.and.resolveTo([rechazada()]);
+    await montar(null);
+    expect(fixture.nativeElement.querySelector('.solicitud-rechazada')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.overlay')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Aparecen aquí cuando aprobemos');
+  });
+
+  it('prioriza la solicitud pendiente ante rechazos históricos', async () => {
+    polizas.listar.and.resolveTo([rechazada(), { ...solicitud(), polizaId: 'p2' }]);
+    await montar(cotizacion);
+    expect(fixture.nativeElement.querySelector('h1').textContent).toContain(
+      'Tu solicitud está en revisión',
+    );
+    expect(fixture.nativeElement.querySelector('.poliza-card').getAttribute('href')).toBe(
+      '/cuenta/solicitudes/p2',
+    );
+  });
+
+  it('presenta el rechazo más reciente aunque la lista no venga ordenada', async () => {
+    const reciente = {
+      ...rechazada(),
+      polizaId: 'p2',
+      rechazo: {
+        motivos: [{ codigo: 'EVIDENCIA_FALTANTE', mensaje: 'No pudimos validar tu identidad.' }],
+        rechazadaEn: '2026-11-01T10:00:00Z',
+      },
+    };
+    polizas.listar.and.resolveTo([rechazada(), reciente]);
+    await montar(cotizacion);
+    expect(fixture.nativeElement.querySelector('.poliza-card').getAttribute('href')).toBe(
+      '/cuenta/solicitudes/p2',
+    );
+    expect(fixture.nativeElement.querySelector('.motivos-home').textContent).toContain(
+      'No pudimos validar tu identidad',
+    );
+  });
+
+  it('permite cotizar después de un rechazo sin mostrar el aviso de solicitud en revisión', async () => {
+    polizas.listar.and.resolveTo([rechazada()]);
+    await montar(cotizacion);
+    const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    fixture.nativeElement.querySelector('.quick-card').click();
+    expect(navegar).toHaveBeenCalledOnceWith(['/cuenta/cotizaciones/nueva']);
+    expect((fixture.nativeElement.querySelector('dialog') as HTMLDialogElement).open).toBeFalse();
+  });
+
   it('03D: Volver conserva la solicitud y no navega', async () => {
     const pendiente = solicitud();
     polizas.listar.and.resolveTo([pendiente]);

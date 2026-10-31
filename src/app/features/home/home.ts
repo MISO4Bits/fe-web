@@ -20,6 +20,15 @@ export class Home implements OnInit {
   protected readonly solicitudPendiente = computed(() =>
     this.solicitudes().find((p) => p.estado === 'PENDIENTE'),
   );
+  protected readonly solicitudVisible = computed<ResumenPolizaSolicitud | undefined>(
+    () =>
+      this.solicitudPendiente() ??
+      this.solicitudes()
+        .filter((p) => p.estado === 'RECHAZADA')
+        .sort((a, b) =>
+          (b.rechazo?.rechazadaEn ?? '').localeCompare(a.rechazo?.rechazadaEn ?? ''),
+        )[0],
+  );
   protected readonly cargandoSolicitudes = signal(true);
   protected readonly errorSolicitudes = signal(false);
   private readonly bienvenidaUsuario = inject(BienvenidaService);

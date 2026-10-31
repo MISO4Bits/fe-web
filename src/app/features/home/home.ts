@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { CotizacionApiService, CotizacionRespuesta } from '../cotizacion/cotizacion-api.service';
 import { RUTAS } from '../../nucleo/rutas';
 import { BienvenidaService } from './bienvenida.service';
+import { UltimaCotizacionService } from '../cotizacion/ultima-cotizacion.service';
 import { PolizasApiService, ResumenPolizaSolicitud } from '../solicitud/polizas-api.service';
 @Component({
   selector: 'app-home',
@@ -13,6 +14,7 @@ import { PolizasApiService, ResumenPolizaSolicitud } from '../solicitud/polizas-
 })
 export class Home implements OnInit {
   private readonly api = inject(CotizacionApiService);
+  private readonly ultimaCotizacion = inject(UltimaCotizacionService);
   private readonly polizasApi = inject(PolizasApiService);
   private readonly router = inject(Router);
   private readonly confirmacion = viewChild.required<ElementRef<HTMLDialogElement>>('confirmacion');
@@ -20,15 +22,23 @@ export class Home implements OnInit {
   protected readonly solicitudPendiente = computed(() =>
     this.solicitudes().find((p) => p.estado === 'PENDIENTE'),
   );
-  protected readonly solicitudVisible = computed<ResumenPolizaSolicitud | undefined>(
-    () =>
-      this.solicitudPendiente() ??
-      this.solicitudes()
-        .filter((p) => p.estado === 'RECHAZADA')
-        .sort((a, b) =>
-          (b.rechazo?.rechazadaEn ?? '').localeCompare(a.rechazo?.rechazadaEn ?? ''),
-        )[0],
-  );
+  protected readonly solicitudVisible = computed<ResumenPolizaSolicitud | undefined>(() => {
+    const pendiente = this.solicitudPendiente();
+    if (pendiente) return pendiente;
+    const cotizacionCreadaEn = Math.max(
+      Date.parse(this.cotizacionActual()?.creadaEn ?? '') || 0,
+      this.ultimaCotizacion.creadaEn(),
+    );
+    return this.solicitudes()
+      .filter(
+        (p) =>
+          p.estado === 'RECHAZADA' &&
+          !(cotizacionCreadaEn > Date.parse(p.cotizacionCreadaEn ?? '')),
+      )
+      .sort((a, b) =>
+        (b.rechazo?.rechazadaEn ?? '').localeCompare(a.rechazo?.rechazadaEn ?? ''),
+      )[0];
+  });
   protected readonly cargandoSolicitudes = signal(true);
   protected readonly errorSolicitudes = signal(false);
   private readonly bienvenidaUsuario = inject(BienvenidaService);
@@ -78,6 +88,7 @@ export class Home implements OnInit {
     this.errorCotizacion.set(false);
     try {
       const actual = await this.api.actual();
+      if (actual) this.ultimaCotizacion.recordar(actual.creadaEn);
       this.cotizacionActual.set(actual?.estado === 'EXPIRADA' ? null : actual);
       this.prepararBienvenida(actual !== null);
     } catch (error: unknown) {

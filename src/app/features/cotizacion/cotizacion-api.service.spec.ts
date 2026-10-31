@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { BFF_BASE_URL } from '../../core/config/api.config';
 import { SessionService } from '../../core/services/session.service';
 import { CotizacionApiService } from './cotizacion-api.service';
+import { UltimaCotizacionService } from './ultima-cotizacion.service';
 
 describe('CotizacionApiService BITS-292', () => {
   let api: CotizacionApiService;
@@ -22,6 +23,7 @@ describe('CotizacionApiService BITS-292', () => {
   });
   afterEach(() => http.verify());
   it('envía los datos del crédito al endpoint de cotizaciones con Bearer', async () => {
+    const recordar = spyOn(TestBed.inject(UltimaCotizacionService), 'recordar');
     const datos = {
       entidadAcreedora: 'BBVA Colombia',
       valorCredito: 200000000,
@@ -35,8 +37,26 @@ describe('CotizacionApiService BITS-292', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.headers.get('Authorization')).toBe('Bearer token-prueba');
     expect(req.request.body).toEqual({ datosCredito: datos });
-    req.flush({ estado: 'VIGENTE' });
+    req.flush({ estado: 'VIGENTE', creadaEn: '2026-10-31T12:00:00Z' });
     await expectAsync(promesa).toBeResolved();
+    expect(recordar).toHaveBeenCalledOnceWith('2026-10-31T12:00:00Z');
+  });
+
+  it('no recuerda una cotización cuya creación falló', async () => {
+    const recordar = spyOn(TestBed.inject(UltimaCotizacionService), 'recordar');
+    const promesa = api.crear({
+      entidadAcreedora: 'BBVA',
+      valorCredito: 200000000,
+      saldoInsoluto: 150000000,
+      plazoRestanteMeses: 180,
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    http
+      .expectOne('http://localhost:8081/v1/cotizaciones')
+      .flush({}, { status: 503, statusText: 'Unavailable' });
+    await expectAsync(promesa).toBeRejected();
+    expect(recordar).not.toHaveBeenCalled();
   });
   it('consulta la cotización vigente', async () => {
     const promesa = api.actual();

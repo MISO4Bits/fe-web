@@ -18,6 +18,7 @@ export interface SolicitarPoliza {
 
 export interface PolizaSolicitud {
   polizaId: string;
+  cotizacionCreadaEn?: string;
   numero?: string | null;
   estado: 'EMITIDA' | 'PENDIENTE' | 'RECHAZADA' | 'VENCIDA';
   solicitudVigenteHasta?: string | null;

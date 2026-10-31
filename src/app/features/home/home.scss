@@ -112,6 +112,26 @@
   font-size: 13px;
   color: #58676a;
 }
+.solicitud-rechazada .insignia-revision {
+  color: #9d1d22;
+  background: #ffe3e1;
+}
+.motivos-home {
+  width: 48%;
+  padding-top: 24px;
+  color: #58676a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.motivos-home p {
+  margin: 8px 0;
+}
+.ver-motivo {
+  display: inline-block;
+  color: #006971;
+  font-weight: 600;
+  margin-top: 8px;
+}
 .pendientes-home li {
   display: flex;
   gap: 9px;
@@ -282,7 +302,8 @@
   margin: 21px 0 18px;
 }
 @media (max-width: 650px) {
-  .pendientes-home {
+  .pendientes-home,
+  .motivos-home {
     width: 100%;
     padding: 0;
   }

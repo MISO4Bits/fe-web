@@ -1,8 +1,10 @@
 <section class="home">
   <h1>
     {{
-      solicitudPendiente()
-        ? 'Tu solicitud está en revisión'
+      solicitudVisible()
+        ? solicitudVisible()?.estado === 'RECHAZADA'
+          ? 'Tu solicitud no fue aprobada'
+          : 'Tu solicitud está en revisión'
         : cotizacionActual()
           ? 'Tienes una cotización en curso'
           : 'Todavía no tienes seguros'
@@ -10,15 +12,17 @@
   </h1>
   <p class="intro">
     {{
-      solicitudPendiente()
-        ? 'Aquí vas a ver tus seguros. Te avisamos por correo cuando tu póliza quede emitida.'
+      solicitudVisible()
+        ? solicitudVisible()?.estado === 'RECHAZADA'
+          ? 'Consulta el motivo de la decisión en tu solicitud.'
+          : 'Aquí vas a ver tus seguros. Te avisamos por correo cuando tu póliza quede emitida.'
         : cotizacionActual()
           ? 'Aquí vas a ver tus seguros. Tu cotización sigue abierta, puedes retomarla cuando quieras.'
           : 'Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.'
     }}
   </p>
 
-  @if (errorCotizacion() && !solicitudPendiente()) {
+  @if (errorCotizacion() && !solicitudVisible()) {
     <div class="insurance-card" role="alert">
       <div class="card-copy">
         <h2>No pudimos consultar tus cotizaciones</h2>
@@ -38,12 +42,15 @@
       </button>
     </div>
   }
-  @if (solicitudPendiente(); as p) {
+  @if (solicitudVisible(); as p) {
     <p class="section-label">TU COTIZACIÓN</p>
     <a
       class="insurance-card quote-card poliza-card"
+      [class.solicitud-rechazada]="p.estado === 'RECHAZADA'"
       [routerLink]="['/cuenta/solicitudes', p.polizaId]"
-      aria-label="Ver solicitud en revisión"
+      [attr.aria-label]="
+        p.estado === 'RECHAZADA' ? 'Ver solicitud no aprobada' : 'Ver solicitud en revisión'
+      "
     >
       <div class="card-copy">
         <span class="escudo" aria-hidden="true">♢</span>
@@ -54,25 +61,40 @@
         </p>
         <strong class="prima-home">{{ moneda.format(p.primaTotalMensual) }} al mes</strong>
       </div>
-      <span class="insignia-revision">En revisión</span>
-      <ul class="pendientes-home">
-        @for (pendiente of p.pendientes; track $index) {
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              @if (pendiente.codigo === 'CORREO_SIN_CONFIRMAR') {
-                <path d="M3 5h18v14H3zM3 5l9 8 9-8" />
-              } @else {
-                <circle cx="12" cy="8" r="5" />
-                <path d="M3 22c0-11 18-11 18 0" />
-              }</svg
-            ><span>{{ pendiente.mensaje }}</span>
-          </li>
-        }
-      </ul>
+      <span class="insignia-revision">{{
+        p.estado === 'RECHAZADA' ? 'No aprobada' : 'En revisión'
+      }}</span>
+      @if (p.estado === 'RECHAZADA') {
+        <div class="motivos-home">
+          @for (motivo of p.rechazo?.motivos; track $index) {
+            <p><strong>Motivo:</strong> {{ motivo.mensaje }}</p>
+          }
+          <span class="ver-motivo">Ver motivo y solicitud <span aria-hidden="true">→</span></span>
+        </div>
+      } @else {
+        <ul class="pendientes-home">
+          @for (pendiente of p.pendientes; track $index) {
+            <li>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                @if (pendiente.codigo === 'CORREO_SIN_CONFIRMAR') {
+                  <path d="M3 5h18v14H3zM3 5l9 8 9-8" />
+                } @else {
+                  <circle cx="12" cy="8" r="5" />
+                  <path d="M3 22c0-11 18-11 18 0" />
+                }</svg
+              ><span>{{ pendiente.mensaje }}</span>
+            </li>
+          }
+        </ul>
+      }
     </a>
     <p class="section-label seguros-label">MIS SEGUROS</p>
     <p class="seguros-pendientes">
-      Todavía no tienes seguros. Aparecen aquí cuando aprobemos tu solicitud.
+      {{
+        p.estado === 'RECHAZADA'
+          ? 'Todavía no tienes seguros.'
+          : 'Todavía no tienes seguros. Aparecen aquí cuando aprobemos tu solicitud.'
+      }}
     </p>
   } @else {
     <p class="section-label">MIS SEGUROS</p>
@@ -135,7 +157,7 @@
   !cotizacionActual() &&
   !cargandoSolicitudes() &&
   !errorSolicitudes() &&
-  !solicitudPendiente()
+  !solicitudVisible()
 ) {
   <div class="overlay">
     <section class="welcome" role="dialog" aria-modal="true" aria-labelledby="bienvenida-titulo">

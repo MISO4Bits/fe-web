@@ -51,6 +51,12 @@ export interface DetallePolizaSolicitud extends ResumenPolizaSolicitud {
   moneda: 'COP';
 }
 
+export interface DocumentoPoliza {
+  estado: 'GENERANDO' | 'LISTO';
+  url?: string | null;
+  expiraEn?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PolizasApiService {
   private readonly http = inject(HttpClient);
@@ -83,6 +89,18 @@ export class PolizasApiService {
         headers: await this.headers(),
       }),
     );
+  }
+
+  async documento(id: string): Promise<DocumentoPoliza> {
+    const respuesta = await firstValueFrom(
+      this.http.get<DocumentoPoliza>(`${this.url}/${encodeURIComponent(id)}/documento`, {
+        headers: await this.headers(),
+        observe: 'response',
+      }),
+    );
+    if (respuesta.status === 202) return { estado: 'GENERANDO' };
+    if (!respuesta.body) throw new Error('DOCUMENTO_NO_DISPONIBLE');
+    return respuesta.body;
   }
 
   async solicitar(solicitud: SolicitarPoliza): Promise<PolizaSolicitud> {

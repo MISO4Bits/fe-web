@@ -19,6 +19,15 @@ export class Home implements OnInit {
   private readonly router = inject(Router);
   private readonly confirmacion = viewChild.required<ElementRef<HTMLDialogElement>>('confirmacion');
   private readonly solicitudes = signal<ResumenPolizaSolicitud[]>([]);
+  protected readonly seguros = computed(() =>
+    this.solicitudes().filter((p) => p.estado === 'EMITIDA'),
+  );
+  protected readonly cotizacionVisible = computed(() => {
+    const actual = this.cotizacionActual();
+    return actual && !this.seguros().some((p) => p.cotizacionCreadaEn === actual.creadaEn)
+      ? actual
+      : null;
+  });
   protected readonly solicitudPendiente = computed(() =>
     this.solicitudes().find((p) => p.estado === 'PENDIENTE'),
   );

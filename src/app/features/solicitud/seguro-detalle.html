@@ -1,0 +1,102 @@
+<section class="detalle">
+  <a class="enlace volver" routerLink="/cuenta">Volver a mis seguros</a>
+  @if (cargando()) {
+    <p role="status">Consultando tu seguro...</p>
+  } @else if (error()) {
+    <div role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" class="boton" (click)="cargar()">Reintentar</button>
+    </div>
+  } @else if (poliza(); as p) {
+    @if (p.estado !== 'EMITIDA') {
+      <p>Este detalle solo está disponible para pólizas emitidas.</p>
+      <a class="enlace" [routerLink]="['/cuenta/solicitudes', p.polizaId]">Ver mi solicitud</a>
+    } @else {
+      <div class="columnas">
+        <div>
+          <h1>Vida deudores</h1>
+          <p class="numero">
+            <span class="insignia">Vigente</span> Seguro N.° {{ p.numero || 'No disponible' }}
+          </p>
+          <section class="panel" aria-labelledby="condiciones-titulo">
+            <h2 id="condiciones-titulo">Condiciones</h2>
+            <dl>
+              <div>
+                <dt>Pagas cada mes</dt>
+                <dd>{{ moneda.format(p.primaTotalMensual) }}</dd>
+              </div>
+              <div>
+                <dt>Cuánto cubrimos hoy</dt>
+                <dd>{{ moneda.format(p.datosCredito.saldoInsoluto) }}</dd>
+              </div>
+              <div>
+                <dt>Te cubre</dt>
+                <dd>{{ fecha(p.vigencia?.desde) }} al {{ fecha(p.vigencia?.hasta) }}</dd>
+              </div>
+            </dl>
+            <p class="etiqueta">COBERTURAS CONTRATADAS</p>
+            <ul>
+              @for (c of p.coberturas; track c.codigo) {
+                <li>{{ c.codigo === 'VIDA' ? 'Vida para tu crédito' : 'Tu casa' }}</li>
+              }
+            </ul>
+            <a class="enlace" [routerLink]="['/cuenta/solicitudes', p.polizaId, 'cuota']"
+              >Ver tu seguro dentro de la cuota</a
+            >
+          </section>
+          <section class="panel" aria-labelledby="documentos-titulo">
+            <h2 id="documentos-titulo">Documentos</h2>
+            <div class="documento">
+              <span>Documento de tu seguro<small>PDF</small></span
+              ><button
+                type="button"
+                class="enlace"
+                [disabled]="descargando()"
+                (click)="verDocumento()"
+              >
+                Descargar
+              </button>
+            </div>
+          </section>
+        </div>
+        <div>
+          <p class="etiqueta">TU CRÉDITO</p>
+          <section class="panel" aria-label="Tu crédito">
+            <dl>
+              <div>
+                <dt>Banco</dt>
+                <dd>{{ p.datosCredito.entidadAcreedora }}</dd>
+              </div>
+              <div>
+                <dt>Saldo del crédito</dt>
+                <dd>{{ moneda.format(p.datosCredito.saldoInsoluto) }}</dd>
+              </div>
+              <div>
+                <dt>Plazo restante</dt>
+                <dd>{{ p.datosCredito.plazoRestanteMeses }} meses</dd>
+              </div>
+              <div>
+                <dt>Qué cubrimos</dt>
+                <dd>El saldo que te falte</dd>
+              </div>
+            </dl>
+          </section>
+          <section class="panel pago">
+            <h2>Cómo se paga</h2>
+            <p>
+              Lo cobra {{ p.datosCredito.entidadAcreedora }} junto con la cuota de tu crédito. No
+              necesitas hacer ningún pago en Solventa.
+            </p>
+          </section>
+          <button type="button" class="boton" [disabled]="descargando()" (click)="verDocumento()">
+            {{ descargando() ? 'Consultando documento...' : 'Ver mi documento' }}
+          </button>
+          @if (mensajeDocumento()) {
+            <p [attr.role]="errorDocumento() ? 'alert' : 'status'">{{ mensajeDocumento() }}</p>
+          }
+          <a class="enlace inicio" routerLink="/cuenta">Inicio</a>
+        </div>
+      </div>
+    }
+  }
+</section>

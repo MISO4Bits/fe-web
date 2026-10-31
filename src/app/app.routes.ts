@@ -99,6 +99,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/solicitud/solicitud').then((m) => m.Solicitud),
       },
       {
+        path: 'seguros/:id',
+        title: 'Detalle de tu seguro ? Solventa',
+        loadComponent: () =>
+          import('./features/solicitud/seguro-detalle').then((m) => m.SeguroDetalle),
+      },
+      {
         path: 'solicitudes/:id/cuota',
         title: 'Tu seguro dentro de la cuota · Solventa',
         loadComponent: () => import('./features/solicitud/seguro-cuota').then((m) => m.SeguroCuota),

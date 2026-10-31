@@ -85,6 +85,21 @@ describe('PolizasApiService', () => {
     });
   }
 
+  for (const status of [200, 202]) {
+    it(`consulta el documento autenticado y maneja HTTP ${status}`, async () => {
+      const pendiente = api.documento('p/1');
+      await Promise.resolve();
+      await Promise.resolve();
+      const req = http.expectOne('/api/v1/cuenta/polizas/p%2F1/documento');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer token');
+      req.flush(
+        status === 200 ? { estado: 'LISTO', url: 'https://example.com/poliza.pdf' } : null,
+        { status, statusText: 'OK' },
+      );
+      expect((await pendiente).estado).toBe(status === 200 ? 'LISTO' : 'GENERANDO');
+    });
+  }
+
   it('no registra solicitudes sin sesión', async () => {
     spyOn(TestBed.inject(SessionService), 'validAccessToken').and.resolveTo(null);
     await expectAsync(api.solicitar(solicitud)).toBeRejectedWithError('SESION_EXPIRADA');

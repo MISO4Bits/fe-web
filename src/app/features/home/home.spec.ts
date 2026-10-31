@@ -62,6 +62,38 @@ describe('Home', () => {
     localStorage.removeItem('solventa.ultima-cotizacion-creada:home-test@example.com');
   });
 
+  it('separa cotizacion y seguros emitidos, con enlaces a su detalle', async () => {
+    polizas.listar.and.resolveTo([
+      {
+        ...solicitud(),
+        polizaId: 'emitida',
+        numero: 'SOL-1',
+        estado: 'EMITIDA',
+        cotizacionCreadaEn: '2026-10-17T10:00:00Z',
+      },
+    ]);
+    await montar(cotizacion);
+    const seguros = fixture.nativeElement.querySelector('section[aria-label="Mis seguros"]');
+    expect(seguros.textContent).toContain('SOL-1');
+    expect(seguros.querySelector('a').getAttribute('href')).toBe('/cuenta/seguros/emitida');
+    expect(seguros.querySelector('[aria-label="Retomar cotizaci\u00f3n vigente"]')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('[aria-label="Retomar cotizaci\u00f3n vigente"]'),
+    ).not.toBeNull();
+  });
+
+  it('no ofrece retomar la cotizacion que ya genero un seguro emitido', async () => {
+    polizas.listar.and.resolveTo([{ ...solicitud(), estado: 'EMITIDA' }]);
+    await montar(cotizacion);
+    expect(
+      fixture.nativeElement.querySelector('[aria-label="Retomar cotizaci\u00f3n vigente"]'),
+    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('h1').textContent).toContain(
+      'Tu seguro est\u00e1 activo',
+    );
+    expect(fixture.nativeElement.querySelector('.welcome')).toBeNull();
+  });
+
   function solicitud(): ResumenPolizaSolicitud {
     return {
       polizaId: 'p1',

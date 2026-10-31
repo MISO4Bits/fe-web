@@ -1,0 +1,148 @@
+:host {
+  display: block;
+  color: #192224;
+}
+.detalle {
+  box-sizing: border-box;
+  max-width: 1260px;
+  margin: auto;
+  padding: 32px 48px 80px;
+}
+.columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+h1 {
+  font-size: 28px;
+  margin: 16px 0 10px;
+}
+h2 {
+  font-size: 16px;
+  margin: 0 0 18px;
+}
+.numero {
+  color: #657476;
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+.insignia {
+  display: inline-block;
+  color: #006e75;
+  background: #d8eff0;
+  padding: 4px 16px;
+  border-radius: 20px;
+  margin-right: 8px;
+  font-size: 11px;
+}
+.panel {
+  background: white;
+  border: 1px solid #dde4e5;
+  border-radius: 12px;
+  padding: 22px 18px;
+  margin-bottom: 22px;
+}
+dl {
+  margin: 0;
+}
+dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #dde4e5;
+  font-size: 14px;
+}
+dl > div:last-child {
+  border: 0;
+  padding-bottom: 0;
+}
+dt {
+  color: #526265;
+}
+dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+}
+.etiqueta {
+  color: #657476;
+  font-size: 11px;
+  margin: 0 0 10px;
+}
+dl + .etiqueta {
+  margin-top: 24px;
+}
+ul {
+  padding-left: 20px;
+  color: #526265;
+  font-size: 14px;
+}
+.pago {
+  background: transparent;
+  margin-bottom: 12px;
+}
+.pago p {
+  color: #526265;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+.documento {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 0;
+  font-size: 14px;
+}
+small {
+  display: block;
+  margin-top: 4px;
+  color: #718184;
+  font-size: 12px;
+}
+.enlace {
+  color: #006e75;
+  text-decoration: none;
+  font: inherit;
+  font-size: 14px;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+.boton {
+  border: 0;
+  border-radius: 30px;
+  background: #006e75;
+  color: white;
+  padding: 16px 24px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.inicio {
+  display: block;
+  margin-top: 16px;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid #006e75;
+  outline-offset: 4px;
+}
+@media (max-width: 700px) {
+  .detalle {
+    padding: 28px 18px 60px;
+  }
+  .columnas {
+    grid-template-columns: 1fr;
+  }
+  dd {
+    overflow-wrap: anywhere;
+  }
+}

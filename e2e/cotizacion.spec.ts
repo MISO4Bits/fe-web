@@ -152,7 +152,7 @@ test('sin autorización financiera, permite aceptar condiciones con tarifa está
   await expect(checkbox).toBeChecked();
   await expect(page.getByRole('alert')).toHaveCount(0);
   await continuar.click();
-  await expect(page).toHaveURL(url);
+  await expect(page).toHaveURL(/\/cuenta\/solicitud$/);
 });
 
 test('sin perfil calculado, usa la tarifa estándar y no la presenta como personalizada (AC-4)', async ({

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { BFF_BASE_URL } from '../../core/config/api.config';
 import { SessionService } from '../../core/services/session.service';
+import { UltimaCotizacionService } from './ultima-cotizacion.service';
 
 export interface DatosCreditoCotizacion {
   entidadAcreedora: string;
@@ -49,6 +50,7 @@ export interface CotizacionRespuesta {
 export class CotizacionApiService {
   private readonly http = inject(HttpClient);
   private readonly sesion = inject(SessionService);
+  private readonly ultimaCotizacion = inject(UltimaCotizacionService);
   private readonly baseUrl = inject(BFF_BASE_URL).replace(/\/$/, '');
   private async headers(): Promise<HttpHeaders> {
     const token = await this.sesion.validAccessToken();
@@ -56,13 +58,15 @@ export class CotizacionApiService {
     return new HttpHeaders({ Authorization: `Bearer ${token}` });
   }
   async crear(datosCredito: DatosCreditoCotizacion): Promise<CotizacionRespuesta> {
-    return firstValueFrom(
+    const cotizacion = await firstValueFrom(
       this.http.post<CotizacionRespuesta>(
         `${this.baseUrl}/v1/cotizaciones`,
         { datosCredito },
         { headers: await this.headers() },
       ),
     );
+    this.ultimaCotizacion.recordar(cotizacion.creadaEn);
+    return cotizacion;
   }
   async actual(): Promise<CotizacionRespuesta | null> {
     return firstValueFrom(

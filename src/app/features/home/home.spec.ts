@@ -43,6 +43,7 @@ describe('Home', () => {
 
   beforeEach(async () => {
     localStorage.removeItem('solventa.bienvenida-cotizacion:home-test@example.com');
+    localStorage.removeItem('solventa.ultima-cotizacion-creada:home-test@example.com');
     api = jasmine.createSpyObj<CotizacionApiService>('CotizacionApiService', ['actual']);
     polizas = jasmine.createSpyObj('PolizasApiService', ['listar']);
     polizas.listar.and.resolveTo([]);
@@ -56,11 +57,15 @@ describe('Home', () => {
       ],
     }).compileComponents();
   });
-  afterEach(() => localStorage.removeItem('solventa.bienvenida-cotizacion:home-test@example.com'));
+  afterEach(() => {
+    localStorage.removeItem('solventa.bienvenida-cotizacion:home-test@example.com');
+    localStorage.removeItem('solventa.ultima-cotizacion-creada:home-test@example.com');
+  });
 
   function solicitud(): ResumenPolizaSolicitud {
     return {
       polizaId: 'p1',
+      cotizacionCreadaEn: cotizacion.creadaEn,
       estado: 'PENDIENTE',
       datosCredito: {
         ...cotizacion.datosCredito,
@@ -151,6 +156,85 @@ describe('Home', () => {
     expect(fixture.nativeElement.querySelector('.solicitud-rechazada')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.overlay')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Aparecen aquí cuando aprobemos');
+  });
+
+  it('prioriza una cotización posterior a la del rechazo y permite retomarla sin borrar la solicitud', async () => {
+    const rechazo = rechazada();
+    polizas.listar.and.resolveTo([rechazo]);
+    // Se compara con la cotización que originó la solicitud, no con la fecha del rechazo.
+    await montar({ ...cotizacion, creadaEn: '2026-10-19T10:00:00Z' });
+    expect(fixture.nativeElement.querySelector('h1').textContent).toContain(
+      'Tienes una cotización en curso',
+    );
+    expect(fixture.nativeElement.querySelector('.solicitud-rechazada')).toBeNull();
+    expect(
+      fixture.nativeElement
+        .querySelector('[aria-label="Retomar cotización vigente"]')
+        .getAttribute('href'),
+    ).toBe('/cuenta/cotizaciones/actual');
+    expect(rechazo.estado).toBe('RECHAZADA');
+    expect(polizas.listar).toHaveBeenCalledTimes(1);
+  });
+
+  it('mantiene el rechazo cuando la cotización actual es anterior a la de la solicitud', async () => {
+    polizas.listar.and.resolveTo([rechazada()]);
+    await montar({ ...cotizacion, creadaEn: '2026-10-17T10:00:00Z' });
+    expect(fixture.nativeElement.querySelector('.solicitud-rechazada')).not.toBeNull();
+  });
+
+  it('compara instantes y mantiene el rechazo para fechas equivalentes con distinto huso horario', async () => {
+    polizas.listar.and.resolveTo([
+      { ...rechazada(), cotizacionCreadaEn: '2026-10-18T05:00:00-05:00' },
+    ]);
+    await montar(cotizacion);
+    expect(fixture.nativeElement.querySelector('.solicitud-rechazada')).not.toBeNull();
+  });
+
+  it('recuerda la cotización posterior aunque ya haya expirado y oculta el rechazo anterior', async () => {
+    polizas.listar.and.resolveTo([rechazada()]);
+    await montar({ ...cotizacion, estado: 'EXPIRADA', creadaEn: '2026-10-19T10:00:00Z' });
+    expect(fixture.nativeElement.querySelector('.solicitud-rechazada')).toBeNull();
+  });
+
+  it('no vuelve a mostrar el rechazo anterior al regresar sin la cotización nueva', async () => {
+    const rechazo = rechazada();
+    polizas.listar.and.resolveTo([rechazo]);
+    await montar({ ...cotizacion, creadaEn: '2026-10-19T10:00:00Z' });
+    fixture.destroy();
+    // Tras declinar o expirar, el backend ya no devuelve una cotización activa.
+    await montar(null);
+    expect(fixture.nativeElement.querySelector('.solicitud-rechazada')).toBeNull();
+    expect(rechazo.estado).toBe('RECHAZADA');
+  });
+
+  it('muestra un rechazo de la nueva cotización aunque el anterior esté oculto', async () => {
+    polizas.listar.and.resolveTo([rechazada()]);
+    const fechaNueva = '2026-10-19T10:00:00Z';
+    await montar({ ...cotizacion, creadaEn: fechaNueva });
+    fixture.destroy();
+    polizas.listar.and.resolveTo([
+      { ...rechazada(), polizaId: 'p2', cotizacionCreadaEn: fechaNueva },
+    ]);
+    await montar(null);
+    expect(fixture.nativeElement.querySelector('.solicitud-rechazada').getAttribute('href')).toBe(
+      '/cuenta/solicitudes/p2',
+    );
+  });
+
+  for (const fecha of [undefined, 'fecha-invalida']) {
+    it('conserva el rechazo si no se puede comprobar la fecha de su cotización', async () => {
+      polizas.listar.and.resolveTo([{ ...rechazada(), cotizacionCreadaEn: fecha }]);
+      await montar({ ...cotizacion, creadaEn: '2026-10-19T10:00:00Z' });
+      expect(fixture.nativeElement.querySelector('.solicitud-rechazada')).not.toBeNull();
+    });
+  }
+
+  it('mantiene la prioridad de una solicitud pendiente aunque exista una cotización posterior', async () => {
+    polizas.listar.and.resolveTo([solicitud()]);
+    await montar({ ...cotizacion, creadaEn: '2026-10-19T10:00:00Z' });
+    expect(fixture.nativeElement.querySelector('h1').textContent).toContain(
+      'Tu solicitud está en revisión',
+    );
   });
 
   it('prioriza la solicitud pendiente ante rechazos históricos', async () => {

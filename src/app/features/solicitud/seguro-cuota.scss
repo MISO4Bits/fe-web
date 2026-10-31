@@ -1,0 +1,132 @@
+:host {
+  display: block;
+  color: #192224;
+}
+.seguro-cuota {
+  max-width: 1260px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 52px 48px 80px;
+}
+h1 {
+  font-size: 30px;
+  line-height: 1.25;
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+.introduccion {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #526265;
+  margin: 0 0 30px;
+}
+.etiqueta {
+  color: #718184;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+.resumen {
+  max-width: 610px;
+  box-sizing: border-box;
+  background: white;
+  border: 1px solid #dce5e7;
+  border-radius: 12px;
+  padding: 22px 20px 12px;
+}
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 18px;
+}
+dl {
+  margin: 0;
+}
+dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 10px 0;
+  font-size: 14px;
+}
+dt {
+  color: #526265;
+}
+dd {
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+dl > .total {
+  border-top: 1px solid #dce5e7;
+  margin: 18px 0 0;
+  padding-top: 16px;
+  align-items: center;
+}
+.total dt {
+  color: #192224;
+  font-size: 16px;
+  font-weight: 600;
+}
+.total dd {
+  color: #00717a;
+  font-size: 26px;
+  font-weight: 700;
+}
+.nota {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #718184;
+  margin: 3px 0 0;
+}
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 30px;
+  padding: 15px 24px;
+  font: inherit;
+  font-size: 14px;
+  color: white;
+  background: #006e75;
+  text-decoration: none;
+  cursor: pointer;
+}
+.inicio {
+  margin-top: 24px;
+}
+.enlace {
+  display: block;
+  width: fit-content;
+  margin-top: 22px;
+  color: #006e75;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid #006e75;
+  outline-offset: 4px;
+}
+@media (max-width: 650px) {
+  .seguro-cuota {
+    padding: 36px 18px 60px;
+  }
+  h1 {
+    font-size: 26px;
+  }
+  .introduccion {
+    font-size: 14px;
+  }
+  .resumen {
+    padding: 20px 16px 14px;
+  }
+  .total dt {
+    font-size: 14px;
+  }
+  .total dd {
+    font-size: 23px;
+  }
+}

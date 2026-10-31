@@ -1,6 +1,9 @@
 import { expect, Page, test } from '@playwright/test';
 import { cotizacion, entrar, simularCotizacionActiva, simularSesion } from './apoyo/cotizacion';
-import { PolizaSolicitud } from '../src/app/features/solicitud/polizas-api.service';
+import {
+  DetallePolizaSolicitud,
+  PolizaSolicitud,
+} from '../src/app/features/solicitud/polizas-api.service';
 
 async function enviarSolicitud(page: Page, poliza: PolizaSolicitud) {
   await simularSesion(page);
@@ -58,9 +61,14 @@ test('BITS-97: al enviar una solicitud abre el resultado del backend', async ({ 
 
 for (const estado of ['PENDIENTE', 'RECHAZADA', 'EMITIDA'] as const) {
   test(`BITS-97: al enviar muestra ${estado} con los datos reales`, async ({ page }) => {
-    const poliza: PolizaSolicitud = {
+    const actual = cotizacion();
+    const poliza: DetallePolizaSolicitud = {
       polizaId: 'p1',
       estado,
+      datosCredito: actual.datosCredito,
+      coberturas: actual.oferta.desglose.coberturas.filter((c) => c.codigo === 'VIDA'),
+      primaTotalMensual: actual.oferta.primaMensual,
+      moneda: 'COP',
       pendientes: [
         {
           codigo: 'CORREO_SIN_CONFIRMAR',
@@ -111,7 +119,12 @@ for (const estado of ['PENDIENTE', 'RECHAZADA', 'EMITIDA'] as const) {
       await expect(page.locator('.pendientes')).toHaveCount(0);
     }
     if (estado === 'EMITIDA') {
-      await page.getByRole('button', { name: 'Ver los detalles' }).click();
+      await page.getByRole('link', { name: 'Ver los detalles' }).click();
+      await expect(page).toHaveURL(/\/cuenta\/solicitudes\/p1\/cuota$/);
+      await expect(
+        page.getByRole('heading', { name: 'Tu seguro dentro de la cuota', exact: true }),
+      ).toBeVisible();
+      await page.getByRole('link', { name: 'Volver a mi solicitud' }).click();
       await expect(page).toHaveURL(/\/cuenta\/solicitudes\/p1$/);
     }
     await page.screenshot({

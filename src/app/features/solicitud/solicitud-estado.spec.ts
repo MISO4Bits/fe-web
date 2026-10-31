@@ -50,7 +50,7 @@ describe('SolicitudEstado BITS-97', () => {
     expect(fixture.nativeElement.querySelector('.detalles')).toBeNull();
   });
 
-  it('muestra la emisión con fechas reales y deja Ver los detalles sin acción', async () => {
+  it('muestra la emisión con fechas reales y enlaza al seguro dentro de la cuota', async () => {
     api.consultar.and.resolveTo({
       ...pendiente,
       estado: 'EMITIDA',
@@ -63,10 +63,8 @@ describe('SolicitudEstado BITS-97', () => {
     expect(fixture.nativeElement.textContent).toContain('29/10/2026');
     expect(fixture.nativeElement.textContent).toContain('30/10/2026');
     expect(fixture.nativeElement.querySelector('.pendientes')).toBeNull();
-    const detalles = fixture.nativeElement.querySelector('.detalles') as HTMLButtonElement;
-    detalles.click();
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Solicitud aprobada');
+    const detalles = fixture.nativeElement.querySelector('.detalles') as HTMLAnchorElement;
+    expect(detalles.getAttribute('href')).toBe('/cuenta/solicitudes/p1/cuota');
     expect(api.consultar).toHaveBeenCalledTimes(1);
   });
 

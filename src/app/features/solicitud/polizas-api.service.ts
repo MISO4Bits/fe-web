@@ -37,6 +37,20 @@ export interface ResumenPolizaSolicitud extends PolizaSolicitud {
   primaTotalMensual: number;
 }
 
+export interface CoberturaContratada {
+  codigo: 'VIDA' | 'HOGAR';
+  obligatoria: boolean;
+  sumaAsegurada: number;
+  primaNeta: number;
+  iva: number;
+  primaTotal: number;
+}
+
+export interface DetallePolizaSolicitud extends ResumenPolizaSolicitud {
+  coberturas: CoberturaContratada[];
+  moneda: 'COP';
+}
+
 @Injectable({ providedIn: 'root' })
 export class PolizasApiService {
   private readonly http = inject(HttpClient);
@@ -60,6 +74,14 @@ export class PolizasApiService {
   async listar(): Promise<ResumenPolizaSolicitud[]> {
     return firstValueFrom(
       this.http.get<ResumenPolizaSolicitud[]>(this.url, { headers: await this.headers() }),
+    );
+  }
+
+  async consultarDetalle(id: string): Promise<DetallePolizaSolicitud> {
+    return firstValueFrom(
+      this.http.get<DetallePolizaSolicitud>(`${this.url}/${encodeURIComponent(id)}`, {
+        headers: await this.headers(),
+      }),
     );
   }
 

@@ -108,7 +108,9 @@
         </ol>
       }
       @if (p.estado === 'EMITIDA') {
-        <button class="boton detalles" type="button">Ver los detalles</button>
+        <a class="boton detalles" [routerLink]="['/cuenta/solicitudes', p.polizaId, 'cuota']"
+          >Ver los detalles</a
+        >
       }
       <a class="enlace" [class.boton]="p.estado === 'RECHAZADA'" routerLink="/cuenta"
         >Ir a mis seguros</a

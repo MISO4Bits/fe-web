@@ -28,6 +28,25 @@ describe('PolizasApiService', () => {
   });
   afterEach(() => http.verify());
 
+  it('consulta el detalle completo de la póliza por ID con autenticación', async () => {
+    const pendiente = api.consultarDetalle('p/1');
+    await Promise.resolve();
+    await Promise.resolve();
+    const req = http.expectOne('/api/v1/cuenta/polizas/p%2F1');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer token');
+    const respuesta = {
+      polizaId: 'p/1',
+      estado: 'EMITIDA',
+      primaTotalMensual: 77374,
+      emitidaEn: '2026-10-22T15:00:00Z',
+      coberturas: [],
+      datosCredito: { entidadAcreedora: 'Bancolombia' },
+    };
+    req.flush(respuesta);
+    await expectAsync(pendiente).toBeResolvedTo(jasmine.objectContaining(respuesta));
+  });
+
   it('consulta el listado de pólizas autenticado para el Inicio', async () => {
     const pendiente = api.listar();
     await Promise.resolve();

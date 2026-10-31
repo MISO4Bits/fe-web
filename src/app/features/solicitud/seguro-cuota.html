@@ -1,0 +1,50 @@
+<section class="seguro-cuota">
+  @if (cargando()) {
+    <p role="status">Consultando tu seguro...</p>
+  } @else if (error()) {
+    <p role="alert">{{ error() }}</p>
+    <button class="boton" type="button" (click)="cargar()">Reintentar</button>
+  } @else if (poliza(); as p) {
+    @if (p.estado === 'EMITIDA') {
+      <h1>Tu seguro dentro de la cuota</h1>
+      <p class="introduccion">
+        Tu seguro está activo. No pagas nada aquí: {{ p.datosCredito.entidadAcreedora }} lo cobra
+        dentro de tu cuota desde el {{ fechaInicio() }}.
+      </p>
+      <h2 class="etiqueta">EL SEGURO, MES A MES</h2>
+      <section class="resumen" aria-label="Valor mensual de tu seguro">
+        <h3>{{ hogar() ? 'Vida deudores y tu casa' : 'Vida deudores' }}</h3>
+        <dl>
+          @if (vida(); as cobertura) {
+            <div>
+              <dt>Vida para tu crédito</dt>
+              <dd>{{ moneda.format(cobertura.primaTotal) }}</dd>
+            </div>
+          }
+          @if (hogar(); as cobertura) {
+            <div>
+              <dt>Tu casa</dt>
+              <dd>{{ moneda.format(cobertura.primaNeta) }}</dd>
+            </div>
+            <div>
+              <dt>IVA de tu casa</dt>
+              <dd>{{ moneda.format(cobertura.iva) }}</dd>
+            </div>
+          }
+          <div class="total">
+            <dt>Tu seguro dentro de la cuota</dt>
+            <dd>{{ moneda.format(p.primaTotalMensual) }}</dd>
+          </div>
+        </dl>
+        <p class="nota">Es el mismo valor que aceptaste en tu cotización.</p>
+      </section>
+    } @else {
+      <h1>Detalle del seguro no disponible</h1>
+      <p class="introduccion">Este detalle solo está disponible para pólizas emitidas.</p>
+    }
+  }
+  @if (!cargando()) {
+    <a class="boton inicio" routerLink="/cuenta">Ir al inicio</a>
+    <a class="enlace" [routerLink]="['/cuenta/solicitudes', id()]">Volver a mi solicitud</a>
+  }
+</section>

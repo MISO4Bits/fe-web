@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { BACKOFFICE_LOGIN_URL } from '../../../core/config/backoffice-url';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { PermissionDialog } from '../permission-dialog/permission-dialog';
 @Component({
@@ -8,5 +9,6 @@ import { PermissionDialog } from '../permission-dialog/permission-dialog';
   styleUrl: './site-shell.scss',
 })
 export class SiteShell {
+  protected readonly backofficeUrl = BACKOFFICE_LOGIN_URL;
   largeText = false;
 }

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, provideRouter } from '@angular/router';
 import { Login } from './login';
-import { LoginService } from './login.service';
+import { AccesoPorBackofficeError, LoginService } from './login.service';
 
 describe('Login', () => {
   let fixture: ComponentFixture<Login>;
@@ -28,9 +28,9 @@ describe('Login', () => {
   const fill = (fixture: ComponentFixture<Login>, email = ' persona@correo.com ') => {
     const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
     inputs[0].value = email;
-    inputs[0].dispatchEvent(new Event('input'));
+    inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
     inputs[1].value = 'Clave12345';
-    inputs[1].dispatchEvent(new Event('input'));
+    inputs[1].dispatchEvent(new Event('input', { bubbles: true }));
     fixture.detectChanges();
   };
 
@@ -96,5 +96,32 @@ describe('Login', () => {
     expect(service.ingresar).toHaveBeenCalledTimes(1);
     complete();
     await fixture.whenStable();
+  });
+  it('muestra el portal correcto para cuentas internas sin navegar ni invalidar campos', async () => {
+    service.ingresar.and.rejectWith(new AccesoPorBackofficeError());
+    fill(fixture, 'admin@solventa4bits.com');
+    fixture.nativeElement.querySelector('button.ingresar').click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent.trim()).toBe(
+      'Tu acceso es por el Backoffice',
+    );
+    expect(fixture.nativeElement.querySelectorAll('input[aria-invalid="true"]')).toHaveSize(0);
+    expect(navigate).not.toHaveBeenCalled();
+    fill(fixture, 'persona@correo.com');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('un 403 genérico sigue siendo un error de credenciales', async () => {
+    service.ingresar.and.rejectWith(new HttpErrorResponse({ status: 403 }));
+    fill(fixture);
+    fixture.nativeElement.querySelector('button.ingresar').click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
+      'Correo o contraseña incorrectos.',
+    );
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

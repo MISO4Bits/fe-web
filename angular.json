@@ -63,7 +63,13 @@
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/config/backoffice-url.ts",
+                  "with": "src/app/core/config/backoffice-url.local.ts"
+                }
+              ]
             },
             "dev": {
               "fileReplacements": [

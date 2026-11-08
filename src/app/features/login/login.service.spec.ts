@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { BFF_BASE_URL } from '../../core/config/api.config';
 import { SessionService } from '../../core/services/session.service';
 import { Sesion } from '../../nucleo/sesion/sesion';
-import { LoginService } from './login.service';
+import { AccesoPorBackofficeError, LoginService } from './login.service';
 
 describe('LoginService', () => {
   let service: LoginService;
@@ -69,4 +69,20 @@ describe('LoginService', () => {
     expect(session.accessToken()).toBeNull();
     expect(sesion.hayCliente()).toBeFalse();
   });
+  for (const email of [
+    'admin@solventa4bits.com',
+    'socio@solventa4bits.com',
+    ' ADMIN@SOLVENTA4BITS.COM ',
+  ]) {
+    it(`rechaza ${email} sin consultar el login ni abrir sesión de cliente`, async () => {
+      await expectAsync(service.ingresar(email, 'ClaveLocal123')).toBeRejectedWithError(
+        AccesoPorBackofficeError,
+        'Tu acceso es por el Backoffice',
+      );
+      http.expectNone('/api/v1/sesiones');
+      http.expectNone('/api/v1/cuenta');
+      expect(session.accessToken()).toBeNull();
+      expect(sesion.hayCliente()).toBeFalse();
+    });
+  }
 });

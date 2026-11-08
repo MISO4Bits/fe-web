@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LoginService } from './login.service';
+import { AccesoPorBackofficeError, LoginService } from './login.service';
 import { RUTAS } from '../../nucleo/rutas';
 
 @Component({
@@ -37,11 +37,13 @@ export class Login {
     } catch (error) {
       const status = error instanceof HttpErrorResponse ? error.status : 0;
       this.error.set(
-        status === 401 || status === 403
-          ? 'Correo o contraseña incorrectos.'
-          : status === 429
-            ? 'Demasiados intentos. Inténtalo más tarde.'
-            : 'No pudimos iniciar sesión. Inténtalo nuevamente.',
+        error instanceof AccesoPorBackofficeError
+          ? error.message
+          : status === 401 || status === 403
+            ? 'Correo o contraseña incorrectos.'
+            : status === 429
+              ? 'Demasiados intentos. Inténtalo más tarde.'
+              : 'No pudimos iniciar sesión. Inténtalo nuevamente.',
       );
     } finally {
       this.esperando.set(false);

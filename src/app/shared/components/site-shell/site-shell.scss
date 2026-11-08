@@ -120,3 +120,36 @@ nav button {
     flex-shrink: 0;
   }
 }
+
+.backoffice-link {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  padding-block: 8px;
+}
+.backoffice-link:hover {
+  text-decoration: underline;
+}
+@media (max-width: 700px) {
+  header {
+    height: auto;
+    min-height: 72px;
+  }
+  .top-bar {
+    height: auto;
+    min-height: 72px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding-block: 12px;
+    box-sizing: border-box;
+  }
+  .brand {
+    flex-basis: 100%;
+    margin-right: 0;
+  }
+  .top-bar span {
+    margin-right: 0;
+  }
+}

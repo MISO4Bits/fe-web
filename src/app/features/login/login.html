@@ -1,7 +1,17 @@
 <section class="login-page">
   <h1>Entra a tu cuenta</h1>
   <p class="intro">Tus cotizaciones y tus seguros, en un solo lugar.</p>
-  <form class="login-card" [formGroup]="form" (ngSubmit)="ingresar()" novalidate>
+  @if (error()) {
+    <p class="error-banner" role="alert" id="error-ingreso">{{ error() }}</p>
+  }
+  <form
+    class="login-card"
+    [formGroup]="form"
+    (ngSubmit)="ingresar()"
+    (input)="error.set('')"
+    [attr.aria-describedby]="error() ? 'error-ingreso' : null"
+    novalidate
+  >
     <div class="field">
       <label for="correo-login">Correo electrónico</label>
       <input
@@ -28,9 +38,6 @@
         <small>Ingresa tu contraseña.</small>
       }
     </div>
-    @if (error()) {
-      <p class="error" role="alert">{{ error() }}</p>
-    }
     <button class="ingresar" type="submit" [disabled]="esperando()">
       {{ esperando() ? 'Ingresando…' : 'Ingresar' }}
     </button>

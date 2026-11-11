@@ -131,4 +131,79 @@ describe('SiniestroDetalle BITS-302', () => {
     expect(texto).toContain('Bogotá');
     expect(texto).not.toContain('Lo que reportaste');
   });
+
+  it('muestra el motivo del rechazo y permite consultar un siniestro sin archivos', async () => {
+    api.consultar.and.resolveTo({
+      ...base,
+      estado: 'RECHAZADO',
+      motivoRechazo: 'El evento no está cubierto',
+      archivos: [],
+    });
+    const fixture = await montar();
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).toContain('No podemos pagar este siniestro');
+    expect(texto).toContain('El evento no está cubierto');
+    expect(texto).toContain('Sin archivos');
+    expect(texto).not.toContain('Te respondemos a más tardar');
+  });
+
+  it('muestra una póliza sin cobertura de hogar y un siniestro de incapacidad', async () => {
+    api.consultar.and.resolveTo({ ...base, tipo: 'INCAPACIDAD_TOTAL' });
+    polizas.consultarDetalle.and.resolveTo({ ...poliza, coberturas: [] });
+    const fixture = await montar();
+    const texto = fixture.nativeElement.textContent;
+    expect(texto).toContain('Incapacidad total');
+    expect(texto).toContain('Vida para tu crédito');
+    expect(texto).not.toContain('Vida para tu crédito y Tu casa');
+  });
+
+  for (const [error, mensaje] of [
+    [new HttpErrorResponse({ status: 404 }), 'No encontramos este siniestro.'],
+    [new HttpErrorResponse({ status: 401 }), 'Tu sesión expiró.'],
+    [new Error('SESION_EXPIRADA'), 'Tu sesión expiró.'],
+  ] as const) {
+    it(`explica el error ${error instanceof HttpErrorResponse ? error.status : error.message}`, async () => {
+      api.consultar.and.rejectWith(error);
+      const fixture = await montar();
+      expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(mensaje);
+      expect(fixture.nativeElement.querySelector('.poliza')).toBeNull();
+    });
+  }
+
+  it('permite reintentar la consulta del siniestro tras un fallo temporal', async () => {
+    api.consultar.and.rejectWith(new HttpErrorResponse({ status: 503 }));
+    const fixture = await montar();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(
+      'No pudimos consultar tu siniestro',
+    );
+    api.consultar.and.resolveTo(base);
+    (fixture.nativeElement.querySelector('.error button') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    await Promise.resolve();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(base.numero);
+    expect(api.consultar).toHaveBeenCalledTimes(2);
+  });
+
+  it('actualiza un siniestro en estudio al volver a la ventana', async () => {
+    const fixture = await montar();
+    api.consultar.and.resolveTo({
+      ...base,
+      estado: 'FALTA_INFORMACION',
+      fechaLimite: null,
+      evidenciaPedida: { detalle: 'Falta una foto', pedidaEn: '2026-11-03T15:00:00Z' },
+    });
+    window.dispatchEvent(new Event('focus'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(api.consultar).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.textContent).toContain('Falta una foto');
+  });
+
+  it('no vuelve a consultar un siniestro cerrado al recuperar el foco', async () => {
+    api.consultar.and.resolveTo({ ...base, estado: 'RECHAZADO', motivoRechazo: 'No cubierto' });
+    await montar();
+    window.dispatchEvent(new Event('focus'));
+    expect(api.consultar).toHaveBeenCalledTimes(1);
+  });
 });

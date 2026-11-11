@@ -1,0 +1,163 @@
+<section class="siniestro-detalle">
+  <a class="volver" routerLink="/cuenta">Volver a inicio</a>
+  @if (cargando() && !siniestro()) {
+    <p role="status">Consultando tu siniestro...</p>
+  } @else if (error()) {
+    <div class="panel error" role="alert">
+      <p>{{ error() }}</p>
+      <button type="button" (click)="cargar()">Reintentar</button>
+    </div>
+  } @else if (siniestro(); as s) {
+    <header class="titulo">
+      <div class="titulo-linea">
+        <h1>Siniestro {{ s.numero }}</h1>
+        <span class="estado">{{
+          s.estado === 'EN_ESTUDIO'
+            ? 'En estudio'
+            : s.estado === 'FALTA_INFORMACION'
+              ? 'Falta información'
+              : s.estado === 'PAGADO'
+                ? 'Pagado'
+                : 'Rechazado'
+        }}</span>
+        @if (s.automatico) {
+          <span class="estado">Automático</span>
+        }
+      </div>
+      <p>
+        {{ tipo(s.tipo) }},
+        @if (s.automatico && s.estado === 'PAGADO' && s.pago) {
+          pagado el {{ fecha(s.pago.pagadoEn) }}.
+        } @else {
+          reportado el {{ fecha(s.reportadoEn) }}. Último cambio el {{ fecha(s.actualizadoEn) }}.
+        }
+      </p>
+    </header>
+
+    <div class="columnas">
+      <div class="principal">
+        @if (s.estado === 'EN_ESTUDIO') {
+          <section class="aviso-estudio" aria-label="Estado de la revisión">
+            <span class="reloj" aria-hidden="true">◷</span>
+            <div>
+              <strong>Estamos revisando tu siniestro {{ s.numero }}.</strong>
+              @if (s.fechaLimite) {
+                <p>Te respondemos a más tardar el {{ fecha(s.fechaLimite) }}.</p>
+              }
+            </div>
+          </section>
+        }
+
+        @if (s.estado === 'FALTA_INFORMACION' && s.evidenciaPedida) {
+          <section class="panel pendientes" aria-labelledby="pendientes-titulo">
+            <h2 id="pendientes-titulo">Pendientes</h2>
+            <p>
+              {{ s.evidenciaPedida.detalle }}. Pedido el {{ fecha(s.evidenciaPedida.pedidaEn) }}.
+            </p>
+            <p class="enviar-app">Envíalo desde la app de Solventa en tu teléfono.</p>
+          </section>
+          <p class="aviso-plazo">
+            El plazo para responderte empieza a contar cuando recibamos lo que falta.
+          </p>
+        }
+
+        @if (s.estado === 'RECHAZADO' && s.motivoRechazo) {
+          <section class="panel respuesta" aria-labelledby="respuesta-titulo">
+            <h2 id="respuesta-titulo">Nuestra respuesta</h2>
+            <strong>No podemos pagar este siniestro.</strong>
+            <p>Motivo: {{ s.motivoRechazo }}</p>
+            <p class="contacto">Si tienes dudas, escríbenos a ayuda@solventa4bits.com.</p>
+          </section>
+        }
+
+        @if (s.estado === 'PAGADO' && s.pago) {
+          <section class="panel" aria-labelledby="pago-titulo">
+            <h2 id="pago-titulo">Tu pago</h2>
+            @for (linea of s.pago.lineas; track $index) {
+              <dl class="filas pago-linea">
+                <div>
+                  <dt>Pagamos a</dt>
+                  <dd>{{ linea.beneficiario === 'CLIENTE' ? 'A ti' : 'Al banco' }}</dd>
+                </div>
+                <div>
+                  <dt>Valor</dt>
+                  <dd>{{ moneda.format(linea.valor) }}</dd>
+                </div>
+                <div>
+                  <dt>Destino</dt>
+                  <dd>{{ linea.destino }}</dd>
+                </div>
+                <div>
+                  <dt>Fecha</dt>
+                  <dd>{{ fecha(s.pago.pagadoEn) }}</dd>
+                </div>
+              </dl>
+            }
+          </section>
+        }
+
+        @if (s.automatico && s.evento) {
+          <section class="panel" aria-labelledby="sismo-titulo">
+            <h2 id="sismo-titulo">El sismo</h2>
+            <dl class="filas">
+              <div>
+                <dt>Fecha</dt>
+                <dd>{{ fecha(s.evento.fecha) }}</dd>
+              </div>
+              <div>
+                <dt>Municipio</dt>
+                <dd>{{ s.evento.municipio }}</dd>
+              </div>
+              <div>
+                <dt>Magnitud</dt>
+                <dd>{{ s.evento.magnitud.toLocaleString('es-CO') }}</dd>
+              </div>
+            </dl>
+          </section>
+        }
+
+        @if (!s.automatico) {
+          <section class="panel" aria-labelledby="reportado-titulo">
+            <h2 id="reportado-titulo">Lo que reportaste</h2>
+            <dl class="filas">
+              <div>
+                <dt>Ocurrió el</dt>
+                <dd>{{ fecha(s.fechaOcurrencia) }}</dd>
+              </div>
+              @if (s.narracion) {
+                <div>
+                  <dt>Lo que contaste</dt>
+                  <dd>{{ s.narracion }}</dd>
+                </div>
+              }
+              <div>
+                <dt>Archivos</dt>
+                <dd>{{ archivos(s) }}</dd>
+              </div>
+            </dl>
+          </section>
+        }
+      </div>
+
+      @if (poliza(); as p) {
+        <aside class="panel poliza" aria-labelledby="poliza-titulo">
+          <h2 id="poliza-titulo">Tu póliza</h2>
+          <dl class="filas">
+            <div>
+              <dt>Póliza</dt>
+              <dd>{{ producto(p) }}</dd>
+            </div>
+            <div>
+              <dt>Número</dt>
+              <dd>{{ p.numero || 'No disponible' }}</dd>
+            </div>
+            <div>
+              <dt>Banco</dt>
+              <dd>{{ p.datosCredito.entidadAcreedora }}</dd>
+            </div>
+          </dl>
+        </aside>
+      }
+    </div>
+  }
+</section>

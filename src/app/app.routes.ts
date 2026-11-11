@@ -105,6 +105,12 @@ export const routes: Routes = [
           import('./features/solicitud/seguro-detalle').then((m) => m.SeguroDetalle),
       },
       {
+        path: 'siniestros/:id',
+        title: 'Detalle de tu siniestro · Solventa',
+        loadComponent: () =>
+          import('./features/siniestros/siniestro-detalle').then((m) => m.SiniestroDetalle),
+      },
+      {
         path: 'solicitudes/:id/cuota',
         title: 'Tu seguro dentro de la cuota · Solventa',
         loadComponent: () => import('./features/solicitud/seguro-cuota').then((m) => m.SeguroCuota),

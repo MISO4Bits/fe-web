@@ -5,11 +5,13 @@ import { Home } from './home';
 import { PolizasApiService, ResumenPolizaSolicitud } from '../solicitud/polizas-api.service';
 import { CotizacionApiService, CotizacionRespuesta } from '../cotizacion/cotizacion-api.service';
 import { Sesion } from '../../nucleo/sesion/sesion';
+import { SiniestrosApiService } from '../siniestros/siniestros-api.service';
 
 describe('Home', () => {
   let fixture: ComponentFixture<Home>;
   let api: jasmine.SpyObj<CotizacionApiService>;
   let polizas: jasmine.SpyObj<PolizasApiService>;
+  let siniestros: jasmine.SpyObj<SiniestrosApiService>;
   const cotizacion: CotizacionRespuesta = {
     estado: 'VIGENTE',
     producto: 'VIDA_HIPOTECARIO',
@@ -47,11 +49,14 @@ describe('Home', () => {
     api = jasmine.createSpyObj<CotizacionApiService>('CotizacionApiService', ['actual']);
     polizas = jasmine.createSpyObj('PolizasApiService', ['listar']);
     polizas.listar.and.resolveTo([]);
+    siniestros = jasmine.createSpyObj('SiniestrosApiService', ['listar']);
+    siniestros.listar.and.resolveTo([]);
     await TestBed.configureTestingModule({
       imports: [Home],
       providers: [
         provideRouter([]),
         { provide: PolizasApiService, useValue: polizas },
+        { provide: SiniestrosApiService, useValue: siniestros },
         { provide: CotizacionApiService, useValue: api },
         { provide: Sesion, useValue: { actual: () => ({ correo: 'home-test@example.com' }) } },
       ],
@@ -454,5 +459,25 @@ describe('Home', () => {
     expect(
       fixture.nativeElement.querySelector('a[aria-label="Retomar cotización vigente"]'),
     ).toBeNull();
+  });
+
+  it('enlaza los siniestros de la cuenta con su detalle', async () => {
+    siniestros.listar.and.resolveTo([
+      {
+        id: 's1',
+        numero: 'SIN-2026-00042',
+        polizaId: 'p1',
+        tipo: 'INCENDIO_TERREMOTO',
+        automatico: false,
+        estado: 'EN_ESTUDIO',
+        reportadoEn: '2026-11-02T15:00:00Z',
+        actualizadoEn: '2026-11-02T15:00:00Z',
+      },
+    ]);
+    await montar(cotizacion);
+    const enlace = fixture.nativeElement.querySelector('.siniestro-card') as HTMLAnchorElement;
+    expect(enlace.getAttribute('href')).toBe('/cuenta/siniestros/s1');
+    expect(enlace.textContent).toContain('SIN-2026-00042');
+    expect(enlace.textContent).toContain('En estudio');
   });
 });

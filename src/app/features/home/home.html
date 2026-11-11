@@ -169,6 +169,34 @@
       </section>
     }
   </section>
+  @if (siniestros().length || errorSiniestros()) {
+    <section aria-label="Mis siniestros" class="siniestros-home">
+      <p class="section-label seguros-label">MIS SINIESTROS</p>
+      @if (errorSiniestros()) {
+        <div class="insurance-card" role="alert">
+          <p>No pudimos consultar tus siniestros.</p>
+          <button class="primary" type="button" (click)="cargarSiniestros()">Reintentar</button>
+        </div>
+      }
+      @for (s of siniestros(); track s.id) {
+        <a class="insurance-card siniestro-card" [routerLink]="['/cuenta/siniestros', s.id]">
+          <div class="card-copy">
+            <h2>Siniestro {{ s.numero }}</h2>
+            <p>Consulta en qué va tu siniestro</p>
+          </div>
+          <span class="etiqueta-cotizacion">{{
+            s.estado === 'EN_ESTUDIO'
+              ? 'En estudio'
+              : s.estado === 'FALTA_INFORMACION'
+                ? 'Falta información'
+                : s.estado === 'PAGADO'
+                  ? 'Pagado'
+                  : 'Rechazado'
+          }}</span>
+        </a>
+      }
+    </section>
+  }
   <p class="section-label quick-label">ACCESOS RÁPIDOS</p>
   <button
     type="button"

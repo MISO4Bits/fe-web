@@ -6,6 +6,7 @@ import { RUTAS } from '../../nucleo/rutas';
 import { BienvenidaService } from './bienvenida.service';
 import { UltimaCotizacionService } from '../cotizacion/ultima-cotizacion.service';
 import { PolizasApiService, ResumenPolizaSolicitud } from '../solicitud/polizas-api.service';
+import { ResumenSiniestro, SiniestrosApiService } from '../siniestros/siniestros-api.service';
 @Component({
   selector: 'app-home',
   imports: [RouterLink],
@@ -16,9 +17,13 @@ export class Home implements OnInit {
   private readonly api = inject(CotizacionApiService);
   private readonly ultimaCotizacion = inject(UltimaCotizacionService);
   private readonly polizasApi = inject(PolizasApiService);
+  private readonly siniestrosApi = inject(SiniestrosApiService);
   private readonly router = inject(Router);
   private readonly confirmacion = viewChild.required<ElementRef<HTMLDialogElement>>('confirmacion');
   private readonly solicitudes = signal<ResumenPolizaSolicitud[]>([]);
+  protected readonly siniestros = signal<ResumenSiniestro[]>([]);
+  protected readonly cargandoSiniestros = signal(true);
+  protected readonly errorSiniestros = signal(false);
   protected readonly seguros = computed(() =>
     this.solicitudes().filter((p) => p.estado === 'EMITIDA'),
   );
@@ -61,6 +66,7 @@ export class Home implements OnInit {
   ngOnInit(): void {
     void this.cargarCotizacion();
     void this.cargarSolicitudes();
+    void this.cargarSiniestros();
   }
   protected readonly cargandoCotizacion = signal(true);
   protected readonly errorCotizacion = signal(false);
@@ -74,6 +80,18 @@ export class Home implements OnInit {
       this.errorSolicitudes.set(true);
     } finally {
       this.cargandoSolicitudes.set(false);
+    }
+  }
+
+  protected async cargarSiniestros(): Promise<void> {
+    this.cargandoSiniestros.set(true);
+    this.errorSiniestros.set(false);
+    try {
+      this.siniestros.set(await this.siniestrosApi.listar());
+    } catch {
+      this.errorSiniestros.set(true);
+    } finally {
+      this.cargandoSiniestros.set(false);
     }
   }
 

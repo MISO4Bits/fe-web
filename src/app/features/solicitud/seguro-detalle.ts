@@ -1,7 +1,13 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { DetallePolizaSolicitud, PolizasApiService } from './polizas-api.service';
+import {
+  ResumenSiniestro,
+  SiniestrosApiService,
+  EstadoSiniestro,
+  TipoSiniestro,
+} from '../siniestros/siniestros-api.service';
 
 @Component({
   selector: 'app-seguro-detalle',
@@ -12,7 +18,23 @@ import { DetallePolizaSolicitud, PolizasApiService } from './polizas-api.service
 export class SeguroDetalle {
   readonly id = input.required<string>();
   private readonly api = inject(PolizasApiService);
+  private readonly siniestrosApi = inject(SiniestrosApiService);
   protected readonly poliza = signal<DetallePolizaSolicitud | null>(null);
+  protected readonly siniestros = signal<ResumenSiniestro[]>([]);
+  protected readonly siniestrosVida = computed(() =>
+    this.siniestros().filter((s) => s.tipo === 'INCAPACIDAD_TOTAL'),
+  );
+  protected readonly siniestrosHogar = computed(() =>
+    this.siniestros().filter((s) => s.tipo !== 'INCAPACIDAD_TOTAL'),
+  );
+  protected readonly gruposSiniestros = computed(() =>
+    [
+      { id: 'vida', titulo: 'VIDA PARA TU CRÉDITO', filas: this.siniestrosVida() },
+      { id: 'hogar', titulo: 'TU CASA', filas: this.siniestrosHogar() },
+    ].filter((grupo) => grupo.filas.length),
+  );
+  protected readonly cargandoSiniestros = signal(true);
+  protected readonly errorSiniestros = signal(false);
   protected readonly cargando = signal(true);
   protected readonly error = signal('');
   protected readonly descargando = signal(false);
@@ -39,13 +61,19 @@ export class SeguroDetalle {
     void this.consultar(this.id());
   }
 
+  protected reintentarSiniestros(): void {
+    void this.consultarSiniestros(this.id(), this.consulta);
+  }
+
   private async consultar(id: string): Promise<void> {
     const consulta = ++this.consulta;
     this.cargando.set(true);
     this.error.set('');
     this.poliza.set(null);
+    this.siniestros.set([]);
     this.mensajeDocumento.set('');
     this.descargando.set(false);
+    void this.consultarSiniestros(id, consulta);
     try {
       const poliza = await this.api.consultarDetalle(id);
       if (consulta === this.consulta) this.poliza.set(poliza);
@@ -58,6 +86,55 @@ export class SeguroDetalle {
       );
     } finally {
       if (consulta === this.consulta) this.cargando.set(false);
+    }
+  }
+
+  private async consultarSiniestros(polizaId: string, consulta: number): Promise<void> {
+    this.cargandoSiniestros.set(true);
+    this.errorSiniestros.set(false);
+    try {
+      const siniestros = await this.siniestrosApi.listar();
+      if (consulta !== this.consulta) return;
+      this.siniestros.set(
+        siniestros
+          .filter((s) => s.polizaId === polizaId)
+          .sort((a, b) => Date.parse(b.reportadoEn) - Date.parse(a.reportadoEn)),
+      );
+    } catch {
+      if (consulta === this.consulta) this.errorSiniestros.set(true);
+    } finally {
+      if (consulta === this.consulta) this.cargandoSiniestros.set(false);
+    }
+  }
+
+  protected producto(poliza: DetallePolizaSolicitud): string {
+    const vida = poliza.coberturas.some((c) => c.codigo === 'VIDA');
+    const hogar = poliza.coberturas.some((c) => c.codigo === 'HOGAR');
+    if (vida && hogar) return 'Vida para tu crédito y Tu casa';
+    return hogar ? 'Tu casa' : 'Vida para tu crédito';
+  }
+
+  protected tipoSiniestro(tipo: TipoSiniestro): string {
+    switch (tipo) {
+      case 'INCAPACIDAD_TOTAL':
+        return 'Incapacidad total';
+      case 'SISMO_PARAMETRICO':
+        return 'Terremoto';
+      case 'INCENDIO_TERREMOTO':
+        return 'Incendio o terremoto';
+    }
+  }
+
+  protected estadoSiniestro(estado: EstadoSiniestro): string {
+    switch (estado) {
+      case 'EN_ESTUDIO':
+        return 'En estudio';
+      case 'FALTA_INFORMACION':
+        return 'Falta información';
+      case 'PAGADO':
+        return 'Pagado';
+      case 'RECHAZADO':
+        return 'Rechazado';
     }
   }
 

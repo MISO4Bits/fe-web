@@ -14,7 +14,7 @@
     } @else {
       <div class="columnas">
         <div>
-          <h1>Vida deudores</h1>
+          <h1>{{ producto(p) }}</h1>
           <p class="numero">
             <span class="insignia">Vigente</span> Seguro N.° {{ p.numero || 'No disponible' }}
           </p>
@@ -34,7 +34,78 @@
                 <dd>{{ fecha(p.vigencia?.desde) }} al {{ fecha(p.vigencia?.hasta) }}</dd>
               </div>
             </dl>
-            <p class="etiqueta">COBERTURAS CONTRATADAS</p>
+          </section>
+        </div>
+        <div>
+          <p class="etiqueta">TU CRÉDITO</p>
+          <section class="panel" aria-label="Tu crédito">
+            <dl>
+              <div>
+                <dt>Banco</dt>
+                <dd>{{ p.datosCredito.entidadAcreedora }}</dd>
+              </div>
+              <div>
+                <dt>Saldo del crédito</dt>
+                <dd>{{ moneda.format(p.datosCredito.saldoInsoluto) }}</dd>
+              </div>
+              <div>
+                <dt>Plazo restante</dt>
+                <dd>{{ p.datosCredito.plazoRestanteMeses }} meses</dd>
+              </div>
+              <div>
+                <dt>Qué cubrimos</dt>
+                <dd>El saldo que te falte</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      </div>
+      @if (cargandoSiniestros()) {
+        <p class="cargando-siniestros" role="status">Consultando tus siniestros...</p>
+      } @else if (errorSiniestros()) {
+        <section class="panel error-siniestros" role="alert">
+          <p>No pudimos consultar tus siniestros. Inténtalo de nuevo.</p>
+          <button type="button" class="boton" (click)="reintentarSiniestros()">
+            Reintentar siniestros
+          </button>
+        </section>
+      } @else if (gruposSiniestros().length) {
+        <section class="siniestros" aria-label="Siniestros de este seguro">
+          @for (grupo of gruposSiniestros(); track grupo.id) {
+            <section [attr.aria-labelledby]="'siniestros-' + grupo.id">
+              <h2 class="etiqueta" [id]="'siniestros-' + grupo.id">{{ grupo.titulo }}</h2>
+              <div class="tabla-siniestros">
+                <div class="cabecera-siniestros" aria-hidden="true">
+                  <span>NÚMERO</span><span>TIPO DE EVENTO</span><span>REPORTADO</span
+                  ><span>ESTADO</span>
+                </div>
+                <ul class="lista-siniestros">
+                  @for (s of grupo.filas; track s.id) {
+                    <li>
+                      <a [routerLink]="['/cuenta/siniestros', s.id]">
+                        <strong>{{ s.numero }}</strong>
+                        <span class="tipo-evento">{{ tipoSiniestro(s.tipo) }}</span>
+                        <span class="fecha-reporte">{{ fecha(s.reportadoEn) }}</span>
+                        <span class="estados-siniestro">
+                          <span class="insignia">{{ estadoSiniestro(s.estado) }}</span>
+                          @if (s.automatico && s.estado === 'PAGADO') {
+                            <span class="insignia">Automático</span>
+                          }
+                        </span>
+                        <span class="flecha" aria-hidden="true">›</span>
+                      </a>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </section>
+          }
+        </section>
+      }
+      <div class="complementos">
+        <div>
+          <section class="panel" aria-labelledby="coberturas-titulo">
+            <h2 id="coberturas-titulo">Coberturas contratadas</h2>
             <ul>
               @for (c of p.coberturas; track c.codigo) {
                 <li>{{ c.codigo === 'VIDA' ? 'Vida para tu crédito' : 'Tu casa' }}</li>
@@ -60,27 +131,6 @@
           </section>
         </div>
         <div>
-          <p class="etiqueta">TU CRÉDITO</p>
-          <section class="panel" aria-label="Tu crédito">
-            <dl>
-              <div>
-                <dt>Banco</dt>
-                <dd>{{ p.datosCredito.entidadAcreedora }}</dd>
-              </div>
-              <div>
-                <dt>Saldo del crédito</dt>
-                <dd>{{ moneda.format(p.datosCredito.saldoInsoluto) }}</dd>
-              </div>
-              <div>
-                <dt>Plazo restante</dt>
-                <dd>{{ p.datosCredito.plazoRestanteMeses }} meses</dd>
-              </div>
-              <div>
-                <dt>Qué cubrimos</dt>
-                <dd>El saldo que te falte</dd>
-              </div>
-            </dl>
-          </section>
           <section class="panel pago">
             <h2>Cómo se paga</h2>
             <p>

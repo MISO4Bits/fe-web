@@ -3,9 +3,28 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { SeguroDetalle } from './seguro-detalle';
 import { DetallePolizaSolicitud, PolizasApiService } from './polizas-api.service';
+import { ResumenSiniestro, SiniestrosApiService } from '../siniestros/siniestros-api.service';
 
 describe('SeguroDetalle BITS-104', () => {
   let api: jasmine.SpyObj<PolizasApiService>;
+  let siniestrosApi: jasmine.SpyObj<SiniestrosApiService>;
+  const siniestro = (
+    id: string,
+    polizaId: string,
+    tipo: ResumenSiniestro['tipo'],
+    estado: ResumenSiniestro['estado'],
+    reportadoEn: string,
+    automatico = false,
+  ): ResumenSiniestro => ({
+    id,
+    numero: `SIN-${id}`,
+    polizaId,
+    tipo,
+    estado,
+    reportadoEn,
+    actualizadoEn: reportadoEn,
+    automatico,
+  });
   const poliza: DetallePolizaSolicitud = {
     polizaId: 'p1',
     estado: 'EMITIDA',
@@ -43,8 +62,14 @@ describe('SeguroDetalle BITS-104', () => {
   beforeEach(() => {
     api = jasmine.createSpyObj('PolizasApiService', ['consultarDetalle', 'documento']);
     api.consultarDetalle.and.resolveTo({ ...poliza, numero: 'SOL-104' });
+    siniestrosApi = jasmine.createSpyObj('SiniestrosApiService', ['listar']);
+    siniestrosApi.listar.and.resolveTo([]);
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: PolizasApiService, useValue: api }],
+      providers: [
+        provideRouter([]),
+        { provide: PolizasApiService, useValue: api },
+        { provide: SiniestrosApiService, useValue: siniestrosApi },
+      ],
     });
   });
   async function montar() {
@@ -123,5 +148,71 @@ describe('SeguroDetalle BITS-104', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.columnas')).not.toBeNull();
+  });
+
+  it('agrupa por cobertura, filtra la póliza y ordena cada grupo del más reciente al antiguo', async () => {
+    siniestrosApi.listar.and.resolveTo([
+      siniestro('hogar-antiguo', 'p1', 'INCENDIO_TERREMOTO', 'RECHAZADO', '2026-08-02T10:00:00Z'),
+      siniestro('ajeno', 'p2', 'INCAPACIDAD_TOTAL', 'PAGADO', '2026-12-02T10:00:00Z'),
+      siniestro('vida', 'p1', 'INCAPACIDAD_TOTAL', 'PAGADO', '2026-09-03T10:00:00Z'),
+      siniestro(
+        'hogar-reciente',
+        'p1',
+        'SISMO_PARAMETRICO',
+        'PAGADO',
+        '2026-11-02T10:00:00Z',
+        true,
+      ),
+      siniestro(
+        'hogar-pendiente',
+        'p1',
+        'INCENDIO_TERREMOTO',
+        'FALTA_INFORMACION',
+        '2026-10-20T10:00:00Z',
+      ),
+    ]);
+    const fixture = await montar();
+    const vida = fixture.nativeElement.querySelector('#siniestros-vida').closest('section');
+    const hogar = fixture.nativeElement.querySelector('#siniestros-hogar').closest('section');
+    expect(vida.querySelectorAll('.lista-siniestros a').length).toBe(1);
+    expect(vida.textContent).toContain('Incapacidad total');
+    const filas = Array.from(hogar.querySelectorAll('.lista-siniestros a')) as HTMLAnchorElement[];
+    expect(filas.map((fila) => fila.getAttribute('href'))).toEqual([
+      '/cuenta/siniestros/hogar-reciente',
+      '/cuenta/siniestros/hogar-pendiente',
+      '/cuenta/siniestros/hogar-antiguo',
+    ]);
+    expect(filas[0].textContent).toContain('Automático');
+    expect(filas[1].textContent).toContain('Falta información');
+    expect(filas[1].textContent).not.toContain('Automático');
+    expect(fixture.nativeElement.textContent).not.toContain('SIN-ajeno');
+  });
+
+  it('oculta la sección cuando esta póliza no tiene siniestros', async () => {
+    siniestrosApi.listar.and.resolveTo([
+      siniestro('ajeno', 'p2', 'INCAPACIDAD_TOTAL', 'PAGADO', '2026-11-02T10:00:00Z'),
+    ]);
+    const fixture = await montar();
+    expect(fixture.nativeElement.querySelector('.siniestros')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.error-siniestros')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.documento')).not.toBeNull();
+  });
+
+  it('mantiene el seguro visible y permite reintentar cuando falla la lista', async () => {
+    siniestrosApi.listar.and.rejectWith(new HttpErrorResponse({ status: 503 }));
+    const fixture = await montar();
+    expect(fixture.nativeElement.textContent).toContain('SOL-104');
+    expect(fixture.nativeElement.querySelector('.error-siniestros')?.textContent).toContain(
+      'No pudimos consultar tus siniestros',
+    );
+    siniestrosApi.listar.and.resolveTo([
+      siniestro('recuperado', 'p1', 'INCAPACIDAD_TOTAL', 'EN_ESTUDIO', '2026-11-02T10:00:00Z'),
+    ]);
+    fixture.nativeElement.querySelector('.error-siniestros button').click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.error-siniestros')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('SIN-recuperado');
+    expect(siniestrosApi.listar).toHaveBeenCalledTimes(2);
   });
 });

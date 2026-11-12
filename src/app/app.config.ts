@@ -3,7 +3,7 @@ import localeCo from '@angular/common/locales/es-CO';
 registerLocaleData(localeCo, 'es-CO');
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withFetch } from '@angular/common/http';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
 import { apiConfig, BFF_BASE_URL } from './core/config/api.config';
@@ -20,7 +20,11 @@ export const appConfig: ApplicationConfig = {
       provide: REGISTRATION_GATEWAY,
       useClass: apiConfig.useMocks ? RegistrationMockService : RegistrationHttpService,
     },
-    provideRouter(routes, withComponentInputBinding()),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
+    ),
     // Material carga el sprite de iconos con HttpClient.
     provideHttpClient(withFetch()),
     proveerIconos(),

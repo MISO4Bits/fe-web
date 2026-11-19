@@ -16,11 +16,24 @@ export interface SolicitarPoliza {
   documentosAceptados: DocumentoAceptado[];
 }
 
+export type DecisionRenovacion = 'ACEPTAR' | 'RECHAZAR';
+
+export interface RenovacionPoliza {
+  estado: 'SIN_RESPUESTA' | 'ACEPTADA' | 'RECHAZADA';
+  primaActual: number;
+  primaNueva: number;
+  ipc: number;
+  fechaRenovacion: string;
+  decidirHasta: string;
+  avisoBanco?: { entidadAcreedora: string; registradoEn: string } | null;
+}
+
 export interface PolizaSolicitud {
   polizaId: string;
   cotizacionCreadaEn?: string;
   numero?: string | null;
-  estado: 'EMITIDA' | 'PENDIENTE' | 'RECHAZADA' | 'VENCIDA';
+  estado: 'EMITIDA' | 'PENDIENTE' | 'RECHAZADA' | 'VENCIDA' | 'DESACTIVADA';
+  renovacion?: RenovacionPoliza | null;
   solicitudVigenteHasta?: string | null;
   emitidaEn?: string | null;
   vigencia?: { desde: string; hasta: string } | null;
@@ -88,6 +101,19 @@ export class PolizasApiService {
       this.http.get<DetallePolizaSolicitud>(`${this.url}/${encodeURIComponent(id)}`, {
         headers: await this.headers(),
       }),
+    );
+  }
+
+  async decidirRenovacion(
+    id: string,
+    decision: DecisionRenovacion,
+  ): Promise<DetallePolizaSolicitud> {
+    return firstValueFrom(
+      this.http.post<DetallePolizaSolicitud>(
+        `${this.url}/${encodeURIComponent(id)}/renovacion`,
+        { decision },
+        { headers: await this.headers() },
+      ),
     );
   }
 

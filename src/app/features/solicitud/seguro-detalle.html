@@ -8,7 +8,7 @@
       <button type="button" class="boton" (click)="cargar()">Reintentar</button>
     </div>
   } @else if (poliza(); as p) {
-    @if (p.estado !== 'EMITIDA') {
+    @if (p.estado !== 'EMITIDA' && p.estado !== 'DESACTIVADA') {
       <p>Este detalle solo está disponible para pólizas emitidas.</p>
       <a class="enlace" [routerLink]="['/cuenta/solicitudes', p.polizaId]">Ver mi solicitud</a>
     } @else {
@@ -16,25 +16,55 @@
         <div>
           <h1>{{ producto(p) }}</h1>
           <p class="numero">
-            <span class="insignia">Vigente</span> Seguro N.° {{ p.numero || 'No disponible' }}
+            <span class="insignia">{{ insigniaSeguro(p) }}</span> Seguro N.°
+            {{ p.numero || 'No disponible' }}
           </p>
           <section class="panel" aria-labelledby="condiciones-titulo">
             <h2 id="condiciones-titulo">Condiciones</h2>
             <dl>
-              <div>
-                <dt>Pagas cada mes</dt>
-                <dd>{{ moneda.format(p.primaTotalMensual) }}</dd>
-              </div>
-              <div>
-                <dt>Cuánto cubrimos hoy</dt>
-                <dd>{{ moneda.format(p.datosCredito.saldoInsoluto) }}</dd>
-              </div>
-              <div>
-                <dt>Te cubre</dt>
-                <dd>{{ fecha(p.vigencia?.desde) }} al {{ fecha(p.vigencia?.hasta) }}</dd>
-              </div>
+              @if (p.estado !== 'DESACTIVADA') {
+                <div>
+                  <dt>Pagas cada mes</dt>
+                  <dd>{{ moneda.format(p.primaTotalMensual) }}</dd>
+                </div>
+                <div>
+                  <dt>Cuánto cubrimos hoy</dt>
+                  <dd>{{ moneda.format(p.datosCredito.saldoInsoluto) }}</dd>
+                </div>
+              }
+              @if (p.estado === 'EMITIDA' && p.renovacion?.estado === 'RECHAZADA') {
+                <div>
+                  <dt>Termina el</dt>
+                  <dd>{{ fecha(p.renovacion?.fechaRenovacion) }}</dd>
+                </div>
+              } @else {
+                <div>
+                  <dt>{{ p.estado === 'DESACTIVADA' ? 'Estuvo vigente' : 'Te cubre' }}</dt>
+                  <dd>{{ fecha(p.vigencia?.desde) }} al {{ fecha(p.vigencia?.hasta) }}</dd>
+                </div>
+              }
+              @if (p.renovacion?.avisoBanco; as aviso) {
+                <div>
+                  <dt>Avisamos a {{ aviso.entidadAcreedora }} el</dt>
+                  <dd>{{ fecha(aviso.registradoEn) }}</dd>
+                </div>
+              }
             </dl>
           </section>
+          @if (
+            p.estado === 'EMITIDA' &&
+            p.renovacion?.estado === 'RECHAZADA' &&
+            plazoRenovacionAbierto(p.renovacion!)
+          ) {
+            <button
+              type="button"
+              class="enlace accion-renovacion"
+              [disabled]="guardandoDecision()"
+              (click)="decidirRenovacion('ACEPTAR')"
+            >
+              {{ guardandoDecision() ? 'Guardando decisión...' : 'Quiero renovarla' }}
+            </button>
+          }
         </div>
         <div>
           <p class="etiqueta">TU CRÉDITO</p>
@@ -58,8 +88,19 @@
               </div>
             </dl>
           </section>
+          @if (p.estado === 'DESACTIVADA') {
+            <a class="boton accion-renovacion" routerLink="/cuenta/cotizaciones/nueva"
+              >Cotizar un seguro nuevo</a
+            >
+          }
         </div>
       </div>
+      @if (errorRenovacion() && !dialogoRenovacion.open) {
+        <p role="alert">{{ errorRenovacion() }}</p>
+      }
+      @if (p.estado === 'DESACTIVADA') {
+        <p>Para reportar un siniestro, usa la app de Solventa en tu teléfono.</p>
+      }
       @if (cargandoSiniestros()) {
         <p class="cargando-siniestros" role="status">Consultando tus siniestros...</p>
       } @else if (errorSiniestros()) {
@@ -102,51 +143,147 @@
           }
         </section>
       }
-      <div class="complementos">
-        <div>
-          <section class="panel" aria-labelledby="coberturas-titulo">
-            <h2 id="coberturas-titulo">Coberturas contratadas</h2>
-            <ul>
-              @for (c of p.coberturas; track c.codigo) {
-                <li>{{ c.codigo === 'VIDA' ? 'Vida para tu crédito' : 'Tu casa' }}</li>
-              }
-            </ul>
-            <a class="enlace" [routerLink]="['/cuenta/solicitudes', p.polizaId, 'cuota']"
-              >Ver tu seguro dentro de la cuota</a
-            >
-          </section>
-          <section class="panel" aria-labelledby="documentos-titulo">
-            <h2 id="documentos-titulo">Documentos</h2>
-            <div class="documento">
-              <span>Documento de tu seguro<small>PDF</small></span
-              ><button
-                type="button"
-                class="enlace"
-                [disabled]="descargando()"
-                (click)="verDocumento()"
+      @if (p.estado === 'EMITIDA') {
+        <div class="complementos">
+          <div>
+            <section class="panel" aria-labelledby="coberturas-titulo">
+              <h2 id="coberturas-titulo">Coberturas contratadas</h2>
+              <ul>
+                @for (c of p.coberturas; track c.codigo) {
+                  <li>{{ c.codigo === 'VIDA' ? 'Vida para tu crédito' : 'Tu casa' }}</li>
+                }
+              </ul>
+              <a class="enlace" [routerLink]="['/cuenta/solicitudes', p.polizaId, 'cuota']"
+                >Ver tu seguro dentro de la cuota</a
               >
-                Descargar
-              </button>
-            </div>
-          </section>
+            </section>
+            <section class="panel" aria-labelledby="documentos-titulo">
+              <h2 id="documentos-titulo">Documentos</h2>
+              <div class="documento">
+                <span>Documento de tu seguro<small>PDF</small></span
+                ><button
+                  type="button"
+                  class="enlace"
+                  [disabled]="descargando()"
+                  (click)="verDocumento()"
+                >
+                  Descargar
+                </button>
+              </div>
+            </section>
+          </div>
+          <div>
+            <section class="panel pago">
+              <h2>Cómo se paga</h2>
+              <p>
+                Lo cobra {{ p.datosCredito.entidadAcreedora }} junto con la cuota de tu crédito. No
+                necesitas hacer ningún pago en Solventa.
+              </p>
+            </section>
+            <button type="button" class="boton" [disabled]="descargando()" (click)="verDocumento()">
+              {{ descargando() ? 'Consultando documento...' : 'Ver mi documento' }}
+            </button>
+            @if (mensajeDocumento()) {
+              <p [attr.role]="errorDocumento() ? 'alert' : 'status'">{{ mensajeDocumento() }}</p>
+            }
+            <a class="enlace inicio" routerLink="/cuenta">Inicio</a>
+          </div>
         </div>
-        <div>
-          <section class="panel pago">
-            <h2>Cómo se paga</h2>
-            <p>
-              Lo cobra {{ p.datosCredito.entidadAcreedora }} junto con la cuota de tu crédito. No
-              necesitas hacer ningún pago en Solventa.
-            </p>
-          </section>
-          <button type="button" class="boton" [disabled]="descargando()" (click)="verDocumento()">
-            {{ descargando() ? 'Consultando documento...' : 'Ver mi documento' }}
-          </button>
-          @if (mensajeDocumento()) {
-            <p [attr.role]="errorDocumento() ? 'alert' : 'status'">{{ mensajeDocumento() }}</p>
-          }
-          <a class="enlace inicio" routerLink="/cuenta">Inicio</a>
-        </div>
-      </div>
+      }
     }
   }
 </section>
+
+<dialog
+  #dialogoRenovacion
+  class="modal modal-condiciones"
+  aria-labelledby="renovacion-titulo"
+  (cancel)="cancelarDialogo($event)"
+>
+  @if (poliza(); as p) {
+    @if (p.renovacion; as r) {
+      <p class="etiqueta">Renovación</p>
+      @if (confirmarRechazo()) {
+        <h2 id="renovacion-titulo">¿Seguro que no quieres renovar?</h2>
+        <p>
+          Tu póliza sigue activa hasta el {{ fecha(r.fechaRenovacion) }}. Ese día queda desactivada.
+          Tu crédito necesita un seguro de vida: si no le presentas otro,
+          {{ p.datosCredito.entidadAcreedora }} te incluirá en el suyo y te lo cobrará en la cuota.
+          Puedes cambiar de opinión hasta el {{ fecha(r.decidirHasta) }}. Ese día le avisamos a
+          {{ p.datosCredito.entidadAcreedora }} que tu póliza termina el
+          {{ fecha(r.fechaRenovacion) }}.
+        </p>
+      } @else {
+        <h2 id="renovacion-titulo">Tu póliza se renueva el {{ fecha(r.fechaRenovacion) }}</h2>
+        <p>
+          Hoy pagas {{ moneda.format(r.primaActual) }} al mes dentro de la cuota de tu crédito.
+          Desde el {{ fecha(r.fechaRenovacion) }} pagarás {{ moneda.format(r.primaNueva) }}. Tu
+          tarifa sube con el IPC, {{ porcentaje.format(r.ipc) }}. Lo que cubrimos sigue siendo el
+          saldo de tu crédito.
+        </p>
+        <dl class="primas-renovacion">
+          <div>
+            <dt>Hoy</dt>
+            <dd>{{ moneda.format(r.primaActual) }} al mes</dd>
+          </div>
+          <div>
+            <dt>Desde el {{ fecha(r.fechaRenovacion) }}</dt>
+            <dd>{{ moneda.format(r.primaNueva) }} al mes</dd>
+          </div>
+        </dl>
+        <p>
+          Si no respondes, la renovamos sola por un año más. Puedes decidir antes del
+          {{ fecha(r.decidirHasta) }}.
+        </p>
+      }
+      @if (errorRenovacion()) {
+        <p role="alert">{{ errorRenovacion() }}</p>
+      }
+      <div class="acciones-renovacion">
+        @if (confirmarRechazo()) {
+          <button
+            type="button"
+            class="boton boton-rechazar"
+            [disabled]="guardandoDecision()"
+            (click)="decidirRenovacion('RECHAZAR')"
+          >
+            {{ guardandoDecision() ? 'Guardando decisión...' : 'No renovar' }}
+          </button>
+          <button
+            type="button"
+            class="enlace"
+            [disabled]="guardandoDecision()"
+            (click)="cambiarConfirmacion(false)"
+          >
+            Volver
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="boton"
+            [disabled]="guardandoDecision()"
+            (click)="decidirRenovacion('ACEPTAR')"
+          >
+            {{ guardandoDecision() ? 'Guardando decisión...' : 'Aceptar la renovación' }}
+          </button>
+          <button
+            type="button"
+            class="enlace"
+            [disabled]="guardandoDecision()"
+            (click)="cambiarConfirmacion(true)"
+          >
+            No renovar
+          </button>
+        }
+        <button
+          type="button"
+          class="enlace"
+          [disabled]="guardandoDecision()"
+          (click)="dialogoRenovacion.close()"
+        >
+          Cerrar
+        </button>
+      </div>
+    }
+  }
+</dialog>

@@ -1,6 +1,49 @@
+@use '../modal-condiciones';
+
 :host {
   display: block;
   color: #192224;
+}
+.modal-condiciones {
+  @include modal-condiciones.base;
+  @include modal-condiciones.dialogo;
+  width: min(585px, calc(100% - 32px));
+
+  h2 {
+    font-size: 24px;
+  }
+
+  p {
+    line-height: 1.5;
+  }
+}
+.primas-renovacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 32px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #edf3f3;
+
+  dd {
+    margin: 4px 0 0;
+    font-weight: 600;
+  }
+}
+.acciones-renovacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-top: 24px;
+}
+.accion-renovacion {
+  display: inline-block;
+  margin-top: 16px;
+  text-decoration: none;
+}
+.boton.boton-rechazar {
+  background: #b42318;
 }
 .detalle {
   box-sizing: border-box;

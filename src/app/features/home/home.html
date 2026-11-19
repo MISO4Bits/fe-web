@@ -7,9 +7,11 @@
           : 'Tu solicitud está en revisión'
         : cotizacionVisible()
           ? 'Tienes una cotización en curso'
-          : seguros().length
+          : tieneSeguroActivo()
             ? 'Tu seguro está activo'
-            : 'Todavía no tienes seguros'
+            : seguros().length
+              ? 'Tus seguros'
+              : 'Todavía no tienes seguros'
     }}
   </h1>
   <p class="intro">
@@ -20,9 +22,11 @@
           : 'Aquí vas a ver tus seguros. Te avisamos por correo cuando tu póliza quede emitida.'
         : cotizacionVisible()
           ? 'Aquí vas a ver tus seguros. Tu cotización sigue abierta, puedes retomarla cuando quieras.'
-          : seguros().length
+          : tieneSeguroActivo()
             ? 'Tu seguro quedó activo. Aquí ves el documento, lo que pagas y cuándo se renueva.'
-            : 'Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.'
+            : seguros().length
+              ? 'Consulta el detalle de tus seguros.'
+              : 'Aquí vas a ver tus seguros. Todavía no tienes ninguno, empieza cotizando el de tu crédito.'
     }}
   </p>
 
@@ -131,7 +135,7 @@
           </p>
           <strong class="prima-home">{{ moneda.format(p.primaTotalMensual) }} al mes</strong>
         </div>
-        <span class="etiqueta-cotizacion">Vigente</span>
+        <span class="etiqueta-cotizacion">{{ insigniaSeguro(p) }}</span>
       </a>
     }
     @if (

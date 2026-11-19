@@ -6,6 +6,7 @@ import { RUTAS } from '../../nucleo/rutas';
 import { BienvenidaService } from './bienvenida.service';
 import { UltimaCotizacionService } from '../cotizacion/ultima-cotizacion.service';
 import { PolizasApiService, ResumenPolizaSolicitud } from '../solicitud/polizas-api.service';
+import { insigniaSeguro } from '../solicitud/renovacion-poliza';
 import { ResumenSiniestro, SiniestrosApiService } from '../siniestros/siniestros-api.service';
 @Component({
   selector: 'app-home',
@@ -25,8 +26,12 @@ export class Home implements OnInit {
   protected readonly cargandoSiniestros = signal(true);
   protected readonly errorSiniestros = signal(false);
   protected readonly seguros = computed(() =>
-    this.solicitudes().filter((p) => p.estado === 'EMITIDA'),
+    this.solicitudes().filter((p) => p.estado === 'EMITIDA' || p.estado === 'DESACTIVADA'),
   );
+  protected readonly tieneSeguroActivo = computed(() =>
+    this.seguros().some((p) => p.estado === 'EMITIDA'),
+  );
+  protected readonly insigniaSeguro = insigniaSeguro;
   protected readonly cotizacionVisible = computed(() => {
     const actual = this.cotizacionActual();
     return actual && !this.seguros().some((p) => p.cotizacionCreadaEn === actual.creadaEn)

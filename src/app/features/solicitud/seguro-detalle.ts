@@ -1,7 +1,23 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  Injector,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { DetallePolizaSolicitud, PolizasApiService } from './polizas-api.service';
+import {
+  DecisionRenovacion,
+  DetallePolizaSolicitud,
+  PolizasApiService,
+} from './polizas-api.service';
+import { insigniaSeguro, plazoRenovacionAbierto } from './renovacion-poliza';
 import {
   ResumenSiniestro,
   SiniestrosApiService,
@@ -19,6 +35,18 @@ export class SeguroDetalle {
   readonly id = input.required<string>();
   private readonly api = inject(PolizasApiService);
   private readonly siniestrosApi = inject(SiniestrosApiService);
+  private readonly injector = inject(Injector);
+  private readonly dialogoRenovacion =
+    viewChild<ElementRef<HTMLDialogElement>>('dialogoRenovacion');
+  protected readonly insigniaSeguro = insigniaSeguro;
+  protected readonly confirmarRechazo = signal(false);
+  protected readonly guardandoDecision = signal(false);
+  protected readonly errorRenovacion = signal('');
+  protected readonly plazoRenovacionAbierto = plazoRenovacionAbierto;
+  protected readonly porcentaje = new Intl.NumberFormat('es-CO', {
+    style: 'percent',
+    maximumFractionDigits: 2,
+  });
   protected readonly poliza = signal<DetallePolizaSolicitud | null>(null);
   protected readonly siniestros = signal<ResumenSiniestro[]>([]);
   protected readonly siniestrosVida = computed(() =>
@@ -65,8 +93,12 @@ export class SeguroDetalle {
     void this.consultarSiniestros(this.id(), this.consulta);
   }
 
-  private async consultar(id: string): Promise<void> {
+  private async consultar(id: string, mostrarPropuesta = true): Promise<void> {
     const consulta = ++this.consulta;
+    this.dialogoRenovacion()?.nativeElement.close();
+    this.confirmarRechazo.set(false);
+    this.guardandoDecision.set(false);
+    if (mostrarPropuesta) this.errorRenovacion.set('');
     this.cargando.set(true);
     this.error.set('');
     this.poliza.set(null);
@@ -76,7 +108,18 @@ export class SeguroDetalle {
     void this.consultarSiniestros(id, consulta);
     try {
       const poliza = await this.api.consultarDetalle(id);
-      if (consulta === this.consulta) this.poliza.set(poliza);
+      if (consulta !== this.consulta) return;
+      this.poliza.set(poliza);
+      if (mostrarPropuesta && insigniaSeguro(poliza) === 'Por renovar') {
+        afterNextRender(
+          () => {
+            if (consulta === this.consulta && insigniaSeguro(poliza) === 'Por renovar') {
+              this.dialogoRenovacion()?.nativeElement.showModal();
+            }
+          },
+          { injector: this.injector },
+        );
+      }
     } catch (error: unknown) {
       if (consulta !== this.consulta) return;
       this.error.set(
@@ -86,6 +129,42 @@ export class SeguroDetalle {
       );
     } finally {
       if (consulta === this.consulta) this.cargando.set(false);
+    }
+  }
+
+  protected cancelarDialogo(event: Event): void {
+    if (this.guardandoDecision()) event.preventDefault();
+  }
+
+  protected cambiarConfirmacion(confirmar: boolean): void {
+    this.errorRenovacion.set('');
+    this.confirmarRechazo.set(confirmar);
+  }
+
+  protected async decidirRenovacion(decision: DecisionRenovacion): Promise<void> {
+    if (this.guardandoDecision()) return;
+    const poliza = this.poliza();
+    if (poliza?.estado !== 'EMITIDA' || !poliza.renovacion) return;
+    const consulta = this.consulta;
+    this.guardandoDecision.set(true);
+    this.errorRenovacion.set('');
+    try {
+      const actualizada = await this.api.decidirRenovacion(poliza.polizaId, decision);
+      if (consulta !== this.consulta) return;
+      this.dialogoRenovacion()?.nativeElement.close();
+      this.poliza.set(actualizada);
+    } catch (error: unknown) {
+      if (consulta !== this.consulta) return;
+      if (error instanceof HttpErrorResponse && error.status === 409) {
+        this.errorRenovacion.set(
+          'La propuesta ya no admite cambios. Actualizamos el estado de tu seguro.',
+        );
+        await this.consultar(poliza.polizaId, false);
+      } else {
+        this.errorRenovacion.set('No pudimos guardar tu decisión. Inténtalo de nuevo.');
+      }
+    } finally {
+      if (consulta === this.consulta) this.guardandoDecision.set(false);
     }
   }
 

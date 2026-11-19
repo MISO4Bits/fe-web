@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { SeguroDetalle } from './seguro-detalle';
 import { DetallePolizaSolicitud, PolizasApiService } from './polizas-api.service';
+import { plazoRenovacionAbierto } from './renovacion-poliza';
 import { ResumenSiniestro, SiniestrosApiService } from '../siniestros/siniestros-api.service';
 
 describe('SeguroDetalle BITS-104', () => {
@@ -60,7 +61,11 @@ describe('SeguroDetalle BITS-104', () => {
   };
 
   beforeEach(() => {
-    api = jasmine.createSpyObj('PolizasApiService', ['consultarDetalle', 'documento']);
+    api = jasmine.createSpyObj('PolizasApiService', [
+      'consultarDetalle',
+      'documento',
+      'decidirRenovacion',
+    ]);
     api.consultarDetalle.and.resolveTo({ ...poliza, numero: 'SOL-104' });
     siniestrosApi = jasmine.createSpyObj('SiniestrosApiService', ['listar']);
     siniestrosApi.listar.and.resolveTo([]);
@@ -80,6 +85,73 @@ describe('SeguroDetalle BITS-104', () => {
     fixture.detectChanges();
     return fixture;
   }
+  const propuesta = {
+    estado: 'SIN_RESPUESTA' as const,
+    primaActual: 77374,
+    primaNueva: 81397,
+    ipc: 0.052,
+    fechaRenovacion: '2099-12-17T17:00:00Z',
+    decidirHasta: '2099-11-17T17:00:00Z',
+  };
+
+  it('pide confirmar el rechazo y permite revertirlo', async () => {
+    api.consultarDetalle.and.resolveTo({ ...poliza, renovacion: propuesta });
+    api.decidirRenovacion.and.resolveTo({
+      ...poliza,
+      renovacion: { ...propuesta, estado: 'RECHAZADA' },
+    });
+    const fixture = await montar();
+    const detalle: HTMLElement = fixture.nativeElement;
+    const dialogo = detalle.querySelector('dialog')!;
+    const pulsar = (contenedor: HTMLElement, texto: string) =>
+      Array.from(contenedor.querySelectorAll('button'))
+        .find((boton) => boton.textContent?.trim() === texto)!
+        .click();
+
+    expect(dialogo.open).toBeTrue();
+    pulsar(dialogo, 'No renovar');
+    fixture.detectChanges();
+    expect(dialogo.querySelector('h2')?.textContent).toContain('Seguro que no quieres renovar');
+    expect(api.decidirRenovacion).not.toHaveBeenCalled();
+    pulsar(dialogo, 'No renovar');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(api.decidirRenovacion).toHaveBeenCalledOnceWith('p1', 'RECHAZAR');
+    expect(dialogo.open).toBeFalse();
+    expect(detalle.querySelector('.numero')?.textContent).toContain('No se renueva');
+
+    api.decidirRenovacion.and.resolveTo({
+      ...poliza,
+      renovacion: { ...propuesta, estado: 'ACEPTADA' },
+    });
+    pulsar(detalle, 'Quiero renovarla');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(api.decidirRenovacion).toHaveBeenCalledWith('p1', 'ACEPTAR');
+    expect(detalle.querySelector('.numero')?.textContent).toContain('Vigente');
+  });
+
+  it('cierra el plazo al inicio del día calendario del corte en Colombia', () => {
+    jasmine.clock().install();
+    try {
+      jasmine.clock().mockDate(new Date('2099-11-17T04:59:59Z'));
+      expect(plazoRenovacionAbierto(propuesta)).toBeTrue();
+      jasmine.clock().mockDate(new Date('2099-11-17T05:00:00Z'));
+      expect(plazoRenovacionAbierto(propuesta)).toBeFalse();
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it('muestra la vigencia anterior y permite cotizar para una póliza desactivada', async () => {
+    api.consultarDetalle.and.resolveTo({ ...poliza, estado: 'DESACTIVADA' });
+    const fixture = await montar();
+    const detalle: HTMLElement = fixture.nativeElement;
+    expect(detalle.textContent).toContain('Desactivada');
+    expect(detalle.textContent).toContain('Estuvo vigente');
+    expect(detalle.textContent).toContain('usa la app de Solventa');
+    expect(detalle.querySelector('a[href="/cuenta/cotizaciones/nueva"]')).not.toBeNull();
+  });
   it('muestra datos de la poliza, vigencia, credito y coberturas contratadas', async () => {
     const fixture = await montar();
     const texto = fixture.nativeElement.textContent;

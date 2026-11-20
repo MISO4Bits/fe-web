@@ -87,6 +87,16 @@ describe('Home', () => {
     ).not.toBeNull();
   });
 
+  it('muestra la póliza desactivada en Mis seguros y enlaza a su detalle', async () => {
+    polizas.listar.and.resolveTo([{ ...solicitud(), estado: 'DESACTIVADA' }]);
+    await montar(null);
+    const enlace: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      'section[aria-label="Mis seguros"] a[href="/cuenta/seguros/p1"]',
+    );
+    expect(enlace.textContent).toContain('Desactivada');
+    expect(fixture.nativeElement.querySelector('h1').textContent.trim()).toBe('Tus seguros');
+  });
+
   it('no ofrece retomar la cotizacion que ya genero un seguro emitido', async () => {
     polizas.listar.and.resolveTo([{ ...solicitud(), estado: 'EMITIDA' }]);
     await montar(cotizacion);

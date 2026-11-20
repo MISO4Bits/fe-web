@@ -218,8 +218,8 @@
         <p>
           Hoy pagas {{ moneda.format(r.primaActual) }} al mes dentro de la cuota de tu crédito.
           Desde el {{ fecha(r.fechaRenovacion) }} pagarás {{ moneda.format(r.primaNueva) }}. Tu
-          tarifa sube con el IPC, {{ porcentaje.format(r.ipc) }}. Lo que cubrimos sigue siendo el
-          saldo de tu crédito.
+          tarifa sube con el {{ ipcAplicado(r.fechaRenovacion, r.ipc) }}. Lo que cubrimos sigue
+          siendo el saldo de tu crédito.
         </p>
         <dl class="primas-renovacion">
           <div>

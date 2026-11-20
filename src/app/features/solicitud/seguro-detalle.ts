@@ -43,10 +43,15 @@ export class SeguroDetalle {
   protected readonly guardandoDecision = signal(false);
   protected readonly errorRenovacion = signal('');
   protected readonly plazoRenovacionAbierto = plazoRenovacionAbierto;
-  protected readonly porcentaje = new Intl.NumberFormat('es-CO', {
+  private readonly porcentajeIpc = new Intl.NumberFormat('es', {
     style: 'percent',
     maximumFractionDigits: 2,
   });
+  private readonly anioColombia = new Intl.DateTimeFormat('es-CO', {
+    year: 'numeric',
+    timeZone: 'America/Bogota',
+  });
+
   protected readonly poliza = signal<DetallePolizaSolicitud | null>(null);
   protected readonly siniestros = signal<ResumenSiniestro[]>([]);
   protected readonly siniestrosVida = computed(() =>
@@ -215,6 +220,13 @@ export class SeguroDetalle {
       case 'RECHAZADO':
         return 'Rechazado';
     }
+  }
+
+  protected ipcAplicado(fechaRenovacion: string, ipc: number): string {
+    const fecha = Date.parse(fechaRenovacion);
+    const anio = Number.isFinite(fecha) ? Number(this.anioColombia.format(fecha)) - 1 : null;
+    const porcentaje = this.porcentajeIpc.format(ipc);
+    return anio === null ? `IPC, ${porcentaje}` : `IPC de ${anio}, ${porcentaje}`;
   }
 
   protected fecha(valor?: string | null): string {

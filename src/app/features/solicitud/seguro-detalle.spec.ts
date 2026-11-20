@@ -109,6 +109,9 @@ describe('SeguroDetalle BITS-104', () => {
         .click();
 
     expect(dialogo.open).toBeTrue();
+    expect(dialogo.textContent?.replace(/\s+/g, ' ')).toContain(
+      'Tu tarifa sube con el IPC de 2098, 5,2 %.',
+    );
     pulsar(dialogo, 'No renovar');
     fixture.detectChanges();
     expect(dialogo.querySelector('h2')?.textContent).toContain('Seguro que no quieres renovar');
